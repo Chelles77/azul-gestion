@@ -9,14 +9,14 @@ import {
   Menu, ChevronDown, Loader2
 } from 'lucide-react';
 
-// Type Lot adapté aux noms de colonnes Supabase (minuscules)
+// Type Lot EXACTEMENT comme dans Supabase (noms minuscules)
 type Lot = {
   id: string;
   user_id?: string;
   numerolot: string;
   dateachat: string;
   source: string;
-  prixAchat: number; // Supabase garde parfois la 1ère lettre majuscule si créée ainsi
+  prixachat: number;
   fraisport: number;
   fraisencheres: number;
   couttotal: number;
@@ -53,7 +53,6 @@ export default function PageGestionAchats() {
         }
         setUser(user);
 
-        // Chargement depuis Supabase
         const { data, error } = await supabase
           .from('lots')
           .select('*')
@@ -94,7 +93,7 @@ export default function PageGestionAchats() {
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // Calculs dynamiques
+  // Calculs dynamiques (variables locales en camelCase)
   const prixAchatNum = parseFloat(formData.prixAchat) || 0;
   const fraisPortNum = parseFloat(formData.fraisPort) || 0;
   const fraisEncheresNum = parseFloat(formData.fraisEncheres) || 0;
@@ -109,13 +108,13 @@ export default function PageGestionAchats() {
   const nbPiecesVendables = Math.max(0, nbPiecesNum - Math.round(nbPiecesNum * (tauxRebutNum / 100)));
   const coutReelParPiece = nbPiecesVendables > 0 ? (coutTotal / nbPiecesVendables) : 0;
 
-  // KPIs globaux
-  const totalInvesti = lots.reduce((acc, lot) => acc + (lot.coutTotal || 0), 0);
-  const totalFraisAnnexes = lots.reduce((acc, lot) => acc + (lot.fraisPort || 0) + (lot.fraisEncheres || 0), 0);
+  // KPIs globaux (utilisent les noms Supabase)
+  const totalInvesti = lots.reduce((acc, lot) => acc + (lot.couttotal || 0), 0);
+  const totalFraisAnnexes = lots.reduce((acc, lot) => acc + (lot.fraisport || 0) + (lot.fraisencheres || 0), 0);
   const avgIndice = lots.length > 0 
     ? (lots.reduce((acc, lot) => acc + (lot.indiceachat || 0), 0) / lots.length).toFixed(1) 
     : '0';
-  const totalValeurNeuve = lots.reduce((acc, lot) => acc + (lot.prixNeufTotal || 0), 0);
+  const totalValeurNeuve = lots.reduce((acc, lot) => acc + (lot.prixneuftotal || 0), 0);
   const rendementGlobal = totalValeurNeuve > 0 
     ? (((totalValeurNeuve - totalInvesti) / totalValeurNeuve) * 100).toFixed(1) 
     : '0';
@@ -133,13 +132,13 @@ export default function PageGestionAchats() {
       numeroLot: lot.numerolot || '',
       dateAchat: lot.dateachat || new Date().toISOString().split('T')[0],
       source: lot.source || 'B-Stock',
-      prixAchat: (lot.prixAchat || 0).toString(),
-      fraisPort: (lot.fraisPort || 0).toString(),
-      fraisEncheres: (lot.fraisEncheres || 0).toString(),
-      nbPalettes: (lot.nbPalettes || 1).toString(),
-      nbPieces: (lot.nbPieces || 0).toString(),
-      prixNeufTotal: (lot.prixNeufTotal || 0).toString(),
-      tauxRebut: (lot.tauxRebut || 0).toString()
+      prixAchat: (lot.prixachat || 0).toString(),
+      fraisPort: (lot.fraisport || 0).toString(),
+      fraisEncheres: (lot.fraisencheres || 0).toString(),
+      nbPalettes: (lot.nbpalettes || 1).toString(),
+      nbPieces: (lot.nbpieces || 0).toString(),
+      prixNeufTotal: (lot.prixneuftotal || 0).toString(),
+      tauxRebut: (lot.tauxrebut || 0).toString()
     });
     setIsModalOpen(true);
   };
@@ -159,21 +158,21 @@ export default function PageGestionAchats() {
     setSaving(true);
     
     const newLotData = {
-  user_id: user.id,
-  numerolot: formData.numeroLot,
-  dateachat: formData.dateAchat,
-  source: formData.source,
-  prixachat: prixAchatNum,      // Si erreur, changer en prixachat
-  fraisport: fraisPortNum,      // <-- MINUSCULE
-  fraisencheres: fraisEncheresNum, // <-- MINUSCULE
-  couttotal: coutTotal,         // <-- MINUSCULE
-  nbpalettes: nbPalettesNum,    // <-- MINUSCULE
-  nbpieces: nbPiecesNum,        // <-- MINUSCULE
-  prixneuftotal: prixNeufNum,   // <-- MINUSCULE
-  tauxrebut: tauxRebutNum,      // <-- MINUSCULE
-  indiceachat: indiceAchat,     // Déjà bon
-  coutreelparpiece: coutReelParPiece // Déjà bon
-};
+      user_id: user.id,
+      numerolot: formData.numeroLot,
+      dateachat: formData.dateAchat,
+      source: formData.source,
+      prixAchat: prixAchatNum,
+      fraisport: fraisPortNum,
+      fraisencheres: fraisEncheresNum,
+      couttotal: coutTotal,
+      nbpalettes: nbPalettesNum,
+      nbpieces: nbPiecesNum,
+      prixneuftotal: prixNeufNum,
+      tauxrebut: tauxRebutNum,
+      indiceachat: indiceAchat,
+      coutreelparpiece: coutReelParPiece
+    };
 
     const supabase = createClient();
     try {
@@ -221,7 +220,6 @@ export default function PageGestionAchats() {
               <span className="font-bold text-xl tracking-tight text-white hidden sm:block">AZUL<span className="text-blue-500">GESTION</span></span>
             </div>
             
-            {/* Menu Desktop */}
             <div className="hidden md:flex flex-1 justify-center items-center h-full">
               <button onClick={() => router.push('/')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Accueil</button>
               
@@ -247,7 +245,6 @@ export default function PageGestionAchats() {
               <button onClick={() => router.push('/organizer')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Organisateur</button>
             </div>
 
-            {/* User & Logout */}
             <div className="flex items-center gap-4">
               <span className="hidden lg:block text-sm text-gray-400 bg-[#252525] px-3 py-1.5 rounded-full border border-gray-700 truncate max-w-[200px]">{user.email}</span>
               <button onClick={handleLogout} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-red-900/20 active:scale-95 whitespace-nowrap">Déconnexion</button>
@@ -256,7 +253,6 @@ export default function PageGestionAchats() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#1a1a1a] border-t border-gray-800 px-4 py-4 space-y-2 animate-in slide-in-from-top-2">
             <button onClick={() => { router.push('/'); setMobileMenuOpen(false); }} className="block w-full text-left text-white font-medium py-3 px-2 rounded hover:bg-white/5">Accueil</button>
@@ -275,7 +271,6 @@ export default function PageGestionAchats() {
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           
-          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <button onClick={() => router.back()} className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
@@ -359,17 +354,17 @@ export default function PageGestionAchats() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Coût / Palette</span>
-                      <span className="font-bold text-blue-400">{(lot.coutTotal / lot.nbPalettes).toFixed(2)} €</span>
+                      <span className="font-bold text-blue-400">{((lot.couttotal || 0) / (lot.nbpalettes || 1)).toFixed(2)} €</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Pièces Vendables</span>
                       <span className="font-bold text-orange-400">
-                        {Math.round(lot.nbPieces * (1 - lot.tauxRebut/100))} / {lot.nbPieces}
+                        {Math.round((lot.nbpieces || 0) * (1 - (lot.tauxrebut || 0)/100))} / {lot.nbpieces}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Coût Réel / Pièce</span>
-                      <span className="font-bold text-white">{lot.coutreelparpiece.toFixed(2)} €</span>
+                      <span className="font-bold text-white">{(lot.coutreelparpiece || 0).toFixed(2)} €</span>
                     </div>
                   </div>
 
