@@ -5,13 +5,13 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Camera, Package, FileText, TrendingUp, Menu, X, ChevronDown, BarChart3, DollarSign, AlertCircle } from 'lucide-react';
 
-// Type Lot (doit correspondre à celui de la page achat)
+// Type Lot (doit correspondre EXACTEMENT à celui de la page achat)
 type LotStats = {
   id: string;
   numeroLot: string;
   dateAchat: string;
   coutTotal: number;
-  nbPieces: number;
+  nbPieces: number; // Corrigé : était nbPiecesTotales avant
   nbPiecesVendues?: number;
   caGenere?: number;
   beneficeEstime?: number;
@@ -50,7 +50,6 @@ export default function Dashboard() {
       // On initialise les champs de vente s'ils n'existent pas encore
       const lotsWithSales = parsedLots.map((lot: any) => ({
         ...lot,
-        nbPiecesTotales: lot.nbPieces, // Mapping pour compatibilité
         nbPiecesVendues: lot.nbPiecesVendues || 0,
         caGenere: lot.caGenere || 0,
         beneficeEstime: (lot.caGenere || 0) - lot.coutTotal
@@ -74,7 +73,7 @@ export default function Dashboard() {
   const totalCA = lots.reduce((acc, lot) => acc + (lot.caGenere || 0), 0);
   const totalBenefice = totalCA - totalInvesti;
   const totalPiecesVendues = lots.reduce((acc, lot) => acc + (lot.nbPiecesVendues || 0), 0);
-  const totalPiecesTotales = lots.reduce((acc, lot) => acc + (lot.nbPiecesTotales || lot.nbPieces || 0), 0);
+  const totalPiecesTotales = lots.reduce((acc, lot) => acc + (lot.nbPieces || 0), 0);
   const tauxRotationGlobal = totalPiecesTotales > 0 ? Math.round((totalPiecesVendues / totalPiecesTotales) * 100) : 0;
 
   return (
@@ -187,7 +186,7 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-4">
             {lots.map((lot) => {
-              const progressPercent = Math.round(((lot.nbPiecesVendues || 0) / (lot.nbPiecesTotales || lot.nbPieces || 1)) * 100);
+              const progressPercent = Math.round(((lot.nbPiecesVendues || 0) / (lot.nbPieces || 1)) * 100);
               const isProfitable = (lot.beneficeEstime || 0) >= 0;
               
               return (
@@ -199,14 +198,14 @@ export default function Dashboard() {
                         <h3 className="text-lg font-bold text-white">{lot.numeroLot}</h3>
                         <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">{lot.dateAchat}</span>
                       </div>
-                      <p className="text-sm text-gray-500">Coût total: <span className="text-white font-medium">{lot.coutTotal.toFixed(2)} €</span> ({lot.nbPiecesTotales || lot.nbPieces} pièces)</p>
+                      <p className="text-sm text-gray-500">Coût total: <span className="text-white font-medium">{lot.coutTotal.toFixed(2)} €</span> ({lot.nbPieces} pièces)</p>
                     </div>
                     
                     {/* Indicateurs rapides */}
                     <div className="flex gap-6 text-sm">
                       <div className="text-right">
                         <p className="text-gray-500 text-xs uppercase">Vendu</p>
-                        <p className="font-bold text-white">{lot.nbPiecesVendues || 0} / {lot.nbPiecesTotales || lot.nbPieces}</p>
+                        <p className="font-bold text-white">{lot.nbPiecesVendues || 0} / {lot.nbPieces}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-gray-500 text-xs uppercase">CA Généré</p>
