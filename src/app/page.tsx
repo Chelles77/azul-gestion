@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { Camera, Package, FileText, TrendingUp, Menu, X, ChevronDown, BarChart3, DollarSign, AlertCircle } from 'lucide-react';
+import { Package, TrendingUp, Menu, X, ChevronDown, BarChart3, DollarSign, AlertCircle } from 'lucide-react';
 
-// Type Lot adapté aux noms de colonnes Supabase (minuscules)
+// Type Lot adapté aux noms de colonnes Supabase + alias pour affichage
 type LotStats = {
   id: string;
   numerolot: string;
@@ -16,10 +16,6 @@ type LotStats = {
   tauxrebut?: number;
   prixneuftotal?: number;
   coutreelparpiece?: number;
-  // Champs pour le dashboard (ventes)
-  nbPiecesVendues?: number;
-  caGenere?: number;
-  beneficeEstime?: number;
   // Alias pour compatibilité affichage
   numeroLot?: string;
   dateAchat?: string;
@@ -29,6 +25,10 @@ type LotStats = {
   tauxRebut?: number;
   prixNeufTotal?: number;
   coutReelParPiece?: number;
+  // Champs dashboard ventes
+  nbPiecesVendues?: number;
+  caGenere?: number;
+  beneficeEstime?: number;
 };
 
 export default function Dashboard() {
@@ -36,11 +36,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
-  // État pour les lots venant de Supabase
   const [lots, setLots] = useState<LotStats[]>([]);
 
-  // --- AUTHENTIFICATION & CHARGEMENT DES DONNÉES DEPUIS SUPABASE ---
+  // Chargement depuis Supabase
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -53,30 +51,30 @@ export default function Dashboard() {
         }
         setUser(user);
 
-        // Charger les lots DEPUIS SUPABASE (et non localStorage)
         const { data, error } = await supabase
           .from('lots')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Erreur chargement lots:', error);
-        } else {
-          // Mapper les données Supabase vers le format attendu par le dashboard
+        if (error) console.error('Erreur chargement:', error);
+        else {
           const mappedLots = (data || []).map((lot: any) => ({
             ...lot,
-            numeroLot: lot.numerolot,       // Mapping nom Supabase -> nom affichage
+            numeroLot: lot.numerolot,
             dateAchat: lot.dateachat,
             coutTotal: lot.couttotal,
             nbPieces: lot.nbpieces,
+            nbPalettes: lot.nbpalettes,
+            tauxRebut: lot.tauxrebut,
+            prixNeufTotal: lot.prixneuftotal,
+            coutReelParPiece: lot.coutreelparpiece,
             nbPiecesVendues: lot.nbPiecesVendues || 0,
             caGenere: lot.caGenere || 0,
             beneficeEstime: (lot.caGenere || 0) - lot.couttotal
           }));
           setLots(mappedLots);
         }
-
       } catch (error) {
         console.error(error);
         router.push('/login');
@@ -97,13 +95,22 @@ export default function Dashboard() {
   if (loading) return <div className="flex h-screen items-center justify-center bg-[#121212] text-blue-500">Chargement...</div>;
   if (!user) return null;
 
-  // Calculs globaux basés sur les VRAIS lots
+  // Calculs KPI
   const totalInvesti = lots.reduce((acc, lot) => acc + (lot.coutTotal || 0), 0);
   const totalCA = lots.reduce((acc, lot) => acc + (lot.caGenere || 0), 0);
   const totalBenefice = totalCA - totalInvesti;
   const totalPiecesVendues = lots.reduce((acc, lot) => acc + (lot.nbPiecesVendues || 0), 0);
   const totalPiecesTotales = lots.reduce((acc, lot) => acc + (lot.nbPieces || 0), 0);
   const tauxRotationGlobal = totalPiecesTotales > 0 ? Math.round((totalPiecesVendues / totalPiecesTotales) * 100) : 0;
+
+  // Fonction utilitaire couleur indice
+  const getIndiceColor = (val: number) => {
+    if (val === 0) return 'text-gray-500 border-gray-700 bg-gray-900/30';
+    if (val < 15) return 'text-green-400 border-green-500/30 bg-green-900/10';
+    if (val < 25) return 'text-blue-400 border-blue-500/30 bg-blue-900/10';
+    if (val < 40) return 'text-yellow-400 border-yellow-500/30 bg-yellow-900/10';
+    return 'text-red-400 border-red-500/30 bg-red-900/10';
+  };
 
   return (
     <div className="min-h-screen bg-[#121212] text-white font-sans">
@@ -116,8 +123,10 @@ export default function Dashboard() {
               <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-900/50">A</div>
               <span className="font-bold text-xl tracking-tight text-white hidden sm:block">AZUL<span className="text-blue-500">GESTION</span></span>
             </div>
+            
             <div className="hidden md:flex flex-1 justify-center items-center h-full">
               <button onClick={() => router.push('/')} className="h-full flex items-center px-4 text-white font-medium hover:text-blue-400 transition-colors border-b-2 border-blue-500">Accueil</button>
+              
               <div className="relative group h-full flex items-center">
                 <button className="h-full flex items-center gap-1 px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Produits <ChevronDown size={16} /></button>
                 <div className="absolute top-full left-0 mt-0 w-48 bg-[#252525] border border-gray-700 rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
@@ -126,6 +135,7 @@ export default function Dashboard() {
                   <button onClick={() => router.push('/products/archives')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Vendu / Archiver</button>
                 </div>
               </div>
+
               <div className="relative group h-full flex items-center">
                 <button className="h-full flex items-center gap-1 px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Finance <ChevronDown size={16} /></button>
                 <div className="absolute top-full left-0 mt-0 w-56 bg-[#252525] border border-gray-700 rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
@@ -135,8 +145,10 @@ export default function Dashboard() {
                   <button onClick={() => router.push('/finance/simulateur')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Simulateur d'achat</button>
                 </div>
               </div>
+
               <button onClick={() => router.push('/organizer')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Organisateur</button>
             </div>
+
             <div className="flex items-center gap-4">
               <span className="hidden lg:block text-sm text-gray-400 bg-[#252525] px-3 py-1.5 rounded-full border border-gray-700 truncate max-w-[200px]">{user.email}</span>
               <button onClick={handleLogout} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-red-900/20 active:scale-95 whitespace-nowrap">Déconnexion</button>
@@ -144,6 +156,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#1a1a1a] border-t border-gray-800 px-4 py-4 space-y-2 animate-in slide-in-from-top-2">
             <button onClick={() => { router.push('/'); setMobileMenuOpen(false); }} className="block w-full text-left text-white font-medium py-3 px-2 rounded hover:bg-white/5">Accueil</button>
@@ -158,10 +171,10 @@ export default function Dashboard() {
         )}
       </nav>
 
-      {/* CONTENU DASHBOARD LOTS */}
+      {/* CONTENU PRINCIPAL */}
       <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* EN-TÊTE & KPI GLOBAUX */}
+        {/* EN-TÊTE & KPI */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Performance des Lots</h1>
           <p className="text-gray-400 mb-6">Suivi détaillé de vos achats, ventes et rentabilité par lot.</p>
@@ -200,7 +213,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* LISTE DES LOTS (TABLEAU DE BORD PAR LOT) */}
+        {/* LISTE DES LOTS - DESIGN CARTE IDENTIQUE PAGE ACHAT */}
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <AlertCircle size={20} className="text-blue-500"/> Détails par Lot
         </h2>
@@ -213,70 +226,67 @@ export default function Dashboard() {
             <button onClick={() => router.push('/finance/achat')} className="text-blue-400 hover:text-blue-300 font-medium">Ajouter un lot maintenant →</button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {lots.map((lot) => {
-              const progressPercent = Math.round(((lot.nbPiecesVendues || 0) / (lot.nbPieces || 1)) * 100);
-              const isProfitable = (lot.beneficeEstime || 0) >= 0;
+              // Calculs pour l'affichage
+              const coutTotal = lot.coutTotal || 0;
+              const nbPieces = lot.nbPieces || 0;
+              const nbPalettes = lot.nbPalettes || 1;
+              const tauxRebut = lot.tauxRebut || 0;
+              const prixNeuf = lot.prixNeufTotal || 0;
               
+              const indiceAchat = prixNeuf > 0 ? ((coutTotal / prixNeuf) * 100) : 0;
+              const piecesVendables = Math.round(nbPieces * (1 - tauxRebut/100));
+              const coutParPalette = coutTotal / nbPalettes;
+              const coutReelPiece = piecesVendables > 0 ? (coutTotal / piecesVendables) : 0;
+
               return (
-                <div key={lot.id} className="bg-[#1e1e1e] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-700 transition-colors">
-                  {/* En-tête du Lot */}
-                  <div className="p-6 border-b border-gray-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div key={lot.id} className="bg-[#1e1e1e] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-700 transition-colors group">
+                  {/* En-tête avec Indice */}
+                  <div className="p-5 border-b border-gray-800 flex justify-between items-start">
                     <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-bold text-white">{lot.numeroLot}</h3>
-                        <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">{lot.dateAchat}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">Coût total: <span className="text-white font-medium">{lot.coutTotal?.toFixed(2) || '0.00'} €</span> ({lot.nbPieces} pièces)</p>
+                      <h3 className="text-lg font-bold text-white">{lot.numeroLot}</h3>
+                      <p className="text-xs text-gray-500">{lot.dateAchat} • B-Stock</p>
                     </div>
-                    
-                    {/* Indicateurs rapides */}
-                    <div className="flex gap-6 text-sm">
-                      <div className="text-right">
-                        <p className="text-gray-500 text-xs uppercase">Vendu</p>
-                        <p className="font-bold text-white">{lot.nbPiecesVendues || 0} / {lot.nbPieces}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-gray-500 text-xs uppercase">CA Généré</p>
-                        <p className="font-bold text-white">{(lot.caGenere || 0).toFixed(2)} €</p>
-                      </div>
-                      <div className="text-right min-w-[100px]">
-                        <p className="text-gray-500 text-xs uppercase">Rentabilité</p>
-                        <p className={`font-bold ${isProfitable ? 'text-green-400' : 'text-red-400'}`}>
-                          {isProfitable ? '+' : ''}{(lot.beneficeEstime || 0).toFixed(2)} €
-                        </p>
-                      </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getIndiceColor(indiceAchat)}`}>
+                      {indiceAchat.toFixed(1)}%
                     </div>
                   </div>
 
-                  {/* Barre de Progression & Actions */}
-                  <div className="p-6 bg-[#1a1a1a]/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-medium text-gray-400">Progression des ventes</span>
-                      <span className="text-xs font-bold text-blue-400">{progressPercent}%</span>
+                  {/* Détails du lot */}
+                  <div className="p-5 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Coût Total</span>
+                      <span className="font-bold text-white">{coutTotal.toLocaleString()} €</span>
                     </div>
-                    <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                      <div 
-                        className={`h-3 rounded-full transition-all duration-500 ${progressPercent === 100 ? 'bg-green-500' : 'bg-blue-600'}`}
-                        style={{ width: `${progressPercent}%` }}
-                      ></div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Coût / Palette</span>
+                      <span className="font-bold text-blue-400">{coutParPalette.toFixed(2)} €</span>
                     </div>
-                    
-                    <div className="mt-4 flex gap-3">
-                      <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
-                        Voir les produits du lot
-                      </button>
-                      <button className="px-4 py-2 bg-[#252525] hover:bg-[#333] border border-gray-700 text-gray-300 text-sm font-medium rounded-lg transition-colors">
-                        Ajouter une vente
-                      </button>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Pièces Vendables</span>
+                      <span className="font-bold text-orange-400">{piecesVendables} / {nbPieces}</span>
                     </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Coût Réel / Pièce</span>
+                      <span className="font-bold text-white">{coutReelPiece.toFixed(2)} €</span>
+                    </div>
+                  </div>
+
+                  {/* Boutons d'action */}
+                  <div className="p-4 bg-[#1a1a1a] border-t border-gray-800 flex gap-2">
+                    <button className="flex-1 bg-[#252525] hover:bg-[#333] border border-gray-700 text-gray-300 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
+                      Voir les produits
+                    </button>
+                    <button className="px-3 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-800/50 text-blue-400 rounded-lg transition-colors">
+                      Ajouter vente
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-
       </main>
     </div>
   );
