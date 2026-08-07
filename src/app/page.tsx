@@ -5,13 +5,13 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { Camera, Package, FileText, TrendingUp, Menu, X, ChevronDown, BarChart3, DollarSign, AlertCircle } from 'lucide-react';
 
-// Type Lot (doit correspondre EXACTEMENT à celui de la page achat)
+// Type Lot adapté aux noms de colonnes Supabase (minuscules)
 type LotStats = {
   id: string;
-  numeroLot: string;
-  dateAchat: string;
-  coutTotal: number;
-  nbPieces: number; // Corrigé : était nbPiecesTotales avant
+  numerolot: string;
+  dateachat: string;
+  couttotal: number;
+  nbpieces: number;
   nbPiecesVendues?: number;
   caGenere?: number;
   beneficeEstime?: number;
@@ -23,17 +23,46 @@ export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // État pour les VRAIS lots venant du localStorage
+  // État pour les lots venant de Supabase
   const [lots, setLots] = useState<LotStats[]>([]);
 
-  // --- AUTHENTIFICATION & CHARGEMENT DES DONNÉES ---
+  // --- AUTHENTIFICATION & CHARGEMENT DES DONNÉES DEPUIS SUPABASE ---
   useEffect(() => {
     const checkUser = async () => {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) router.push('/login');
-        else setUser(user);
+        
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+        setUser(user);
+
+        // Charger les lots DEPUIS SUPABASE (et non localStorage)
+        const { data, error } = await supabase
+          .from('lots')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erreur chargement lots:', error);
+        } else {
+          // Mapper les données Supabase vers le format attendu par le dashboard
+          const mappedLots = (data || []).map((lot: any) => ({
+            ...lot,
+            numeroLot: lot.numerolot,       // Mapping nom Supabase -> nom affichage
+            dateAchat: lot.dateachat,
+            coutTotal: lot.couttotal,
+            nbPieces: lot.nbpieces,
+            nbPiecesVendues: lot.nbPiecesVendues || 0,
+            caGenere: lot.caGenere || 0,
+            beneficeEstime: (lot.caGenere || 0) - lot.couttotal
+          }));
+          setLots(mappedLots);
+        }
+
       } catch (error) {
         console.error(error);
         router.push('/login');
@@ -42,20 +71,6 @@ export default function Dashboard() {
       }
     };
     checkUser();
-
-    // Charger les lots depuis le localStorage
-    const storedLots = localStorage.getItem('azul_lots');
-    if (storedLots) {
-      const parsedLots = JSON.parse(storedLots);
-      // On initialise les champs de vente s'ils n'existent pas encore
-      const lotsWithSales = parsedLots.map((lot: any) => ({
-        ...lot,
-        nbPiecesVendues: lot.nbPiecesVendues || 0,
-        caGenere: lot.caGenere || 0,
-        beneficeEstime: (lot.caGenere || 0) - lot.coutTotal
-      }));
-      setLots(lotsWithSales);
-    }
   }, []);
 
   const handleLogout = async () => {
@@ -69,7 +84,7 @@ export default function Dashboard() {
   if (!user) return null;
 
   // Calculs globaux basés sur les VRAIS lots
-  const totalInvesti = lots.reduce((acc, lot) => acc + lot.coutTotal, 0);
+  const totalInvesti = lots.reduce((acc, lot) => acc + (lot.coutTotal || 0), 0);
   const totalCA = lots.reduce((acc, lot) => acc + (lot.caGenere || 0), 0);
   const totalBenefice = totalCA - totalInvesti;
   const totalPiecesVendues = lots.reduce((acc, lot) => acc + (lot.nbPiecesVendues || 0), 0);
@@ -198,7 +213,7 @@ export default function Dashboard() {
                         <h3 className="text-lg font-bold text-white">{lot.numeroLot}</h3>
                         <span className="text-xs bg-gray-800 text-gray-400 px-2 py-1 rounded">{lot.dateAchat}</span>
                       </div>
-                      <p className="text-sm text-gray-500">Coût total: <span className="text-white font-medium">{lot.coutTotal.toFixed(2)} €</span> ({lot.nbPieces} pièces)</p>
+                      <p className="text-sm text-gray-500">Coût total: <span className="text-white font-medium">{lot.coutTotal?.toFixed(2) || '0.00'} €</span> ({lot.nbPieces} pièces)</p>
                     </div>
                     
                     {/* Indicateurs rapides */}
