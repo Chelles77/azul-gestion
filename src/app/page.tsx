@@ -12,9 +12,23 @@ type LotStats = {
   dateachat: string;
   couttotal: number;
   nbpieces: number;
+  nbpalettes?: number;
+  tauxrebut?: number;
+  prixneuftotal?: number;
+  coutreelparpiece?: number;
+  // Champs pour le dashboard (ventes)
   nbPiecesVendues?: number;
   caGenere?: number;
   beneficeEstime?: number;
+  // Alias pour compatibilité affichage
+  numeroLot?: string;
+  dateAchat?: string;
+  coutTotal?: number;
+  nbPieces?: number;
+  nbPalettes?: number;
+  tauxRebut?: number;
+  prixNeufTotal?: number;
+  coutReelParPiece?: number;
 };
 
 export default function Dashboard() {
