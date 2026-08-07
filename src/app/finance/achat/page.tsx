@@ -16,14 +16,14 @@ type Lot = {
   numerolot: string;
   dateachat: string;
   source: string;
-  prixAchat: number;
-  fraisPort: number;
-  fraisEncheres: number;
-  coutTotal: number;
-  nbPalettes: number;
-  nbPieces: number;
-  prixNeufTotal: number;
-  tauxRebut: number;
+  prixAchat: number; // Supabase garde parfois la 1ère lettre majuscule si créée ainsi
+  fraisport: number;
+  fraisencheres: number;
+  couttotal: number;
+  nbpalettes: number;
+  nbpieces: number;
+  prixneuftotal: number;
+  tauxrebut: number;
   indiceachat: number;
   coutreelparpiece: number;
   created_at?: string;
