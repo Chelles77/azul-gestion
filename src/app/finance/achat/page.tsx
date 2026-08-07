@@ -9,12 +9,12 @@ import {
   Menu, ChevronDown, Loader2
 } from 'lucide-react';
 
-// Type Lot partagé
+// Type Lot adapté aux noms de colonnes Supabase (minuscules)
 type Lot = {
   id: string;
   user_id?: string;
-  numeroLot: string;
-  dateAchat: string;
+  numerolot: string;
+  dateachat: string;
   source: string;
   prixAchat: number;
   fraisPort: number;
@@ -24,8 +24,8 @@ type Lot = {
   nbPieces: number;
   prixNeufTotal: number;
   tauxRebut: number;
-  indiceAchat: number;
-  coutReelParPiece: number;
+  indiceachat: number;
+  coutreelparpiece: number;
   created_at?: string;
 };
 
@@ -35,40 +35,33 @@ export default function PageGestionAchats() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // État pour les lots (maintenant vides au début, chargés depuis Supabase)
   const [lots, setLots] = useState<Lot[]>([]);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLot, setEditingLot] = useState<Lot | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Vérification auth et CHARGEMENT DES LOTS DEPUIS SUPABASE
+  // Chargement initial
   useEffect(() => {
     const init = async () => {
       try {
         const supabase = createClient();
-        
-        // 1. Vérifier l'utilisateur
         const { data: { user } } = await supabase.auth.getUser();
+        
         if (!user) {
           router.push('/login');
           return;
         }
         setUser(user);
 
-        // 2. Charger les lots DEPUIS SUPABASE (et non localStorage)
+        // Chargement depuis Supabase
         const { data, error } = await supabase
           .from('lots')
           .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Erreur chargement lots:', error);
-          // Si la table n'existe pas encore, on garde le tableau vide
-        } else {
-          setLots(data || []);
-        }
+        if (error) console.error('Erreur chargement:', error);
+        else setLots(data || []);
 
       } catch (error) {
         console.error(error);
@@ -86,6 +79,7 @@ export default function PageGestionAchats() {
     router.push('/login');
   };
 
+  // Formulaire
   const initialFormState = {
     numeroLot: '',
     dateAchat: new Date().toISOString().split('T')[0],
@@ -100,7 +94,7 @@ export default function PageGestionAchats() {
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // --- CALCULS DYNAMIQUES (Identiques) ---
+  // Calculs dynamiques
   const prixAchatNum = parseFloat(formData.prixAchat) || 0;
   const fraisPortNum = parseFloat(formData.fraisPort) || 0;
   const fraisEncheresNum = parseFloat(formData.fraisEncheres) || 0;
@@ -112,22 +106,21 @@ export default function PageGestionAchats() {
   const tauxRebutNum = parseFloat(formData.tauxRebut) || 0;
   
   const indiceAchat = prixNeufNum > 0 ? ((coutTotal / prixNeufNum) * 100) : 0;
-  const nbPiecesHS = Math.round(nbPiecesNum * (tauxRebutNum / 100));
-  const nbPiecesVendables = Math.max(0, nbPiecesNum - nbPiecesHS);
+  const nbPiecesVendables = Math.max(0, nbPiecesNum - Math.round(nbPiecesNum * (tauxRebutNum / 100)));
   const coutReelParPiece = nbPiecesVendables > 0 ? (coutTotal / nbPiecesVendables) : 0;
 
-  // --- KPI GLOBAUX (Calculés sur les lots chargés) ---
-  const totalInvesti = lots.reduce((acc, lot) => acc + lot.coutTotal, 0);
-  const totalFraisAnnexes = lots.reduce((acc, lot) => acc + lot.fraisPort + lot.fraisEncheres, 0);
+  // KPIs globaux
+  const totalInvesti = lots.reduce((acc, lot) => acc + (lot.coutTotal || 0), 0);
+  const totalFraisAnnexes = lots.reduce((acc, lot) => acc + (lot.fraisPort || 0) + (lot.fraisEncheres || 0), 0);
   const avgIndice = lots.length > 0 
-    ? (lots.reduce((acc, lot) => acc + lot.indiceAchat, 0) / lots.length).toFixed(1) 
+    ? (lots.reduce((acc, lot) => acc + (lot.indiceachat || 0), 0) / lots.length).toFixed(1) 
     : '0';
-  const totalValeurNeuve = lots.reduce((acc, lot) => acc + lot.prixNeufTotal, 0);
+  const totalValeurNeuve = lots.reduce((acc, lot) => acc + (lot.prixNeufTotal || 0), 0);
   const rendementGlobal = totalValeurNeuve > 0 
     ? (((totalValeurNeuve - totalInvesti) / totalValeurNeuve) * 100).toFixed(1) 
     : '0';
 
-  // --- ACTIONS ---
+  // Actions modale
   const openNewLotModal = () => {
     setEditingLot(null);
     setFormData(initialFormState);
@@ -137,28 +130,26 @@ export default function PageGestionAchats() {
   const openEditModal = (lot: Lot) => {
     setEditingLot(lot);
     setFormData({
-      ...lot,
-      prixAchat: lot.prixAchat.toString(),
-      fraisPort: lot.fraisPort.toString(),
-      fraisEncheres: lot.fraisEncheres.toString(),
-      nbPalettes: lot.nbPalettes.toString(),
-      nbPieces: lot.nbPieces.toString(),
-      prixNeufTotal: lot.prixNeufTotal.toString(),
-      tauxRebut: lot.tauxRebut.toString()
+      numeroLot: lot.numerolot || '',
+      dateAchat: lot.dateachat || new Date().toISOString().split('T')[0],
+      source: lot.source || 'B-Stock',
+      prixAchat: (lot.prixAchat || 0).toString(),
+      fraisPort: (lot.fraisPort || 0).toString(),
+      fraisEncheres: (lot.fraisEncheres || 0).toString(),
+      nbPalettes: (lot.nbPalettes || 1).toString(),
+      nbPieces: (lot.nbPieces || 0).toString(),
+      prixNeufTotal: (lot.prixNeufTotal || 0).toString(),
+      tauxRebut: (lot.tauxRebut || 0).toString()
     });
     setIsModalOpen(true);
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce lot ?')) {
+    if (confirm('Supprimer ce lot ?')) {
       const supabase = createClient();
       const { error } = await supabase.from('lots').delete().eq('id', id);
-      
-      if (!error) {
-        setLots(lots.filter(l => l.id !== id));
-      } else {
-        alert('Erreur lors de la suppression: ' + error.message);
-      }
+      if (!error) setLots(lots.filter(l => l.id !== id));
+      else alert('Erreur: ' + error.message);
     }
   };
 
@@ -168,53 +159,40 @@ export default function PageGestionAchats() {
     setSaving(true);
     
     const newLotData = {
-      user_id: user.id,
-      numeroLot: formData.numeroLot,
-      dateAchat: formData.dateAchat,
-      source: formData.source,
-      prixAchat: prixAchatNum,
-      fraisPort: fraisPortNum,
-      fraisEncheres: fraisEncheresNum,
-      coutTotal,
-      nbPalettes: nbPalettesNum,
-      nbPieces: nbPiecesNum,
-      prixNeufTotal: prixNeufNum,
-      tauxRebut: tauxRebutNum,
-      indiceAchat,
-      coutReelParPiece
-    };
+  user_id: user.id,
+  numerolot: formData.numeroLot,
+  dateachat: formData.dateAchat,
+  source: formData.source,
+  prixachat: prixAchatNum,      // Si erreur, changer en prixachat
+  fraisport: fraisPortNum,      // <-- MINUSCULE
+  fraisencheres: fraisEncheresNum, // <-- MINUSCULE
+  couttotal: coutTotal,         // <-- MINUSCULE
+  nbpalettes: nbPalettesNum,    // <-- MINUSCULE
+  nbpieces: nbPiecesNum,        // <-- MINUSCULE
+  prixneuftotal: prixNeufNum,   // <-- MINUSCULE
+  tauxrebut: tauxRebutNum,      // <-- MINUSCULE
+  indiceachat: indiceAchat,     // Déjà bon
+  coutreelparpiece: coutReelParPiece // Déjà bon
+};
 
     const supabase = createClient();
-    let result;
-
     try {
+      let result;
       if (editingLot) {
-        // MISE À JOUR DANS SUPABASE
-        result = await supabase
-          .from('lots')
-          .update(newLotData)
-          .eq('id', editingLot.id)
-          .select();
+        result = await supabase.from('lots').update(newLotData).eq('id', editingLot.id).select();
       } else {
-        // CRÉATION DANS SUPABASE
-        result = await supabase
-          .from('lots')
-          .insert([newLotData])
-          .select();
+        result = await supabase.from('lots').insert([newLotData]).select();
       }
 
       if (result.error) throw result.error;
 
-      // Mettre à jour l'état local immédiatement pour l'UI
       if (editingLot) {
         setLots(lots.map(l => l.id === editingLot.id ? { ...l, ...newLotData, id: editingLot.id } : l));
       } else {
         setLots([result.data?.[0], ...lots]);
       }
-      
       setIsModalOpen(false);
     } catch (err: any) {
-      console.error(err);
       alert('Erreur: ' + err.message);
     } finally {
       setSaving(false);
@@ -234,8 +212,7 @@ export default function PageGestionAchats() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white font-sans">
-      
-      {/* NAVBAR (Identique) */}
+      {/* NAVBAR */}
       <nav className="bg-[#1a1a1a] border-b border-gray-800 sticky top-0 z-40 shadow-md">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 w-full">
@@ -243,8 +220,11 @@ export default function PageGestionAchats() {
               <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-900/50">A</div>
               <span className="font-bold text-xl tracking-tight text-white hidden sm:block">AZUL<span className="text-blue-500">GESTION</span></span>
             </div>
+            
+            {/* Menu Desktop */}
             <div className="hidden md:flex flex-1 justify-center items-center h-full">
               <button onClick={() => router.push('/')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Accueil</button>
+              
               <div className="relative group h-full flex items-center">
                 <button className="h-full flex items-center gap-1 px-4 text-white font-medium transition-colors border-b-2 border-blue-500">Produits <ChevronDown size={16} /></button>
                 <div className="absolute top-full left-0 mt-0 w-48 bg-[#252525] border border-gray-700 rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
@@ -253,6 +233,7 @@ export default function PageGestionAchats() {
                   <button onClick={() => router.push('/products/archives')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Vendu / Archiver</button>
                 </div>
               </div>
+
               <div className="relative group h-full flex items-center">
                 <button className="h-full flex items-center gap-1 px-4 text-white font-medium transition-colors border-b-2 border-blue-500">Finance <ChevronDown size={16} /></button>
                 <div className="absolute top-full left-0 mt-0 w-56 bg-[#252525] border border-gray-700 rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
@@ -262,8 +243,11 @@ export default function PageGestionAchats() {
                   <button onClick={() => router.push('/finance/simulateur')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Simulateur d'achat</button>
                 </div>
               </div>
+
               <button onClick={() => router.push('/organizer')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Organisateur</button>
             </div>
+
+            {/* User & Logout */}
             <div className="flex items-center gap-4">
               <span className="hidden lg:block text-sm text-gray-400 bg-[#252525] px-3 py-1.5 rounded-full border border-gray-700 truncate max-w-[200px]">{user.email}</span>
               <button onClick={handleLogout} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-red-900/20 active:scale-95 whitespace-nowrap">Déconnexion</button>
@@ -271,6 +255,8 @@ export default function PageGestionAchats() {
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#1a1a1a] border-t border-gray-800 px-4 py-4 space-y-2 animate-in slide-in-from-top-2">
             <button onClick={() => { router.push('/'); setMobileMenuOpen(false); }} className="block w-full text-left text-white font-medium py-3 px-2 rounded hover:bg-white/5">Accueil</button>
@@ -285,11 +271,11 @@ export default function PageGestionAchats() {
         )}
       </nav>
 
-      {/* CONTENU PRINCIPAL */}
+      {/* MAIN CONTENT */}
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           
-          {/* EN-TÊTE INTERNE */}
+          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
               <button onClick={() => router.back()} className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
@@ -309,7 +295,7 @@ export default function PageGestionAchats() {
             </button>
           </div>
 
-          {/* KPI GLOBAUX */}
+          {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div className="bg-[#1e1e1e] p-5 rounded-xl border border-gray-800">
               <div className="flex items-center gap-3 mb-2">
@@ -344,7 +330,7 @@ export default function PageGestionAchats() {
             </div>
           </div>
 
-          {/* LISTE DES LOTS */}
+          {/* Lots List */}
           {lots.length === 0 ? (
             <div className="bg-[#1e1e1e] rounded-xl border border-gray-800 p-12 text-center">
               <Package size={48} className="mx-auto text-gray-600 mb-4"/>
@@ -358,18 +344,18 @@ export default function PageGestionAchats() {
                 <div key={lot.id} className="bg-[#1e1e1e] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-700 transition-colors group">
                   <div className="p-5 border-b border-gray-800 flex justify-between items-start">
                     <div>
-                      <h3 className="text-lg font-bold text-white">{lot.numeroLot}</h3>
-                      <p className="text-xs text-gray-500">{lot.dateAchat} • {lot.source}</p>
+                      <h3 className="text-lg font-bold text-white">{lot.numerolot}</h3>
+                      <p className="text-xs text-gray-500">{lot.dateachat} • {lot.source}</p>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getIndiceColor(lot.indiceAchat)}`}>
-                      {lot.indiceAchat.toFixed(1)}%
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold border ${getIndiceColor(lot.indiceachat)}`}>
+                      {lot.indiceachat.toFixed(1)}%
                     </div>
                   </div>
 
                   <div className="p-5 space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Coût Total</span>
-                      <span className="font-bold text-white">{lot.coutTotal.toLocaleString()} €</span>
+                      <span className="font-bold text-white">{(lot.couttotal || 0).toLocaleString()} €</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Coût / Palette</span>
@@ -383,7 +369,7 @@ export default function PageGestionAchats() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Coût Réel / Pièce</span>
-                      <span className="font-bold text-white">{lot.coutReelParPiece.toFixed(2)} €</span>
+                      <span className="font-bold text-white">{lot.coutreelparpiece.toFixed(2)} €</span>
                     </div>
                   </div>
 
@@ -408,14 +394,14 @@ export default function PageGestionAchats() {
         </div>
       </div>
 
-      {/* MODALE FORMULAIRE (Identique structurellement, juste saving state ajouté) */}
+      {/* MODAL FORM */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#1e1e1e] rounded-2xl border border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
             
             <div className="sticky top-0 bg-[#1e1e1e] border-b border-gray-800 p-6 flex justify-between items-center z-10">
               <h2 className="text-xl font-bold text-white">
-                {editingLot ? `Modifier ${editingLot.numeroLot}` : 'Nouveau Lot'}
+                {editingLot ? `Modifier ${editingLot.numerolot}` : 'Nouveau Lot'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
                 <X size={24} />
@@ -427,15 +413,15 @@ export default function PageGestionAchats() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Numéro de Lot *</label>
-                  <input type="text" name="numeroLot" required placeholder="LOT-2024-XXX" value={formData.numeroLot} onChange={(e) => setFormData({...formData, numeroLot: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"/>
+                  <input type="text" required placeholder="LOT-2024-XXX" value={formData.numeroLot} onChange={(e) => setFormData({...formData, numeroLot: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"/>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Date d'achat *</label>
-                  <input type="date" name="dateAchat" required value={formData.dateAchat} onChange={(e) => setFormData({...formData, dateAchat: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"/>
+                  <input type="date" required value={formData.dateAchat} onChange={(e) => setFormData({...formData, dateAchat: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"/>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Source</label>
-                  <select name="source" value={formData.source} onChange={(e) => setFormData({...formData, source: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none">
+                  <select value={formData.source} onChange={(e) => setFormData({...formData, source: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none">
                     <option value="B-Stock">B-Stock</option>
                     <option value="Stocklear">Stocklear</option>
                     <option value="Amazon">Amazon Returns</option>
@@ -449,19 +435,19 @@ export default function PageGestionAchats() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Prix Marteau (€)</label>
-                    <input type="number" name="prixAchat" required min="0" step="0.01" placeholder="0.00" value={formData.prixAchat} onChange={(e) => setFormData({...formData, prixAchat: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
+                    <input type="number" required min="0" step="0.01" placeholder="0.00" value={formData.prixAchat} onChange={(e) => setFormData({...formData, prixAchat: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Frais Port (€)</label>
-                    <input type="number" name="fraisPort" min="0" step="0.01" placeholder="0.00" value={formData.fraisPort} onChange={(e) => setFormData({...formData, fraisPort: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
+                    <input type="number" min="0" step="0.01" placeholder="0.00" value={formData.fraisPort} onChange={(e) => setFormData({...formData, fraisPort: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Frais Enchères (€)</label>
-                    <input type="number" name="fraisEncheres" min="0" step="0.01" placeholder="0.00" value={formData.fraisEncheres} onChange={(e) => setFormData({...formData, fraisEncheres: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
+                    <input type="number" min="0" step="0.01" placeholder="0.00" value={formData.fraisEncheres} onChange={(e) => setFormData({...formData, fraisEncheres: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1"><Package size={12}/> Nb. Palettes</label>
-                    <input type="number" name="nbPalettes" required min="1" placeholder="1" value={formData.nbPalettes} onChange={(e) => setFormData({...formData, nbPalettes: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
+                    <input type="number" required min="1" placeholder="1" value={formData.nbPalettes} onChange={(e) => setFormData({...formData, nbPalettes: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-blue-500 outline-none"/>
                   </div>
                 </div>
                 <div className="mt-4 flex gap-4">
@@ -481,15 +467,15 @@ export default function PageGestionAchats() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div>
                     <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1"><Euro size={12} className="text-green-500"/> Valeur Estimée à Neuf (€) *</label>
-                    <input type="number" name="prixNeufTotal" required min="0" placeholder="Ex: 100000" value={formData.prixNeufTotal} onChange={(e) => setFormData({...formData, prixNeufTotal: e.target.value})} className="w-full bg-[#252525] border border-green-900/50 rounded-lg px-3 py-2 text-white focus:border-green-500 outline-none"/>
+                    <input type="number" required min="0" placeholder="Ex: 100000" value={formData.prixNeufTotal} onChange={(e) => setFormData({...formData, prixNeufTotal: e.target.value})} className="w-full bg-[#252525] border border-green-900/50 rounded-lg px-3 py-2 text-white focus:border-green-500 outline-none"/>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Nombre Total de Pièces *</label>
-                    <input type="number" name="nbPieces" required min="1" placeholder="Ex: 1000" value={formData.nbPieces} onChange={(e) => setFormData({...formData, nbPieces: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-purple-500 outline-none"/>
+                    <input type="number" required min="1" placeholder="Ex: 1000" value={formData.nbPieces} onChange={(e) => setFormData({...formData, nbPieces: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-purple-500 outline-none"/>
                   </div>
                   <div>
                     <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1"><AlertTriangle size={12} className="text-orange-500"/> Est. Pièces HS (%)</label>
-                    <input type="number" name="tauxRebut" min="0" max="100" placeholder="Ex: 15" value={formData.tauxRebut} onChange={(e) => setFormData({...formData, tauxRebut: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none"/>
+                    <input type="number" min="0" max="100" placeholder="Ex: 15" value={formData.tauxRebut} onChange={(e) => setFormData({...formData, tauxRebut: e.target.value})} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white focus:border-orange-500 outline-none"/>
                   </div>
                 </div>
 
@@ -524,7 +510,6 @@ export default function PageGestionAchats() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
