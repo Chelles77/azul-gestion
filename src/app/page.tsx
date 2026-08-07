@@ -157,15 +157,43 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* MENU MOBILE FONCTIONNEL AVEC SOUS-MENUS */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-[#1a1a1a] border-t border-gray-800 px-4 py-4 space-y-2 animate-in slide-in-from-top-2">
-            <button onClick={() => { router.push('/'); setMobileMenuOpen(false); }} className="block w-full text-left text-white font-medium py-3 px-2 rounded hover:bg-white/5">Accueil</button>
-            <button className="block w-full text-left text-gray-400 font-medium py-3 px-2 rounded hover:bg-white/5">Produits</button>
-            <button className="block w-full text-left text-gray-400 font-medium py-3 px-2 rounded hover:bg-white/5">Finance</button>
-            <button className="block w-full text-left text-gray-400 font-medium py-3 px-2 rounded hover:bg-white/5">Organisateur</button>
-            <div className="pt-4 mt-2 border-t border-gray-800">
-              <p className="text-xs text-gray-500 mb-2 px-2">{user.email}</p>
-              <button onClick={handleLogout} className="w-full py-2 bg-red-600/20 text-red-400 rounded-lg text-sm font-bold">Se déconnecter</button>
+          <div className="md:hidden fixed inset-0 top-16 z-40 bg-[#1a1a1a] border-t border-gray-800 overflow-y-auto animate-in slide-in-from-top-2">
+            <div className="p-4 space-y-3">
+              {/* Accueil */}
+              <button 
+                onClick={() => { router.push('/'); setMobileMenuOpen(false); }} 
+                className="w-full text-left text-white font-medium py-3 px-4 rounded-lg hover:bg-blue-600/20 active:scale-[0.98] transition-all"
+              >
+                Accueil
+              </button>
+              
+              {/* Produits */}
+              <div className="pt-2 border-t border-gray-800/50">
+                <p className="text-xs text-gray-500 uppercase font-bold px-4 mb-2 mt-2">Produits</p>
+                <button onClick={() => { router.push('/products/brute'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Produit Brute</button>
+                <button onClick={() => { router.push('/products/vente'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Vente</button>
+                <button onClick={() => { router.push('/products/archives'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Vendu / Archiver</button>
+              </div>
+
+              {/* Finance */}
+              <div className="pt-2 border-t border-gray-800/50">
+                <p className="text-xs text-gray-500 uppercase font-bold px-4 mb-2 mt-2">Finance</p>
+                <button onClick={() => { router.push('/finance/achat'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Achat</button>
+                <button onClick={() => { router.push('/finance/suivi'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Suivi / Entrée / Sortie</button>
+                <button onClick={() => { router.push('/finance/analytics'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Analytique</button>
+                <button onClick={() => { router.push('/finance/simulateur'); setMobileMenuOpen(false); }} className="w-full text-left text-sm text-gray-300 py-3 px-6 rounded-lg hover:bg-white/5 active:bg-white/10">• Simulateur d'achat</button>
+              </div>
+
+              {/* Organisateur */}
+              <button onClick={() => { router.push('/organizer'); setMobileMenuOpen(false); }} className="w-full text-left text-gray-300 font-medium py-3 px-4 rounded-lg hover:bg-white/5 active:bg-white/10 mt-2">Organisateur</button>
+              
+              {/* Déconnexion */}
+              <div className="pt-4 mt-4 border-t border-gray-800">
+                <p className="text-xs text-gray-500 mb-3 px-4 truncate">{user.email}</p>
+                <button onClick={async () => { await handleLogout(); setMobileMenuOpen(false); }} className="w-full py-3 bg-red-600/20 text-red-400 rounded-lg text-sm font-bold active:scale-[0.98] transition-transform">Se déconnecter</button>
+              </div>
             </div>
           </div>
         )}
