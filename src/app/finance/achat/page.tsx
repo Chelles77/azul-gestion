@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase'; // Assure-toi que ce chemin est bon
+import { createClient } from '@/lib/supabase';
 import { 
   Plus, Pencil, Trash2, X, Save, Package, Euro, 
   TrendingDown, AlertTriangle, Calculator, ArrowLeft,
-  Menu, ChevronDown
+  Menu, ChevronDown, Loader2
 } from 'lucide-react';
 
 // Type Lot partagé
 type Lot = {
   id: string;
+  user_id?: string;
   numeroLot: string;
   dateAchat: string;
   source: string;
@@ -25,37 +26,58 @@ type Lot = {
   tauxRebut: number;
   indiceAchat: number;
   coutReelParPiece: number;
+  created_at?: string;
 };
 
 export default function PageGestionAchats() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   
-  // Charger les lots depuis le localStorage au démarrage
-  const [lots, setLots] = useState<Lot[]>(() => {
-    if (typeof window !== 'undefined') {
-      return JSON.parse(localStorage.getItem('azul_lots') || '[]');
-    }
-    return [];
-  });
+  // État pour les lots (maintenant vides au début, chargés depuis Supabase)
+  const [lots, setLots] = useState<Lot[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLot, setEditingLot] = useState<Lot | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  // Vérification auth simple
+  // Vérification auth et CHARGEMENT DES LOTS DEPUIS SUPABASE
   useEffect(() => {
-    const checkUser = async () => {
+    const init = async () => {
       try {
         const supabase = createClient();
+        
+        // 1. Vérifier l'utilisateur
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) router.push('/login');
-        else setUser(user);
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+        setUser(user);
+
+        // 2. Charger les lots DEPUIS SUPABASE (et non localStorage)
+        const { data, error } = await supabase
+          .from('lots')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Erreur chargement lots:', error);
+          // Si la table n'existe pas encore, on garde le tableau vide
+        } else {
+          setLots(data || []);
+        }
+
       } catch (error) {
+        console.error(error);
         router.push('/login');
+      } finally {
+        setLoading(false);
       }
     };
-    checkUser();
+    init();
   }, []);
 
   const handleLogout = async () => {
@@ -78,7 +100,7 @@ export default function PageGestionAchats() {
   };
   const [formData, setFormData] = useState(initialFormState);
 
-  // --- CALCULS DYNAMIQUES ---
+  // --- CALCULS DYNAMIQUES (Identiques) ---
   const prixAchatNum = parseFloat(formData.prixAchat) || 0;
   const fraisPortNum = parseFloat(formData.fraisPort) || 0;
   const fraisEncheresNum = parseFloat(formData.fraisEncheres) || 0;
@@ -94,7 +116,7 @@ export default function PageGestionAchats() {
   const nbPiecesVendables = Math.max(0, nbPiecesNum - nbPiecesHS);
   const coutReelParPiece = nbPiecesVendables > 0 ? (coutTotal / nbPiecesVendables) : 0;
 
-  // --- KPI GLOBAUX ---
+  // --- KPI GLOBAUX (Calculés sur les lots chargés) ---
   const totalInvesti = lots.reduce((acc, lot) => acc + lot.coutTotal, 0);
   const totalFraisAnnexes = lots.reduce((acc, lot) => acc + lot.fraisPort + lot.fraisEncheres, 0);
   const avgIndice = lots.length > 0 
@@ -127,19 +149,26 @@ export default function PageGestionAchats() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Êtes-vous sûr de vouloir supprimer ce lot ?')) {
-      const updatedLots = lots.filter(l => l.id !== id);
-      setLots(updatedLots);
-      localStorage.setItem('azul_lots', JSON.stringify(updatedLots));
+      const supabase = createClient();
+      const { error } = await supabase.from('lots').delete().eq('id', id);
+      
+      if (!error) {
+        setLots(lots.filter(l => l.id !== id));
+      } else {
+        alert('Erreur lors de la suppression: ' + error.message);
+      }
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    setSaving(true);
     
-    const newLot: Lot = {
-      id: editingLot ? editingLot.id : Date.now().toString(),
+    const newLotData = {
+      user_id: user.id,
       numeroLot: formData.numeroLot,
       dateAchat: formData.dateAchat,
       source: formData.source,
@@ -155,16 +184,41 @@ export default function PageGestionAchats() {
       coutReelParPiece
     };
 
-    let updatedLots;
-    if (editingLot) {
-      updatedLots = lots.map(l => l.id === editingLot.id ? newLot : l);
-    } else {
-      updatedLots = [newLot, ...lots];
+    const supabase = createClient();
+    let result;
+
+    try {
+      if (editingLot) {
+        // MISE À JOUR DANS SUPABASE
+        result = await supabase
+          .from('lots')
+          .update(newLotData)
+          .eq('id', editingLot.id)
+          .select();
+      } else {
+        // CRÉATION DANS SUPABASE
+        result = await supabase
+          .from('lots')
+          .insert([newLotData])
+          .select();
+      }
+
+      if (result.error) throw result.error;
+
+      // Mettre à jour l'état local immédiatement pour l'UI
+      if (editingLot) {
+        setLots(lots.map(l => l.id === editingLot.id ? { ...l, ...newLotData, id: editingLot.id } : l));
+      } else {
+        setLots([result.data?.[0], ...lots]);
+      }
+      
+      setIsModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      alert('Erreur: ' + err.message);
+    } finally {
+      setSaving(false);
     }
-    
-    setLots(updatedLots);
-    localStorage.setItem('azul_lots', JSON.stringify(updatedLots));
-    setIsModalOpen(false);
   };
 
   const getIndiceColor = (val: number) => {
@@ -175,12 +229,13 @@ export default function PageGestionAchats() {
     return 'text-red-400 border-red-500/30 bg-red-900/10';
   };
 
-  if (!user) return null; // Évite le flash avant redirection login
+  if (loading) return <div className="min-h-screen bg-[#121212] flex items-center justify-center text-white"><Loader2 className="animate-spin mr-2"/> Chargement...</div>;
+  if (!user) return null; 
 
   return (
     <div className="min-h-screen bg-[#121212] text-white font-sans">
       
-      {/* NAVBAR IDENTIQUE AU DASHBOARD */}
+      {/* NAVBAR (Identique) */}
       <nav className="bg-[#1a1a1a] border-b border-gray-800 sticky top-0 z-40 shadow-md">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 w-full">
@@ -230,7 +285,7 @@ export default function PageGestionAchats() {
         )}
       </nav>
 
-      {/* CONTENU PRINCIPAL DE LA PAGE ACHAT */}
+      {/* CONTENU PRINCIPAL */}
       <div className="p-6">
         <div className="max-w-7xl mx-auto">
           
@@ -247,9 +302,10 @@ export default function PageGestionAchats() {
             </div>
             <button 
               onClick={openNewLotModal}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center gap-2 disabled:opacity-50"
+              disabled={saving}
             >
-              <Plus size={20} /> Nouveau Lot
+              {saving ? <Loader2 className="animate-spin" size={20}/> : <Plus size={20} />} Nouveau Lot
             </button>
           </div>
 
@@ -352,7 +408,7 @@ export default function PageGestionAchats() {
         </div>
       </div>
 
-      {/* MODALE FORMULAIRE (Identique à la version précédente) */}
+      {/* MODALE FORMULAIRE (Identique structurellement, juste saving state ajouté) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-[#1e1e1e] rounded-2xl border border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
@@ -456,8 +512,8 @@ export default function PageGestionAchats() {
               </div>
 
               <div className="flex gap-4 pt-4 border-t border-gray-800">
-                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2">
-                  <Save size={20} /> {editingLot ? 'Mettre à jour' : 'Enregistrer le Lot'}
+                <button type="submit" disabled={saving} className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2">
+                  {saving ? <Loader2 className="animate-spin" size={20}/> : <Save size={20} />} {editingLot ? 'Mettre à jour' : 'Enregistrer le Lot'}
                 </button>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 bg-[#252525] hover:bg-[#333] border border-gray-700 text-gray-300 font-medium rounded-lg transition-colors">
                   Annuler
