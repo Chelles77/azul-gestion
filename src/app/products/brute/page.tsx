@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase'; // Chemin corrigé pour ton projet
 import { useRouter } from 'next/navigation';
 import { QrCode, Upload, Edit2, Printer, CheckCircle, Package, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -19,6 +19,7 @@ interface LotDB {
 interface ProduitDB {
   id: string;
   lot_id: string;
+  user_id: string;
   nom: string;
   marque: string | null;
   categorie: string;
@@ -36,6 +37,7 @@ interface ProduitDB {
 interface Produit {
   id: string;
   lotId: string;
+  userId: string;
   nom: string;
   marque: string | null;
   categorie: string;
@@ -93,8 +95,11 @@ export default function ProduitsBrutePage() {
   const [uploading, setUploading] = useState(false);
   const [filterMarque, setFilterMarque] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
+  
+  // NOUVEAU : État pour l'utilisateur connecté
+  const [userId, setUserId] = useState<string>('');
 
-  // === FETCH LOTS ===
+  // === FETCH LOTS & USER ===
   useEffect(() => {
     async function fetchLots() {
       const { data, error } = await supabase
@@ -110,7 +115,13 @@ export default function ProduitsBrutePage() {
       }
       setLoading(false);
     }
+    
     fetchLots();
+
+    // NOUVEAU : Récupération de l'ID utilisateur
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
   }, []);
 
   // === CALCUL COEF BRUT AU CHANGEMENT DE LOT ===
@@ -118,11 +129,9 @@ export default function ProduitsBrutePage() {
     if (selectedLotId) {
       const lot = lots.find(l => l.id === selectedLotId);
       if (lot) {
-        // Calcul dynamique si coef_brut n'existe pas encore
         const coef = lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0);
         setCoefBrut(coef);
         
-        // Mettre à jour coef_brut en DB si nécessaire
         if (!lot.coef_brut && lot.prixneuftotal > 0) {
           supabase.from('lots').update({ coef_brut: coef }).eq('id', selectedLotId).then();
         }
@@ -151,6 +160,7 @@ export default function ProduitsBrutePage() {
     return {
       id: db.id,
       lotId: db.lot_id,
+      userId: db.user_id,
       nom: db.nom,
       marque: db.marque,
       categorie: db.categorie,
@@ -174,7 +184,7 @@ export default function ProduitsBrutePage() {
   // === IMPORT EXCEL ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !selectedLotId) return;
+    if (!file || !selectedLotId || !userId) return; // Vérification userId
     
     setUploading(true);
     try {
@@ -188,23 +198,21 @@ export default function ProduitsBrutePage() {
         const prixNeuf = parseFloat(prixStr) || 0;
         const desc = row['Item Desc']?.toString() || '';
         
-        // Extraction marque simplifiée
         const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
         const marque = marques.find(m => desc.toLowerCase().includes(m.toLowerCase())) || null;
         
-        // Catégorie simplifiée
         let categorie = 'Autres';
         if (desc.toLowerCase().includes('robot') || desc.toLowerCase().includes('aspir')) categorie = 'Robot Aspirateur';
         else if (desc.toLowerCase().includes('friteuse') || desc.toLowerCase().includes('airfryer') || desc.toLowerCase().includes('cocotte') || desc.toLowerCase().includes('plaque') || desc.toLowerCase().includes('hotte')) categorie = 'Cuisine';
         else if (desc.toLowerCase().includes('micro-ondes') || desc.toLowerCase().includes('ventilateur') || desc.toLowerCase().includes('fer') || desc.toLowerCase().includes('glacière')) categorie = 'Électroménager';
         else if (desc.toLowerCase().includes('accessoire') || desc.toLowerCase().includes('filtre') || desc.toLowerCase().includes('pâtes')) categorie = 'Accessoires';
         
-        // Titre court FR
         const mots = desc.split(' ').slice(0, 8).join(' ');
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
         
         return {
           lot_id: selectedLotId,
+          user_id: userId, // NOUVEAU : Ajout de l'ID utilisateur
           nom: nom.substring(0, 100),
           marque,
           categorie,
@@ -221,6 +229,8 @@ export default function ProduitsBrutePage() {
       if (!error) {
         fetchProduits();
         alert(`${nouveauxProduits.length} produits importés avec succès !`);
+      } else {
+        alert('Erreur lors de l\'insertion: ' + error.message);
       }
     } catch (err) {
       console.error(err);
@@ -233,13 +243,14 @@ export default function ProduitsBrutePage() {
 
   // === CRÉATION RAPIDE DEPUIS LISTE PRÉ-REMPLIE ===
   async function creerProduitsPreRemplis() {
-    if (!selectedLotId || coefBrut === 0) {
-      alert('Sélectionnez un lot valide avec un prix neuf total > 0');
+    if (!selectedLotId || coefBrut === 0 || !userId) {
+      alert('Sélectionnez un lot valide et attendez le chargement de votre session.');
       return;
     }
     
     const produitsToInsert = PRODUITS_INITIAUX.map(p => ({
       lot_id: selectedLotId,
+      user_id: userId, // NOUVEAU : Ajout de l'ID utilisateur
       nom: p.nom,
       marque: p.marque,
       categorie: p.categorie,
@@ -312,12 +323,13 @@ export default function ProduitsBrutePage() {
             <label className="px-4 py-2 bg-white border rounded-lg cursor-pointer hover:bg-gray-50 flex items-center gap-2">
               <Upload size={18} />
               <span>Import Excel</span>
-              <input type="file" accept=".xlsx,.xls" onChange={handleExcelImport} className="hidden" disabled={uploading} />
+              <input type="file" accept=".xlsx,.xls" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
             </label>
             
             <button 
               onClick={creerProduitsPreRemplis}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              disabled={!userId}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50"
             >
               <Package size={18} />
               Charger Liste Démo
