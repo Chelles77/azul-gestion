@@ -58,7 +58,7 @@ export default function ProduitsBrutePage() {
 
   function generateQRCode(): string { return `PROD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`; }
 
-  // === IMPORT EXCEL ULTRA-ROBUSTE (SPÉCIFIQUE À TON FICHIER) ===
+  // === IMPORT EXCEL CORRIGÉ POUR TON FICHIER EXACT ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedLotId || !userId) return;
@@ -76,19 +76,18 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // NETTOYAGE DES NOMS DE COLONNES (Enlève les "|" et espaces)
+      // NETTOYAGE DES NOMS DE COLONNES (Enlève les "|" et espaces invisibles)
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
       
-      // On cherche la clé qui ressemble à "Item Desc" (même avec des | devant)
+      // On cherche la clé qui contient "item" et "desc" (nettoyée)
       const descKey = rawKeys.find(k => k.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('itemdesc')) || rawKeys[0];
-      // On cherche la clé qui ressemble à "TOTAL RETAIL"
+      // On cherche la clé qui contient "total" et "retail" (nettoyée)
       const priceKey = rawKeys.find(k => k.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('totalretail')) || rawKeys[1];
 
       const nouveauxProduits = jsonData.map((row: any) => {
-        // Extraction du prix : gère "1,686.38 €"
+        // Extraction du prix : gère "1,686.38 €" -> enlève tout sauf chiffres et point
         let rawPrice = row[priceKey]?.toString() || '0';
-        // Enlève tout sauf chiffres et point
         rawPrice = rawPrice.replace(/[^\d.]/g, ''); 
         const prixNeuf = parseFloat(rawPrice) || 0;
         
@@ -155,7 +154,7 @@ export default function ProduitsBrutePage() {
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* HEADER SIMPLIFIÉ (Sans navbar interne) */}
+        {/* HEADER SIMPLIFIÉ */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Produits Bruts</h1>
