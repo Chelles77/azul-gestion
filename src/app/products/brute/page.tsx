@@ -11,6 +11,36 @@ interface LotDB { id: string; numerolot: string; couttotal: number; prixneuftota
 interface ProduitDB { id: string; lot_id: string; user_id: string; nom: string; marque: string | null; categorie: string; description: string | null; prix_neuf: number; coef_revient: number; prix_revient: number; qr_code: string; statut: 'brute' | 'en_vente' | 'vendu' | 'archive'; photos: string[] | null; etat_produit: string | null; etat_emballage: string | null; }
 interface Produit { id: string; lotId: string; userId: string; nom: string; marque: string | null; categorie: string; description: string | null; prixNeuf: number; coefRevient: number; prixRevient: number; qrCode: string; statut: 'brute' | 'en_vente' | 'vendu' | 'archive'; photos: string[] | null; etatProduit: string | null; etatEmballage: string | null; }
 
+const PRODUITS_INITIAUX = [
+  { nom: "Dreame X50 Ultra Complete", marque: "Dreame", categorie: "Robot Aspirateur", prixNeuf: 1686.38, desc: "Robot aspirateur laveur IA 20000Pa" },
+  { nom: "Ecovacs Deebot X1 OMNI", marque: "Ecovacs", categorie: "Robot Aspirateur", prixNeuf: 1549.00, desc: "Robot aspirateur laveur station auto" },
+  { nom: "Mova Z50 Ultra", marque: "Mova", categorie: "Robot Aspirateur", prixNeuf: 1348.88, desc: "Robot aspirateur laveur mappage AI" },
+  { nom: "Ecovacs T80 Omni", marque: "Ecovacs", categorie: "Robot Aspirateur", prixNeuf: 1346.25, desc: "Robot aspirateur laveur OZMO ZeroTangle" },
+  { nom: "Dreame L40 Ultra", marque: "Dreame", categorie: "Robot Aspirateur", prixNeuf: 1123.88, desc: "Robot aspirateur laveur serpillière relevable" },
+  { nom: "Dreame L10s Pro Ultra Heat", marque: "Dreame", categorie: "Robot Aspirateur", prixNeuf: 1123.88, desc: "Robot aspirateur laveur eau chaude 7000Pa" },
+  { nom: "Dreame L40s Pro Ultra", marque: "Dreame", categorie: "Robot Aspirateur", prixNeuf: 1011.38, desc: "Robot aspirateur laveur 19000Pa DuoBrush" },
+  { nom: "Roborock S7 MaxV", marque: "Roborock", categorie: "Robot Aspirateur", prixNeuf: 882.44, desc: "Robot aspirateur laveur ReactiveAI 5100Pa" },
+  { nom: "Dreame L10s Ultra Gen 2", marque: "Dreame", categorie: "Robot Aspirateur", prixNeuf: 673.88, desc: "Robot aspirateur laveur MopExtend 10000Pa" },
+  { nom: "Mova E40 Ultra", marque: "Mova", categorie: "Robot Aspirateur", prixNeuf: 561.38, desc: "Robot aspirateur laveur vidage auto 19000Pa" },
+  { nom: "AAOBOSI Glacière Compresseur 45L", marque: "AAOBOSI", categorie: "Électroménager", prixNeuf: 336.93, desc: "Glacière compresseur APP contrôle" },
+  { nom: "Bauknecht Plaque Induction BQ 2760S", marque: "Bauknecht", categorie: "Cuisine", prixNeuf: 299.99, desc: "Plaque induction booster touch control" },
+  { nom: "Ninja CRISPi PRO XL", marque: "Ninja", categorie: "Cuisine", prixNeuf: 249.99, desc: "Friteuse airfryer verre 5,7L 5 modes" },
+  { nom: "Ninja Foodi MAX Dual Zone", marque: "Ninja", categorie: "Cuisine", prixNeuf: 191.30, desc: "Airfryer double zone 9,5L 6-en-1" },
+  { nom: "Comfee Hotte Aspirante 60cm", marque: "Comfee", categorie: "Cuisine", prixNeuf: 157.63, desc: "Hotte aspirante A++ 60cm sans conduit" },
+  { nom: "KitchenAid Accessoire Pâtes", marque: "KitchenAid", categorie: "Accessoires", prixNeuf: 136.44, desc: "Set 3 pièces pâtes frais KitchenAid" },
+  { nom: "Philips Airfryer Dual Basket", marque: "Philips", categorie: "Cuisine", prixNeuf: 129.99, desc: "Friteuse airfryer 9L 2 paniers RapidAir" },
+  { nom: "Panasonic Micro-ondes Solo", marque: "Panasonic", categorie: "Électroménager", prixNeuf: 129.99, desc: "Micro-ondes 800W 20L inox" },
+  { nom: "Levoit Ventilateur Sur Pied", marque: "Levoit", categorie: "Électroménager", prixNeuf: 92.33, desc: "Ventilateur DC silencieux télécommande" },
+  { nom: "Toshiba Micro-ondes Solo", marque: "Toshiba", categorie: "Électroménager", prixNeuf: 76.40, desc: "Micro-ondes 800W 20L LED" },
+  { nom: "Cecotec Ventilateur Mural", marque: "Cecotec", categorie: "Électroménager", prixNeuf: 63.45, desc: "Ventilateur mural 50W noir" },
+  { nom: "Philips Fer Vapeur Series 7000", marque: "Philips", categorie: "Électroménager", prixNeuf: 59.99, desc: "Fer vapeur 2800W SteamGlide Plus" },
+  { nom: "Cecotec Ventilateur Tour", marque: "Cecotec", categorie: "Électroménager", prixNeuf: 49.20, desc: "Ventilateur tour digital 50W télécommande" },
+  { nom: "IBILI Cocotte Ovale Noire", marque: "IBILI", categorie: "Cuisine", prixNeuf: 38.32, desc: "Cocotte acier émaillé 42cm" },
+  { nom: "Rintea Ventilateur Sur Pied", marque: "Rintea", categorie: "Électroménager", prixNeuf: 19.80, desc: "Ventilateur 9 vitesses LED oscillant" },
+  { nom: "Amazon Basics Ventilateur Tour", marque: "Amazon Basics", categorie: "Électroménager", prixNeuf: 16.45, desc: "Ventilateur tour oscillant 71cm 35W" },
+  { nom: "Siemens Filtre Aspirateur Q5.0", marque: "Siemens", categorie: "Accessoires", prixNeuf: 13.93, desc: "Filtre remplacement VSQ5X1230" },
+];
+
 export default function ProduitsBrutePage() {
   const router = useRouter();
   const supabase = createClient();
@@ -58,7 +88,7 @@ export default function ProduitsBrutePage() {
 
   function generateQRCode(): string { return `PROD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`; }
 
-  // === IMPORT EXCEL ULTRA-ROBUSTE ===
+  // === IMPORT EXCEL CORRIGÉ POUR TON FICHIER EXACT ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedLotId || !userId) return;
@@ -68,24 +98,25 @@ export default function ProduitsBrutePage() {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      // raw: true garde les valeurs brutes, defval gère les cellules vides
       const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: "" });
       
       if (jsonData.length === 0) {
-        alert("Le fichier Excel semble vide ou mal formaté.");
+        alert("Le fichier Excel semble vide.");
         setUploading(false);
         return;
       }
 
-      // Détection intelligente des noms de colonnes (gère les espaces/sauts de ligne)
+      // Détection intelligente des colonnes (gère "|TOTAL RETAIL", "Item Desc", etc.)
       const firstRow = jsonData[0];
       const keys = Object.keys(firstRow);
       const descKey = keys.find(k => k.toLowerCase().includes('item') || k.toLowerCase().includes('desc')) || keys[0];
       const priceKey = keys.find(k => k.toLowerCase().includes('total') || k.toLowerCase().includes('retail') || k.toLowerCase().includes('prix')) || keys[1];
 
       const nouveauxProduits = jsonData.map((row: any) => {
-        // Extraction et nettoyage du prix (gère "1,686.38 €")
+        // Extraction du prix : gère "1,686.38 €"
         let rawPrice = row[priceKey]?.toString() || '0';
-        rawPrice = rawPrice.replace(/[€\s]/g, '').replace(/,/g, '');
+        rawPrice = rawPrice.replace(/[€\s]/g, '').replace(/,/g, ''); // Enlève €, espaces et virgules de milliers
         const prixNeuf = parseFloat(rawPrice) || 0;
         
         const desc = row[descKey]?.toString() || '';
@@ -112,10 +143,10 @@ export default function ProduitsBrutePage() {
           description: desc.substring(0, 200), prix_neuf: prixNeuf, coef_revient: coefBrut, 
           prix_revient: Math.round(prixNeuf * coefBrut * 100) / 100, qr_code: generateQRCode(), statut: 'brute' as const 
         };
-      }).filter(Boolean); // Retire les lignes nulles
+      }).filter(Boolean);
       
       if (nouveauxProduits.length === 0) {
-        alert("Aucun produit valide trouvé dans l'Excel (vérifiez les colonnes 'Item Desc' et 'TOTAL RETAIL').");
+        alert("Aucun produit valide trouvé. Vérifiez que votre Excel a bien les colonnes 'Item Desc' et 'TOTAL RETAIL'.");
         setUploading(false);
         return;
       }
@@ -123,7 +154,7 @@ export default function ProduitsBrutePage() {
       const { error } = await supabase.from('produits').insert(nouveauxProduits);
       if (!error) { 
         fetchProduits(); 
-        alert(`${nouveauxProduits.length} produits importés avec succès !`); 
+        alert(`${nouveauxProduits.length} produits importés depuis Excel !`); 
       } else { 
         alert('Erreur Supabase: ' + error.message); 
       }
@@ -134,6 +165,22 @@ export default function ProduitsBrutePage() {
       setUploading(false); 
       e.target.value = ''; 
     }
+  }
+
+  // === CHARGER LISTE DÉMO (AVEC NETTOYAGE AUTO) ===
+  async function creerProduitsPreRemplis() {
+    if (!selectedLotId || coefBrut === 0 || !userId) return;
+    // On supprime les anciens produits 'brute' de ce lot pour éviter les doublons
+    await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
+    
+    const produitsToInsert = PRODUITS_INITIAUX.map(p => ({ 
+      lot_id: selectedLotId, user_id: userId, nom: p.nom, marque: p.marque, categorie: p.categorie, 
+      description: p.desc, prix_neuf: p.prixNeuf, coef_revient: coefBrut, 
+      prix_revient: Math.round(p.prixNeuf * coefBrut * 100) / 100, qr_code: generateQRCode(), statut: 'brute' as const 
+    }));
+    
+    const { error } = await supabase.from('produits').insert(produitsToInsert);
+    if (!error) { fetchProduits(); alert('Liste démo chargée (27 produits propres) !'); }
   }
 
   async function mettreEnVente(id: string) {
@@ -162,12 +209,14 @@ export default function ProduitsBrutePage() {
               {lots.map(lot => <option key={lot.id} value={lot.id}>Lot #{lot.numerolot} • Coef: {((lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0)) * 100).toFixed(1)}%</option>)}
             </select>
             
-            {/* BOUTON IMPORT EXCEL UNIQUE */}
-            <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all font-medium">
-              <Upload size={18} />
-              <span>{uploading ? 'Importation...' : 'Importer Excel'}</span>
+            <label className="px-4 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg cursor-pointer hover:bg-[#252525] flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all">
+              <Upload size={18} className="text-gray-400" /><span className="text-gray-300 font-medium">Import Excel</span>
               <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
             </label>
+            
+            <button onClick={creerProduitsPreRemplis} disabled={!userId} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all disabled:opacity-50">
+              <Package size={18} />Charger Liste Démo
+            </button>
           </div>
         </div>
 
@@ -200,7 +249,6 @@ export default function ProduitsBrutePage() {
         {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800 shadow-lg">
             <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut pour ce lot</p>
-            <p className="text-sm text-gray-500 mt-2">Cliquez sur "Importer Excel" pour ajouter vos produits.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
