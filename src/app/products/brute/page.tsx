@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, TrendingDown, AlertCircle } from 'lucide-react';
+import { QrCode, Upload, Edit2, CheckCircle, Package, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // === TYPES ===
@@ -342,22 +342,15 @@ export default function ProduitsBrutePage() {
           </div>
         </div>
 
-        {/* KPI COEF */}
-        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 rounded-lg">
-                <TrendingDown size={24} className="text-blue-600" />
-              </div>
-              <div>
-                <span className="text-sm text-gray-500 block">Coefficient d'achat du lot</span>
-                <div className="text-2xl font-bold text-gray-900">{(coefBrut * 100).toFixed(1)}%</div>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="text-sm text-gray-500 block">Produits en attente</span>
-              <div className="text-2xl font-bold text-gray-900">{produits.length}</div>
-            </div>
+        {/* KPI COEF - DESIGN AMÉLIORÉ */}
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-200 flex justify-between items-center">
+          <div>
+            <span className="text-sm text-gray-500 block mb-1">Coefficient d'achat du lot</span>
+            <span className="text-3xl font-bold text-blue-600">{(coefBrut * 100).toFixed(1)}%</span>
+          </div>
+          <div className="text-right">
+            <span className="text-sm text-gray-500 block mb-1">Produits en attente</span>
+            <span className="text-3xl font-bold text-gray-900">{produits.length}</span>
           </div>
         </div>
 
@@ -385,7 +378,7 @@ export default function ProduitsBrutePage() {
           </select>
         </div>
 
-        {/* GRILLE PRODUITS */}
+        {/* GRILLE PRODUITS - DESIGN AMÉLIORÉ */}
         {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
             <Package size={48} className="mx-auto text-gray-300 mb-4" />
@@ -395,9 +388,9 @@ export default function ProduitsBrutePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map(produit => (
-              <div key={produit.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
+              <div key={produit.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col">
                 {/* PHOTO */}
-                <div className="h-48 bg-gray-100 relative flex items-center justify-center border-b border-gray-200">
+                <div className="h-48 bg-gray-50 relative flex items-center justify-center border-b border-gray-100">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-cover" />
                   ) : (
@@ -406,42 +399,39 @@ export default function ProduitsBrutePage() {
                       <span className="text-sm">Ajouter photo</span>
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono shadow-sm">
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono shadow-sm border border-gray-200">
                     {produit.qrCode}
                   </div>
                 </div>
                 
                 {/* INFOS */}
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">{produit.categorie}</span>
-                    {produit.marque && <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">{produit.marque}</span>}
+                <div className="p-5 flex-1 flex flex-col">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-xs px-2.5 py-1 bg-gray-100 rounded-full text-gray-600 font-medium">{produit.categorie}</span>
+                    {produit.marque && <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">{produit.marque}</span>}
                   </div>
                   
-                  <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">{produit.nom}</h3>
-                  <p className="text-sm text-gray-500 mb-3 line-clamp-1">{produit.description}</p>
+                  <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 leading-tight">{produit.nom}</h3>
+                  <p className="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">{produit.description}</p>
                   
-                  <div className="flex justify-between items-end mb-4">
-                    <div>
-                      <div className="text-2xl font-bold text-gray-900">{produit.prixNeuf.toFixed(0)} €</div>
-                      <div className="text-xs text-gray-400 flex items-center gap-1">
-                        <TrendingDown size={12} />
-                        Coef {(produit.coefRevient * 100).toFixed(0)}% → <span className="font-medium text-gray-600">{produit.prixRevient.toFixed(0)} €</span>
-                      </div>
+                  <div className="mb-4 mt-auto">
+                    <div className="text-2xl font-extrabold text-gray-900 mb-1">{produit.prixNeuf.toFixed(0)} €</div>
+                    <div className="text-xs text-gray-500 bg-gray-50 inline-block px-2 py-1 rounded">
+                      Revient : <span className="font-bold text-gray-700">{produit.prixRevient.toFixed(0)} €</span> ({(produit.coefRevient * 100).toFixed(0)}%)
                     </div>
                   </div>
                   
                   {/* ACTIONS */}
-                  <div className="flex gap-2">
-                    <button className="flex-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1 text-sm font-medium text-gray-700 transition-all active:scale-[0.98]">
+                  <div className="flex gap-2 pt-4 border-t border-gray-100">
+                    <button className="flex-1 px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1 text-sm font-medium text-gray-700 transition-all active:scale-[0.98]">
                       <Edit2 size={14} /> Modifier
                     </button>
-                    <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center transition-all active:scale-[0.98]">
+                    <button className="px-3 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center justify-center transition-all active:scale-[0.98]" title="Voir QR Code">
                       <QrCode size={16} className="text-gray-600" />
                     </button>
                     <button 
                       onClick={() => mettreEnVente(produit.id)}
-                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all active:scale-[0.98]"
+                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all active:scale-[0.98] shadow-sm"
                       title="Mettre en vente"
                     >
                       <CheckCircle size={16} />
