@@ -11,7 +11,6 @@ interface LotDB { id: string; numerolot: string; couttotal: number; prixneuftota
 interface ProduitDB { id: string; lot_id: string; user_id: string; nom: string; marque: string | null; categorie: string; description: string | null; prix_neuf: number; coef_revient: number; prix_revient: number; qr_code: string; statut: 'brute' | 'en_vente' | 'vendu' | 'archive'; photos: string[] | null; etat_produit: string | null; etat_emballage: string | null; }
 interface Produit { id: string; lotId: string; userId: string; nom: string; marque: string | null; categorie: string; description: string | null; prixNeuf: number; coefRevient: number; prixRevient: number; qrCode: string; statut: 'brute' | 'en_vente' | 'vendu' | 'archive'; photos: string[] | null; etatProduit: string | null; etatEmballage: string | null; }
 
-// Liste des 27 produits uniques nettoyés
 const PRODUITS_INITIAUX = [
   { nom: "Dreame X50 Ultra Complete", marque: "Dreame", categorie: "Robot Aspirateur", prixNeuf: 1686.38, desc: "Robot aspirateur laveur IA 20000Pa" },
   { nom: "Ecovacs Deebot X1 OMNI", marque: "Ecovacs", categorie: "Robot Aspirateur", prixNeuf: 1549.00, desc: "Robot aspirateur laveur station auto" },
@@ -89,7 +88,7 @@ export default function ProduitsBrutePage() {
 
   function generateQRCode(): string { return `PROD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`; }
 
-  // === IMPORT EXCEL CORRIGÉ ===
+  // === IMPORT EXCEL SPÉCIFIQUE POUR TON FORMAT ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedLotId || !userId) return;
@@ -101,12 +100,17 @@ export default function ProduitsBrutePage() {
       const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
       
       const nouveauxProduits = jsonData.map((row: any) => {
-        // CORRECTION PRIX : Gère "1,686.38 €" -> enlève € et espaces, enlève virgules de milliers
-        let prixStr = row['TOTAL RETAIL']?.toString() || '0';
-        prixStr = prixStr.replace(/[€\s]/g, '').replace(/,/g, ''); 
-        const prixNeuf = parseFloat(prixStr) || 0;
+        // CIBLE EXACTE DE TON FICHIER
+        let rawPrice = row['TOTAL RETAIL'] || row['TOTAL RETAIL '] || '0';
+        if (typeof rawPrice === 'number') {
+          // Déjà un nombre
+        } else {
+          // Format "1,686.38 €" -> enlever € et espaces -> enlever virgules
+          rawPrice = rawPrice.toString().replace(/[€\s]/g, '').replace(/,/g, '');
+        }
+        const prixNeuf = parseFloat(rawPrice) || 0;
         
-        const desc = row['Item Desc']?.toString() || '';
+        const desc = row['Item Desc'] || row['Item Desc '] || '';
         const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
         const marque = marques.find(m => desc.toLowerCase().includes(m.toLowerCase())) || null;
         
@@ -116,16 +120,15 @@ export default function ProduitsBrutePage() {
         else if (desc.toLowerCase().includes('micro-ondes') || desc.toLowerCase().includes('ventilateur') || desc.toLowerCase().includes('fer') || desc.toLowerCase().includes('glacière') || desc.toLowerCase().includes('mikrowelle') || desc.toLowerCase().includes('ventilator') || desc.toLowerCase().includes('dampfbügeleisen') || desc.toLowerCase().includes('kühlbox')) categorie = 'Électroménager';
         else if (desc.toLowerCase().includes('accessoire') || desc.toLowerCase().includes('filtre') || desc.toLowerCase().includes('pâtes') || desc.toLowerCase().includes('ersatzfilter')) categorie = 'Accessoires';
         
-        // Titre court : Marque + 6 mots max
         const mots = desc.split(' ').slice(0, 6).join(' ');
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
         
         return { 
           lot_id: selectedLotId, user_id: userId, nom: nom.substring(0, 100), marque, categorie, 
-          description: desc.substring(0, 200), prix_neuf: prixNeuf, coef_revient: coefBrut, 
+          description: desc.toString().substring(0, 200), prix_neuf: prixNeuf, coef_revient: coefBrut, 
           prix_revient: Math.round(prixNeuf * coefBrut * 100) / 100, qr_code: generateQRCode(), statut: 'brute' as const 
         };
-      }).filter((p: any) => p.prixNeuf > 0); // Filtre les lignes vides
+      }).filter((p: any) => p.prixNeuf > 0);
       
       const { error } = await supabase.from('produits').insert(nouveauxProduits);
       if (!error) { fetchProduits(); alert(`${nouveauxProduits.length} produits importés depuis Excel !`); }
@@ -133,20 +136,14 @@ export default function ProduitsBrutePage() {
     } catch (err) { alert('Erreur lors de la lecture du fichier Excel'); } finally { setUploading(false); e.target.value = ''; }
   }
 
-  // === CHARGER LISTE DÉMO (AVEC NETTOYAGE AUTO) ===
   async function creerProduitsPreRemplis() {
     if (!selectedLotId || coefBrut === 0 || !userId) return;
-    
-    // 1. On supprime les anciens produits 'brute' de ce lot pour éviter les doublons (56 produits)
     await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
-    
-    // 2. On insère les 27 produits propres
     const produitsToInsert = PRODUITS_INITIAUX.map(p => ({ 
       lot_id: selectedLotId, user_id: userId, nom: p.nom, marque: p.marque, categorie: p.categorie, 
       description: p.desc, prix_neuf: p.prixNeuf, coef_revient: coefBrut, 
       prix_revient: Math.round(p.prixNeuf * coefBrut * 100) / 100, qr_code: generateQRCode(), statut: 'brute' as const 
     }));
-    
     const { error } = await supabase.from('produits').insert(produitsToInsert);
     if (!error) { fetchProduits(); alert('Liste démo chargée (27 produits) !'); }
   }
@@ -165,8 +162,6 @@ export default function ProduitsBrutePage() {
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Produits Bruts</h1>
@@ -186,7 +181,6 @@ export default function ProduitsBrutePage() {
           </div>
         </div>
 
-        {/* KPI COEF */}
         <div className="bg-[#1a1a1a] rounded-xl p-6 mb-6 border border-gray-800 flex justify-between items-center shadow-lg">
           <div>
             <span className="text-sm text-gray-400 block mb-1 uppercase tracking-wider text-xs">Coefficient d'achat du lot</span>
@@ -198,7 +192,6 @@ export default function ProduitsBrutePage() {
           </div>
         </div>
 
-        {/* FILTRES */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative">
             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -211,7 +204,6 @@ export default function ProduitsBrutePage() {
           </select>
         </div>
 
-        {/* GRILLE PRODUITS */}
         {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800 shadow-lg">
             <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut pour ce lot</p>
