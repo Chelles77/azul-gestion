@@ -58,7 +58,7 @@ export default function ProduitsBrutePage() {
 
   function generateQRCode(): string { return `PROD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`; }
 
-  // === IMPORT EXCEL CORRIGÉ POUR TON FICHIER EXACT ===
+  // === IMPORT EXCEL CORRIGÉ (SANS ERREUR TYPESCRIPT) ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedLotId || !userId) return;
@@ -76,29 +76,26 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // NETTOYAGE DES NOMS DE COLONNES (Enlève les "|" et espaces invisibles)
+      // Détection des colonnes (nettoyage des caractères spéciaux comme |)
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
-      
-      // On cherche la clé qui contient "item" et "desc" (nettoyée)
       const descKey = rawKeys.find(k => k.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('itemdesc')) || rawKeys[0];
-      // On cherche la clé qui contient "total" et "retail" (nettoyée)
       const priceKey = rawKeys.find(k => k.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('totalretail')) || rawKeys[1];
 
-      const nouveauxProduits = jsonData.map((row: any) => {
-        // Extraction du prix : gère "1,686.38 €" -> enlève tout sauf chiffres et point
+      // Construction du tableau SANS null pour éviter l'erreur TS2345
+      const nouveauxProduits: any[] = [];
+      
+      for (const row of jsonData) {
         let rawPrice = row[priceKey]?.toString() || '0';
         rawPrice = rawPrice.replace(/[^\d.]/g, ''); 
         const prixNeuf = parseFloat(rawPrice) || 0;
-        
         const desc = row[descKey]?.toString() || '';
-        if (!desc || prixNeuf <= 0) return null;
+        
+        if (!desc || prixNeuf <= 0) continue; // On saute la ligne au lieu de retourner null
 
-        // Extraction Marque
         const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
         const marque = marques.find(m => desc.toLowerCase().includes(m.toLowerCase())) || null;
         
-        // Déduction Catégorie
         let categorie = 'Autres';
         const d = desc.toLowerCase();
         if (d.includes('robot') || d.includes('aspir') || d.includes('saug') || d.includes('vacuum')) categorie = 'Robot Aspirateur';
@@ -106,19 +103,26 @@ export default function ProduitsBrutePage() {
         else if (d.includes('micro-ondes') || d.includes('ventilateur') || d.includes('fer') || d.includes('glacière') || d.includes('mikrowelle') || d.includes('ventilator') || d.includes('dampfbügeleisen') || d.includes('kühlbox') || d.includes('standventilator')) categorie = 'Électroménager';
         else if (d.includes('accessoire') || d.includes('filtre') || d.includes('ersatzfilter')) categorie = 'Accessoires';
         
-        // Titre court (Marque + 5 mots max)
         const mots = desc.split(' ').slice(0, 5).join(' ');
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
         
-        return { 
-          lot_id: selectedLotId, user_id: userId, nom: nom.substring(0, 100), marque, categorie, 
-          description: desc.substring(0, 200), prix_neuf: prixNeuf, coef_revient: coefBrut, 
-          prix_revient: Math.round(prixNeuf * coefBrut * 100) / 100, qr_code: generateQRCode(), statut: 'brute' as const 
-        };
-      }).filter(Boolean);
+        nouveauxProduits.push({ 
+          lot_id: selectedLotId, 
+          user_id: userId, 
+          nom: nom.substring(0, 100), 
+          marque, 
+          categorie, 
+          description: desc.substring(0, 200), 
+          prix_neuf: prixNeuf, 
+          coef_revient: coefBrut, 
+          prix_revient: Math.round(prixNeuf * coefBrut * 100) / 100, 
+          qr_code: generateQRCode(), 
+          statut: 'brute' as const 
+        });
+      }
       
       if (nouveauxProduits.length === 0) {
-        alert("Aucun produit valide trouvé. Vérifiez que votre Excel a bien les colonnes 'Item Desc' et 'TOTAL RETAIL'.");
+        alert("Aucun produit valide trouvé. Vérifiez les colonnes 'Item Desc' et 'TOTAL RETAIL'.");
         setUploading(false);
         return;
       }
@@ -154,7 +158,7 @@ export default function ProduitsBrutePage() {
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* HEADER SIMPLIFIÉ */}
+        {/* HEADER SIMPLIFIÉ (Sans bouton démo) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Produits Bruts</h1>
@@ -165,7 +169,6 @@ export default function ProduitsBrutePage() {
               {lots.map(lot => <option key={lot.id} value={lot.id}>Lot #{lot.numerolot} • Coef: {((lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0)) * 100).toFixed(1)}%</option>)}
             </select>
             
-            {/* BOUTON IMPORT EXCEL UNIQUE */}
             <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all font-medium">
               <Upload size={18} />
               <span>{uploading ? 'Importation...' : 'Importer Excel'}</span>
