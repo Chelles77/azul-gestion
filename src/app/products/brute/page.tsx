@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@/utils/supabase/client';
+import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { QrCode, Upload, Edit2, Printer, CheckCircle, Package, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
