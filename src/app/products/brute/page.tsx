@@ -2,9 +2,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { createClient } from '@/lib/supabase'; // Chemin corrigé pour ton projet
+import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { QrCode, Upload, Edit2, Printer, CheckCircle, Package, Filter } from 'lucide-react';
+import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, TrendingDown, AlertCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 // === TYPES ===
@@ -95,8 +95,6 @@ export default function ProduitsBrutePage() {
   const [uploading, setUploading] = useState(false);
   const [filterMarque, setFilterMarque] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
-  
-  // NOUVEAU : État pour l'utilisateur connecté
   const [userId, setUserId] = useState<string>('');
 
   // === FETCH LOTS & USER ===
@@ -118,7 +116,6 @@ export default function ProduitsBrutePage() {
     
     fetchLots();
 
-    // NOUVEAU : Récupération de l'ID utilisateur
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) setUserId(data.user.id);
     });
@@ -184,7 +181,7 @@ export default function ProduitsBrutePage() {
   // === IMPORT EXCEL ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !selectedLotId || !userId) return; // Vérification userId
+    if (!file || !selectedLotId || !userId) return;
     
     setUploading(true);
     try {
@@ -194,7 +191,8 @@ export default function ProduitsBrutePage() {
       const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
       
       const nouveauxProduits = jsonData.map((row: any) => {
-        const prixStr = row['TOTAL RETAIL']?.toString().replace(/[^\d,\.]/g, '').replace(',', '.') || '0';
+        // Correction du parseur pour le format "1,686.38 €"
+        const prixStr = row['TOTAL RETAIL']?.toString().replace(/[€\s]/g, '').replace(/,/g, '') || '0';
         const prixNeuf = parseFloat(prixStr) || 0;
         const desc = row['Item Desc']?.toString() || '';
         
@@ -212,7 +210,7 @@ export default function ProduitsBrutePage() {
         
         return {
           lot_id: selectedLotId,
-          user_id: userId, // NOUVEAU : Ajout de l'ID utilisateur
+          user_id: userId,
           nom: nom.substring(0, 100),
           marque,
           categorie,
@@ -250,7 +248,7 @@ export default function ProduitsBrutePage() {
     
     const produitsToInsert = PRODUITS_INITIAUX.map(p => ({
       lot_id: selectedLotId,
-      user_id: userId, // NOUVEAU : Ajout de l'ID utilisateur
+      user_id: userId,
       nom: p.nom,
       marque: p.marque,
       categorie: p.categorie,
@@ -295,7 +293,14 @@ export default function ProduitsBrutePage() {
   const marquesUniques = [...new Set(produits.map(p => p.marque).filter(Boolean))] as string[];
   const categoriesUniques = [...new Set(produits.map(p => p.categorie))];
 
-  if (loading) return <div className="p-8 text-center">Chargement...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-500">Chargement des produits...</p>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
@@ -311,7 +316,7 @@ export default function ProduitsBrutePage() {
             <select 
               value={selectedLotId}
               onChange={(e) => setSelectedLotId(e.target.value)}
-              className="px-4 py-2 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
             >
               {lots.map(lot => (
                 <option key={lot.id} value={lot.id}>
@@ -320,16 +325,16 @@ export default function ProduitsBrutePage() {
               ))}
             </select>
             
-            <label className="px-4 py-2 bg-white border rounded-lg cursor-pointer hover:bg-gray-50 flex items-center gap-2">
-              <Upload size={18} />
-              <span>Import Excel</span>
+            <label className="px-4 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 flex items-center gap-2 shadow-sm transition-all active:scale-[0.98]">
+              <Upload size={18} className="text-gray-600" />
+              <span className="text-gray-700 font-medium">Import Excel</span>
               <input type="file" accept=".xlsx,.xls" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
             </label>
             
             <button 
               onClick={creerProduitsPreRemplis}
               disabled={!userId}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Package size={18} />
               Charger Liste Démo
@@ -338,14 +343,19 @@ export default function ProduitsBrutePage() {
         </div>
 
         {/* KPI COEF */}
-        <div className="bg-white rounded-xl p-4 mb-6 shadow-sm border">
+        <div className="bg-white rounded-xl p-6 mb-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-gray-500">Coefficient d'achat du lot</span>
-              <div className="text-2xl font-bold text-blue-600">{(coefBrut * 100).toFixed(1)}%</div>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <TrendingDown size={24} className="text-blue-600" />
+              </div>
+              <div>
+                <span className="text-sm text-gray-500 block">Coefficient d'achat du lot</span>
+                <div className="text-2xl font-bold text-gray-900">{(coefBrut * 100).toFixed(1)}%</div>
+              </div>
             </div>
             <div className="text-right">
-              <span className="text-sm text-gray-500">Produits en attente</span>
+              <span className="text-sm text-gray-500 block">Produits en attente</span>
               <div className="text-2xl font-bold text-gray-900">{produits.length}</div>
             </div>
           </div>
@@ -358,7 +368,7 @@ export default function ProduitsBrutePage() {
             <select 
               value={filterMarque}
               onChange={(e) => setFilterMarque(e.target.value)}
-              className="pl-9 pr-4 py-2 border rounded-lg bg-white"
+              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Toutes marques</option>
               {marquesUniques.map(m => <option key={m} value={m}>{m}</option>)}
@@ -368,7 +378,7 @@ export default function ProduitsBrutePage() {
           <select 
             value={filterCategorie}
             onChange={(e) => setFilterCategorie(e.target.value)}
-            className="px-4 py-2 border rounded-lg bg-white"
+            className="px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Toutes catégories</option>
             {categoriesUniques.map(c => <option key={c} value={c}>{c}</option>)}
@@ -377,17 +387,17 @@ export default function ProduitsBrutePage() {
 
         {/* GRILLE PRODUITS */}
         {produitsFiltres.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border">
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-200 shadow-sm">
             <Package size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">Aucun produit brut pour ce lot</p>
+            <p className="text-gray-500 text-lg">Aucun produit brut pour ce lot</p>
             <p className="text-sm text-gray-400 mt-2">Importez un Excel ou chargez la liste démo</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map(produit => (
-              <div key={produit.id} className="bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+              <div key={produit.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
                 {/* PHOTO */}
-                <div className="h-48 bg-gray-100 relative flex items-center justify-center">
+                <div className="h-48 bg-gray-100 relative flex items-center justify-center border-b border-gray-200">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-cover" />
                   ) : (
@@ -396,7 +406,7 @@ export default function ProduitsBrutePage() {
                       <span className="text-sm">Ajouter photo</span>
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs font-mono">
+                  <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono shadow-sm">
                     {produit.qrCode}
                   </div>
                 </div>
@@ -404,8 +414,8 @@ export default function ProduitsBrutePage() {
                 {/* INFOS */}
                 <div className="p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600">{produit.categorie}</span>
-                    {produit.marque && <span className="text-xs font-medium text-blue-600">{produit.marque}</span>}
+                    <span className="text-xs px-2 py-1 bg-gray-100 rounded text-gray-600 font-medium">{produit.categorie}</span>
+                    {produit.marque && <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">{produit.marque}</span>}
                   </div>
                   
                   <h3 className="font-bold text-gray-900 mb-1 line-clamp-2">{produit.nom}</h3>
@@ -414,7 +424,8 @@ export default function ProduitsBrutePage() {
                   <div className="flex justify-between items-end mb-4">
                     <div>
                       <div className="text-2xl font-bold text-gray-900">{produit.prixNeuf.toFixed(0)} €</div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 flex items-center gap-1">
+                        <TrendingDown size={12} />
                         Coef {(produit.coefRevient * 100).toFixed(0)}% → <span className="font-medium text-gray-600">{produit.prixRevient.toFixed(0)} €</span>
                       </div>
                     </div>
@@ -422,15 +433,16 @@ export default function ProduitsBrutePage() {
                   
                   {/* ACTIONS */}
                   <div className="flex gap-2">
-                    <button className="flex-1 px-3 py-2 border rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1 text-sm">
+                    <button className="flex-1 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-1 text-sm font-medium text-gray-700 transition-all active:scale-[0.98]">
                       <Edit2 size={14} /> Modifier
                     </button>
-                    <button className="px-3 py-2 border rounded-lg hover:bg-gray-50 flex items-center justify-center">
-                      <QrCode size={16} />
+                    <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center transition-all active:scale-[0.98]">
+                      <QrCode size={16} className="text-gray-600" />
                     </button>
                     <button 
                       onClick={() => mettreEnVente(produit.id)}
-                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center"
+                      className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all active:scale-[0.98]"
+                      title="Mettre en vente"
                     >
                       <CheckCircle size={16} />
                     </button>
