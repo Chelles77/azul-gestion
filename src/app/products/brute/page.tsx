@@ -258,10 +258,24 @@ export default function ProduitsBrutePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map(produit => (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col shadow-lg">
-                <div className="h-48 bg-[#252525] relative flex items-center justify-center border-b border-gray-800">
-                  {produit.photos && produit.photos.length > 0 ? <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-cover" /> : <div className="text-gray-500 text-center"><Upload size={32} className="mx-auto mb-2" /><span className="text-sm">Ajouter photo</span></div>}
-                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700">{produit.qrCode}</div>
-                </div>
+               <div className="h-48 bg-[#252525] relative overflow-hidden border-b border-gray-800">
+  {produit.photos && produit.photos.length > 0 ? (
+    <img 
+      src={produit.photos[0]} 
+      alt={produit.nom} 
+      className="w-full h-full object-cover" 
+    />
+  ) : (
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+      <Upload size={32} className="mb-2" />
+      <span className="text-sm">Ajouter photo</span>
+    </div>
+  )}
+  {/* QR Code badge toujours visible */}
+  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700 z-10">
+    {produit.qrCode}
+  </div>
+</div>
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">{produit.categorie}</span>
