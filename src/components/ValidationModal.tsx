@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, Upload } from 'lucide-react'; // ✅ Ajout de Upload
 import { createClient } from '@/lib/supabase';
 
 interface Produit {
@@ -33,6 +33,11 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
   const [etatEmballage, setEtatEmballage] = useState(product.etat_emballage || '');
   const [prixVente, setPrixVente] = useState(product.prix_estime_vente?.toString() || '');
   const [description, setDescription] = useState(product.description || '');
+  
+  // ✅ AJOUT 1 : États pour la photo
+  const [photoPreview, setPhotoPreview] = useState<string | null>(product.photos?.[0] || null);
+  const [uploading, setUploading] = useState(false);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,9 +51,33 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
       setPrixVente(product.prix_estime_vente?.toString() || prixSuggere.toString());
       setEtatProduit(product.etat_produit || '');
       setEtatEmballage(product.etat_emballage || '');
+      setPhotoPreview(product.photos?.[0] || null); // ✅ Reset preview on open
       setError('');
     }
   }, [isOpen, product]);
+
+  // ✅ AJOUT 2 : Fonction d'upload vers Supabase Storage
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setUploading(true);
+    const supabase = createClient();
+    // ⚠️ Assure-toi que le bucket 'product-photos' existe dans Supabase Storage
+    const fileName = `${product.id}-${Date.now()}.jpg`;
+    
+    const { error } = await supabase.storage
+      .from('product-photos') 
+      .upload(fileName, file);
+      
+    if (!error) {
+      const { data } = supabase.storage.from('product-photos').getPublicUrl(fileName);
+      setPhotoPreview(data.publicUrl);
+    } else {
+      alert('Erreur upload: ' + error.message);
+    }
+    setUploading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +90,9 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
     const supabase = createClient();
 
     try {
+      // ✅ AJOUT 3 : Sauvegarde de la photo dans le tableau photos
+      const photosArray = photoPreview ? [photoPreview] : product.photos;
+
       const { error: updateError } = await supabase
         .from('produits')
         .update({
@@ -69,6 +101,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
           etat_produit: etatProduit,
           etat_emballage: etatEmballage,
           prix_estime_vente: parseFloat(prixVente),
+          photos: photosArray, // ✅ Mise à jour de la colonne photos
           updated_at: new Date().toISOString()
         })
         .eq('id', product.id);
@@ -114,6 +147,44 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
             </div>
           </div>
 
+          {/* ✅ AJOUT 4 : Zone d'Upload Photo (placée avant le Nom) */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Photo du Produit</label>
+            <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 text-center hover:border-blue-500 transition-colors relative bg-[#252525] min-h-[150px] flex items-center justify-center">
+              {photoPreview ? (
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <img src={photoPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+                  <button 
+                    type="button"
+                    onClick={() => { setPhotoPreview(null); }}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700 shadow-lg"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
+                  <Upload size={32} />
+                  <span className="text-sm">Cliquer pour ajouter une photo</span>
+                  <span className="text-xs text-gray-600">JPG, PNG max 5Mo</span>
+                </div>
+              )}
+              {/* Input invisible qui recouvre toute la zone */}
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handlePhotoUpload}
+                disabled={uploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+              {uploading && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-xl z-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Nom du Produit */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Nom du Produit *</label>
@@ -136,7 +207,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
               >
                 <option value="">Sélectionner...</option>
                 <option value="neuf_sous_plastique">🟢 Neuf sous plastique</option>
-                <option value="tres_bon_etat">🟡 Très bon état</option>
+                <option value="tres_bon_etat"> Très bon état</option>
                 <option value="bon_etat"> Bon état</option>
                 <option value="occasion_comme_neuf">✨ Occasion comme neuf</option>
                 <option value="a_reparer"> À réparer</option>
@@ -215,7 +286,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
             </button>
             <button 
               type="submit" 
-              disabled={loading}
+              disabled={loading || uploading}
               className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
             >
               {loading ? (
