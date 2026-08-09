@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import ProductModal from '@/components/ProductModal'; // ✅ NOUVEAU : Import du modal
 
 interface LotDB { id: string; numerolot: string; couttotal: number; prixneuftotal: number; coef_brut: number | null; }
 interface ProduitDB { id: string; lot_id: string; user_id: string; nom: string; marque: string | null; categorie: string; description: string | null; prix_neuf: number; coef_revient: number; prix_revient: number; qr_code: string; statut: 'brute' | 'en_vente' | 'vendu' | 'archive'; photos: string[] | null; etat_produit: string | null; etat_emballage: string | null; }
@@ -23,6 +24,9 @@ export default function ProduitsBrutePage() {
   const [filterMarque, setFilterMarque] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
   const [userId, setUserId] = useState<string>('');
+  
+  // ✅ NOUVEAU : State pour gérer le modal produit
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
     async function fetchLots() {
@@ -65,7 +69,6 @@ export default function ProduitsBrutePage() {
     setUploading(true);
     
     try {
-      // 1. NETTOYAGE : On supprime TOUS les produits bruts existants pour ce lot
       await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
 
       const data = await file.arrayBuffer();
@@ -79,7 +82,6 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Détection des colonnes
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
       const descKey = rawKeys.find(k => k.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('itemdesc')) || rawKeys[0];
@@ -129,7 +131,6 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // 2. INSERTION PROPRE
       const { error } = await supabase.from('produits').insert(nouveauxProduits);
       if (!error) { 
         fetchProduits(); 
@@ -146,7 +147,7 @@ export default function ProduitsBrutePage() {
     }
   }
 
-  // === VIDER LA LISTE DU LOT ACTUEL (NOUVELLE FONCTION) ===
+  // === VIDER LA LISTE DU LOT ACTUEL ===
   async function viderListeLot() {
     if (!selectedLotId) return;
     
@@ -211,7 +212,6 @@ export default function ProduitsBrutePage() {
               <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
             </label>
 
-            {/* NOUVEAU BOUTON : VIDER LA LISTE */}
             <button 
               onClick={viderListeLot}
               disabled={uploading || produits.length === 0}
@@ -276,7 +276,13 @@ export default function ProduitsBrutePage() {
                     </div>
                   </div>
                   <div className="flex gap-2 pt-4 border-t border-gray-800">
-                    <button className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center gap-1 text-sm font-medium text-gray-300 active:scale-[0.98] transition-all"><Edit2 size={14} /> Modifier</button>
+                    {/* ✅ MODIFIÉ : Bouton Modifier qui ouvre le modal */}
+                    <button 
+                      onClick={() => setSelectedProduct(produit)}
+                      className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center gap-1 text-sm font-medium text-gray-300 active:scale-[0.98] transition-all"
+                    >
+                      <Edit2 size={14} /> Modifier
+                    </button>
                     <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center active:scale-[0.98] transition-all" title="Voir QR Code"><QrCode size={16} className="text-gray-400" /></button>
                     <button onClick={() => mettreEnVente(produit.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center active:scale-[0.98] transition-all shadow-sm" title="Mettre en vente"><CheckCircle size={16} /></button>
                   </div>
@@ -286,6 +292,16 @@ export default function ProduitsBrutePage() {
           </div>
         )}
       </div>
+
+      {/* ✅ NOUVEAU : Appel du Modal Produit */}
+      {selectedProduct && (
+        <ProductModal 
+          product={selectedProduct} 
+          isOpen={!!selectedProduct} 
+          onClose={() => setSelectedProduct(null)}
+          onUpdate={fetchProduits}
+        />
+      )}
     </div>
   );
 }
