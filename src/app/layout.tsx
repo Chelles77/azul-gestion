@@ -2,7 +2,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import Navbar from '@/components/Navbar'; // ✅ Import du composant externe
+import Navbar from '@/components/Navbar'; // ✅ Seul import autorisé ici
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${inter.variable} font-sans antialiased bg-[#111111] text-white`}>
-        {/* ✅ SEUL LE COMPOSANT NAVBAR EST APPELÉ ICI */}
+        {/* ✅ Le menu est géré EXCLUSIVEMENT par le composant ci-dessous */}
         <Navbar />
         
         <main className="min-h-screen">
