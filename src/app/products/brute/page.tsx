@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import ProductModal from '@/components/ProductModal'; // ✅ NOUVEAU : Import du modal
+import ProductModal from '@/components/ProductModal';
 
 interface LotDB { id: string; numerolot: string; couttotal: number; prixneuftotal: number; coef_brut: number | null; }
 interface ProduitDB { id: string; lot_id: string; user_id: string; nom: string; marque: string | null; categorie: string; description: string | null; prix_neuf: number; coef_revient: number; prix_revient: number; qr_code: string; statut: 'brute' | 'en_vente' | 'vendu' | 'archive'; photos: string[] | null; etat_produit: string | null; etat_emballage: string | null; }
@@ -24,8 +24,6 @@ export default function ProduitsBrutePage() {
   const [filterMarque, setFilterMarque] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
   const [userId, setUserId] = useState<string>('');
-  
-  // ✅ NOUVEAU : State pour gérer le modal produit
   const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
@@ -62,7 +60,6 @@ export default function ProduitsBrutePage() {
 
   function generateQRCode(): string { return `PROD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`; }
 
-  // === IMPORT EXCEL AVEC NETTOYAGE AUTOMATIQUE ===
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedLotId || !userId) return;
@@ -70,17 +67,12 @@ export default function ProduitsBrutePage() {
     
     try {
       await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
-
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
       const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: "" });
       
-      if (jsonData.length === 0) {
-        alert("Le fichier Excel semble vide.");
-        setUploading(false);
-        return;
-      }
+      if (jsonData.length === 0) { alert("Le fichier Excel semble vide."); setUploading(false); return; }
 
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
@@ -88,13 +80,11 @@ export default function ProduitsBrutePage() {
       const priceKey = rawKeys.find(k => k.replace(/[^a-zA-Z]/g, '').toLowerCase().includes('totalretail')) || rawKeys[1];
 
       const nouveauxProduits: any[] = [];
-      
       for (const row of jsonData) {
         let rawPrice = row[priceKey]?.toString() || '0';
         rawPrice = rawPrice.replace(/[^\d.]/g, ''); 
         const prixNeuf = parseFloat(rawPrice) || 0;
         const desc = row[descKey]?.toString() || '';
-        
         if (!desc || prixNeuf <= 0) continue;
 
         const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
@@ -111,71 +101,31 @@ export default function ProduitsBrutePage() {
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
         
         nouveauxProduits.push({ 
-          lot_id: selectedLotId, 
-          user_id: userId, 
-          nom: nom.substring(0, 100), 
-          marque, 
-          categorie, 
-          description: desc.substring(0, 200), 
-          prix_neuf: prixNeuf, 
-          coef_revient: coefBrut, 
-          prix_revient: Math.round(prixNeuf * coefBrut * 100) / 100, 
-          qr_code: generateQRCode(), 
-          statut: 'brute' as const 
+          lot_id: selectedLotId, user_id: userId, nom: nom.substring(0, 100), marque, categorie, 
+          description: desc.substring(0, 200), prix_neuf: prixNeuf, coef_revient: coefBrut, 
+          prix_revient: Math.round(prixNeuf * coefBrut * 100) / 100, qr_code: generateQRCode(), statut: 'brute' as const 
         });
       }
       
-      if (nouveauxProduits.length === 0) {
-        alert("Aucun produit valide trouvé.");
-        setUploading(false);
-        return;
-      }
-
+      if (nouveauxProduits.length === 0) { alert("Aucun produit valide trouvé."); setUploading(false); return; }
       const { error } = await supabase.from('produits').insert(nouveauxProduits);
-      if (!error) { 
-        fetchProduits(); 
-        alert(`${nouveauxProduits.length} produits importés (anciens doublons supprimés) !`); 
-      } else { 
-        alert('Erreur Supabase: ' + error.message); 
-      }
-    } catch (err) { 
-      console.error(err);
-      alert('Erreur lors de la lecture du fichier Excel.'); 
-    } finally { 
-      setUploading(false); 
-      e.target.value = ''; 
-    }
+      if (!error) { fetchProduits(); alert(`${nouveauxProduits.length} produits importés !`); } 
+      else { alert('Erreur Supabase: ' + error.message); }
+    } catch (err) { console.error(err); alert('Erreur lecture Excel.'); } 
+    finally { setUploading(false); e.target.value = ''; }
   }
 
-  // === VIDER LA LISTE DU LOT ACTUEL ===
   async function viderListeLot() {
     if (!selectedLotId) return;
-    
     const lot = lots.find(l => l.id === selectedLotId);
-    const confirmMessage = `Êtes-vous sûr de vouloir supprimer TOUS les produits bruts du ${lot?.numerolot} ? Cette action est irréversible.`;
-    
-    if (!window.confirm(confirmMessage)) return;
-
+    if (!window.confirm(`Vider TOUS les produits du ${lot?.numerolot} ?`)) return;
     setUploading(true);
     try {
-      const { error } = await supabase
-        .from('produits')
-        .delete()
-        .eq('lot_id', selectedLotId)
-        .eq('statut', 'brute');
-
-      if (!error) {
-        fetchProduits();
-        alert(`La liste du ${lot?.numerolot} a été vidée avec succès.`);
-      } else {
-        alert('Erreur lors de la suppression: ' + error.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Une erreur inattendue est survenue.');
-    } finally {
-      setUploading(false);
-    }
+      const { error } = await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
+      if (!error) { fetchProduits(); alert(`Liste vidée.`); } 
+      else { alert('Erreur: ' + error.message); }
+    } catch (err) { alert('Erreur inattendue.'); } 
+    finally { setUploading(false); }
   }
 
   async function mettreEnVente(id: string) {
@@ -192,50 +142,30 @@ export default function ProduitsBrutePage() {
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Produits Bruts</h1>
             <p className="text-gray-400 mt-1">Inspection et préparation avant mise en vente</p>
           </div>
-          
-          {/* BOUTONS D'ACTION */}
           <div className="flex flex-wrap gap-3">
-            <select value={selectedLotId} onChange={(e) => setSelectedLotId(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm">
+            <select value={selectedLotId} onChange={(e) => setSelectedLotId(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
               {lots.map(lot => <option key={lot.id} value={lot.id}>Lot #{lot.numerolot} • Coef: {((lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0)) * 100).toFixed(1)}%</option>)}
             </select>
-            
-            <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all font-medium">
-              <Upload size={18} />
-              <span>{uploading ? 'Traitement...' : 'Importer Excel'}</span>
+            <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm transition-all font-medium">
+              <Upload size={18} /> <span>{uploading ? 'Traitement...' : 'Importer Excel'}</span>
               <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
             </label>
-
-            <button 
-              onClick={viderListeLot}
-              disabled={uploading || produits.length === 0}
-              className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 hover:text-red-300 border border-red-600/30 rounded-lg flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Trash2 size={18} />
-              <span>Vider la liste</span>
+            <button onClick={viderListeLot} disabled={uploading || produits.length === 0} className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg flex items-center gap-2 shadow-sm transition-all font-medium disabled:opacity-50">
+              <Trash2 size={18} /> <span>Vider la liste</span>
             </button>
           </div>
         </div>
 
-        {/* KPI COEF */}
         <div className="bg-[#1a1a1a] rounded-xl p-6 mb-6 border border-gray-800 flex justify-between items-center shadow-lg">
-          <div>
-            <span className="text-sm text-gray-400 block mb-1 uppercase tracking-wider text-xs">Coefficient d'achat du lot</span>
-            <span className="text-3xl font-bold text-blue-400">{(coefBrut * 100).toFixed(1)}%</span>
-          </div>
-          <div className="text-right">
-            <span className="text-sm text-gray-400 block mb-1 uppercase tracking-wider text-xs">Produits en attente</span>
-            <span className="text-3xl font-bold text-white">{produits.length}</span>
-          </div>
+          <div><span className="text-xs text-gray-400 uppercase tracking-wider block mb-1">Coefficient d'achat</span><span className="text-3xl font-bold text-blue-400">{(coefBrut * 100).toFixed(1)}%</span></div>
+          <div className="text-right"><span className="text-xs text-gray-400 uppercase tracking-wider block mb-1">Produits en attente</span><span className="text-3xl font-bold text-white">{produits.length}</span></div>
         </div>
 
-        {/* FILTRES */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative">
             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -248,34 +178,32 @@ export default function ProduitsBrutePage() {
           </select>
         </div>
 
-        {/* GRILLE PRODUITS */}
         {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800 shadow-lg">
-            <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut pour ce lot</p>
-            <p className="text-sm text-gray-500 mt-2">Cliquez sur "Importer Excel" pour ajouter vos produits.</p>
+            <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map(produit => (
+              // ✅ CORRECTION ICI : overflow-hidden sur la carte ET sur l'image
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col shadow-lg">
-               <div className="h-48 bg-[#252525] relative overflow-hidden border-b border-gray-800">
-  {produit.photos && produit.photos.length > 0 ? (
-    <img 
-      src={produit.photos[0]} 
-      alt={produit.nom} 
-      className="w-full h-full object-cover" 
-    />
-  ) : (
-    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-      <Upload size={32} className="mb-2" />
-      <span className="text-sm">Ajouter photo</span>
-    </div>
-  )}
-  {/* QR Code badge toujours visible */}
-  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700 z-10">
-    {produit.qrCode}
-  </div>
-</div>
+                <div className="h-48 bg-[#252525] relative overflow-hidden border-b border-gray-800">
+                  {produit.photos && produit.photos.length > 0 ? (
+                    <img 
+                      src={produit.photos[0]} 
+                      alt={produit.nom} 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                      <Upload size={32} className="mb-2" /><span className="text-sm">Ajouter photo</span>
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700 z-10">
+                    {produit.qrCode}
+                  </div>
+                </div>
+                
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">{produit.categorie}</span>
@@ -290,15 +218,11 @@ export default function ProduitsBrutePage() {
                     </div>
                   </div>
                   <div className="flex gap-2 pt-4 border-t border-gray-800">
-                    {/* ✅ MODIFIÉ : Bouton Modifier qui ouvre le modal */}
-                    <button 
-                      onClick={() => setSelectedProduct(produit)}
-                      className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center gap-1 text-sm font-medium text-gray-300 active:scale-[0.98] transition-all"
-                    >
+                    <button onClick={() => setSelectedProduct(produit)} className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center gap-1 text-sm font-medium text-gray-300 transition-all">
                       <Edit2 size={14} /> Modifier
                     </button>
-                    <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center active:scale-[0.98] transition-all" title="Voir QR Code"><QrCode size={16} className="text-gray-400" /></button>
-                    <button onClick={() => mettreEnVente(produit.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center active:scale-[0.98] transition-all shadow-sm" title="Mettre en vente"><CheckCircle size={16} /></button>
+                    <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center transition-all" title="Voir QR Code"><QrCode size={16} className="text-gray-400" /></button>
+                    <button onClick={() => mettreEnVente(produit.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all shadow-sm" title="Mettre en vente"><CheckCircle size={16} /></button>
                   </div>
                 </div>
               </div>
@@ -307,7 +231,6 @@ export default function ProduitsBrutePage() {
         )}
       </div>
 
-      {/* ✅ NOUVEAU : Appel du Modal Produit */}
       {selectedProduct && (
         <ProductModal 
           product={selectedProduct} 
