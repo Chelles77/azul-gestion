@@ -143,12 +143,33 @@ export default function PageGestionAchats() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Supprimer ce lot ?')) {
-      const supabase = createClient();
+  // ✅ MODIFICATION 1 : Fonction de suppression sécurisée avec archivage
+  const handleDelete = async (id: string, numerolot: string) => {
+    if (!window.confirm(`⚠️ ATTENTION !\n\nVoulez-vous vraiment SUPPRIMER le lot ${numerolot} ?\n\nLes produits associés seront automatiquement ARCHIVÉS (statut 'archive') et non supprimés définitivement.`)) {
+      return;
+    }
+    
+    const supabase = createClient();
+    
+    try {
+      // 1. Archiver tous les produits du lot avant suppression
+      await supabase
+        .from('produits')
+        .update({ statut: 'archive', updated_at: new Date().toISOString() })
+        .eq('lot_id', id);
+
+      // 2. Supprimer le lot lui-même
       const { error } = await supabase.from('lots').delete().eq('id', id);
-      if (!error) setLots(lots.filter(l => l.id !== id));
-      else alert('Erreur: ' + error.message);
+      
+      if (error) throw error;
+
+      // 3. Mettre à jour l'état local
+      setLots(prev => prev.filter(l => l.id !== id));
+      alert(`Lot ${numerolot} supprimé avec succès. Produits archivés.`);
+      
+    } catch (err: any) {
+      console.error(err);
+      alert('Erreur lors de la suppression: ' + err.message);
     }
   };
 
@@ -321,9 +342,11 @@ export default function PageGestionAchats() {
                     >
                       <Pencil size={16} /> Modifier
                     </button>
+                    {/* ✅ MODIFICATION 2 : Ajout de lot.numerolot dans l'appel */}
                     <button 
-                      onClick={() => handleDelete(lot.id)}
-                      className="px-3 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 rounded-lg transition-colors"
+                      onClick={() => handleDelete(lot.id, lot.numerolot)}
+                      className="px-3 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 rounded-lg transition-colors flex items-center justify-center"
+                      title="Supprimer ce lot (les produits seront archivés)"
                     >
                       <Trash2 size={16} />
                     </button>
