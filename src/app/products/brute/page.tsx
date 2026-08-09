@@ -186,22 +186,27 @@ export default function ProduitsBrutePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map(produit => (
               // ✅ CORRECTION ICI : overflow-hidden sur la carte ET sur l'image
-              <div 
+                <div 
   key={produit.id} 
   className="bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-all duration-200 flex flex-col shadow-lg"
-  style={{ overflow: 'hidden' }}
+  style={{ overflow: 'hidden' }} // ✅ Force le découpage au niveau de la carte entière
 >
-  {/* ZONE IMAGE AVEC OVERFLOW FORCÉ */}
+  {/* Zone Image */}
   <div 
-    className="h-48 bg-[#252525] relative border-b border-gray-800"
-    style={{ overflow: 'hidden' }}
+    className="relative h-48 bg-[#252525] border-b border-gray-800"
+    style={{ overflow: 'hidden' }} // ✅ Force le découpage au niveau de l'image
   >
     {produit.photos && produit.photos.length > 0 ? (
       <img 
         src={produit.photos[0]} 
         alt={produit.nom} 
         className="block w-full h-full"
-        style={{ objectFit: 'cover' }}
+        style={{ 
+          objectFit: 'cover', 
+          width: '100%', 
+          height: '100%',
+          display: 'block'
+        }} 
       />
     ) : (
       <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
@@ -210,63 +215,30 @@ export default function ProduitsBrutePage() {
       </div>
     )}
     
-    {/* Badge QR Code (toujours visible par dessus) */}
+    {/* Badge QR Code */}
     <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700 z-10">
       {produit.qrCode}
     </div>
   </div>
 
-  {/* CONTENU DE LA CARTE (Texte, Prix, Boutons) */}
+  {/* Reste de la carte (texte, prix, boutons) - inchangé */}
   <div className="p-5 flex-1 flex flex-col">
     <div className="flex justify-between items-center mb-3">
-      <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">
-        {produit.categorie}
-      </span>
-      {produit.marque && (
-        <span className="text-xs font-bold text-blue-400 bg-blue-900/30 border border-blue-800/50 px-2.5 py-1 rounded-full">
-          {produit.marque}
-        </span>
-      )}
+      <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">{produit.categorie}</span>
+      {produit.marque && <span className="text-xs font-bold text-blue-400 bg-blue-900/30 border border-blue-800/50 px-2.5 py-1 rounded-full">{produit.marque}</span>}
     </div>
-    
-    <h3 className="font-bold text-white mb-2 line-clamp-2 leading-tight">
-      {produit.nom}
-    </h3>
-    
-    <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">
-      {produit.description}
-    </p>
-    
+    <h3 className="font-bold text-white mb-2 line-clamp-2 leading-tight">{produit.nom}</h3>
+    <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">{produit.description}</p>
     <div className="mb-4 mt-auto">
-      <div className="text-2xl font-extrabold text-white mb-1">
-        {produit.prixNeuf.toFixed(0)} €
-      </div>
+      <div className="text-2xl font-extrabold text-white mb-1">{produit.prixNeuf.toFixed(0)} €</div>
       <div className="text-xs text-gray-400 bg-[#252525] inline-block px-2 py-1 rounded border border-gray-700">
-        Revient : <span className="font-bold text-gray-200">{produit.prixRevient.toFixed(0)} €</span>{' '}
-        <span className="text-gray-500">({(produit.coefRevient * 100).toFixed(0)}%)</span>
+        Revient : <span className="font-bold text-gray-200">{produit.prixRevient.toFixed(0)} €</span> <span className="text-gray-500">({(produit.coefRevient * 100).toFixed(0)}%)</span>
       </div>
     </div>
-    
     <div className="flex gap-2 pt-4 border-t border-gray-800">
-      <button 
-        onClick={() => setSelectedProduct(produit)} 
-        className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center gap-1 text-sm font-medium text-gray-300 transition-all"
-      >
-        <Edit2 size={14} /> Modifier
-      </button>
-      <button 
-        className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center transition-all" 
-        title="Voir QR Code"
-      >
-        <QrCode size={16} className="text-gray-400" />
-      </button>
-      <button 
-        onClick={() => mettreEnVente(produit.id)} 
-        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all shadow-sm" 
-        title="Mettre en vente"
-      >
-        <CheckCircle size={16} />
-      </button>
+      <button onClick={() => setSelectedProduct(produit)} className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center gap-1 text-sm font-medium text-gray-300 transition-all"><Edit2 size={14} /> Modifier</button>
+      <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center transition-all" title="Voir QR Code"><QrCode size={16} className="text-gray-400" /></button>
+      <button onClick={() => mettreEnVente(produit.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all shadow-sm" title="Mettre en vente"><CheckCircle size={16} /></button>
     </div>
   </div>
 </div>
