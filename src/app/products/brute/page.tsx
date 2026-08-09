@@ -133,10 +133,22 @@ export default function ProduitsBrutePage() {
     finally { setUploading(false); }
   }
 
-  async function mettreEnVente(id: string) {
-    const { error } = await supabase.from('produits').update({ statut: 'en_vente', updated_at: new Date().toISOString() }).eq('id', id);
-    if (!error) { setProduits(prev => prev.filter(p => p.id !== id)); router.push('/products/vente'); }
+ async function mettreEnVente(id: string) {
+  const { error } = await supabase
+    .from('produits')
+    .update({ 
+      statut: 'en_vente', 
+      updated_at: new Date().toISOString() 
+    })
+    .eq('id', id);
+    
+  if (!error) { 
+    setProduits(prev => prev.filter(p => p.id !== id));
+    // ✅ Plus de router.push('/products/vente')
+  } else {
+    alert('Erreur lors du passage en vente: ' + error.message);
   }
+}
 
   const produitsFiltres = useMemo(() => produits.filter(p => (!filterMarque || p.marque?.toLowerCase().includes(filterMarque.toLowerCase())) && (!filterCategorie || p.categorie.toLowerCase().includes(filterCategorie.toLowerCase()))), [produits, filterMarque, filterCategorie]);
   const marquesUniques = [...new Set(produits.map(p => p.marque).filter(Boolean))] as string[];

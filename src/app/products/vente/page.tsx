@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Package, QrCode, Edit2 } from 'lucide-react';
+import ValidationModal from '@/components/ValidationModal'; // Assure-toi que ce fichier existe !
 
 interface Produit {
   id: string;
@@ -23,6 +24,7 @@ interface Produit {
 export default function ProduitsEnVentePage() {
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
     async function fetchProduits() {
@@ -56,7 +58,6 @@ export default function ProduitsEnVentePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produits.map(produit => (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all">
-                {/* Image */}
                 <div className="relative h-48 bg-[#252525] flex items-center justify-center">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-contain" />
@@ -68,7 +69,6 @@ export default function ProduitsEnVentePage() {
                   </div>
                 </div>
 
-                {/* Contenu */}
                 <div className="p-5">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400">{produit.categorie}</span>
@@ -77,7 +77,6 @@ export default function ProduitsEnVentePage() {
                   
                   <h3 className="font-bold text-white mb-2 line-clamp-2">{produit.nom}</h3>
                   
-                  {/* États */}
                   <div className="space-y-1 mb-4">
                     {produit.etat_produit && (
                       <p className="text-xs text-gray-400">État: <span className="text-white">{produit.etat_produit.replace('_', ' ')}</span></p>
@@ -87,7 +86,6 @@ export default function ProduitsEnVentePage() {
                     )}
                   </div>
 
-                  {/* Prix */}
                   <div className="mb-4">
                     <div className="text-2xl font-extrabold text-green-400 mb-1">
                       {produit.prix_estime_vente ? `${produit.prix_estime_vente.toFixed(0)} €` : 'Prix non défini'}
@@ -97,9 +95,11 @@ export default function ProduitsEnVentePage() {
                     </div>
                   </div>
 
-                  {/* Boutons */}
                   <div className="flex gap-2 pt-4 border-t border-gray-800">
-                    <button className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center gap-1 text-sm text-gray-300">
+                    <button 
+                      onClick={() => setSelectedProduct(produit)}
+                      className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center gap-1 text-sm text-gray-300"
+                    >
                       <Edit2 size={14} /> Modifier
                     </button>
                     <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center">
@@ -112,6 +112,15 @@ export default function ProduitsEnVentePage() {
           </div>
         )}
       </div>
+
+      {selectedProduct && (
+        <ValidationModal 
+          product={selectedProduct} 
+          isOpen={!!selectedProduct} 
+          onClose={() => setSelectedProduct(null)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 }

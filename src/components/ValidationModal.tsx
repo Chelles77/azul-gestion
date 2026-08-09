@@ -10,12 +10,14 @@ interface Produit {
   nom: string;
   marque: string | null;
   categorie: string;
-  prixNeuf: number;
-  coefRevient: number;
-  prixRevient: number;
-  qrCode: string;
+  prix_neuf: number;
+  prix_revient: number;
+  qr_code: string;
   photos: string[] | null;
   description: string | null;
+  etat_produit: string | null;
+  etat_emballage: string | null;
+  prix_estime_vente: number | null;
 }
 
 interface ValidationModalProps {
@@ -27,23 +29,23 @@ interface ValidationModalProps {
 
 export default function ValidationModal({ product, isOpen, onClose, onSuccess }: ValidationModalProps) {
   const [nom, setNom] = useState(product.nom);
-  const [etatProduit, setEtatProduit] = useState('');
-  const [etatEmballage, setEtatEmballage] = useState('');
-  const [prixVente, setPrixVente] = useState('');
+  const [etatProduit, setEtatProduit] = useState(product.etat_produit || '');
+  const [etatEmballage, setEtatEmballage] = useState(product.etat_emballage || '');
+  const [prixVente, setPrixVente] = useState(product.prix_estime_vente?.toString() || '');
   const [description, setDescription] = useState(product.description || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Prix suggéré : 85% du prix neuf estimé (ajuste selon ta marge)
-  const prixSuggere = Math.round(product.prixNeuf * 0.85); 
+  // Prix suggéré si aucun prix n'existe
+  const prixSuggere = Math.round(product.prix_neuf * 0.85); 
 
   useEffect(() => {
     if (isOpen) {
       setNom(product.nom);
       setDescription(product.description || '');
-      setPrixVente(prixSuggere.toString());
-      setEtatProduit('');
-      setEtatEmballage('');
+      setPrixVente(product.prix_estime_vente?.toString() || prixSuggere.toString());
+      setEtatProduit(product.etat_produit || '');
+      setEtatEmballage(product.etat_emballage || '');
       setError('');
     }
   }, [isOpen, product]);
@@ -66,18 +68,17 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
           description: description,
           etat_produit: etatProduit,
           etat_emballage: etatEmballage,
-          prix_estime_vente: parseFloat(prixVente), // ✅ Nom exact de ta colonne
-          statut: 'en_vente',
+          prix_estime_vente: parseFloat(prixVente),
           updated_at: new Date().toISOString()
         })
         .eq('id', product.id);
 
       if (updateError) throw updateError;
 
-      onSuccess();
-      onClose();
+      onSuccess(); // Rafraîchir la liste
+      onClose();   // Fermer la modal
     } catch (err: any) {
-      setError(err.message || 'Erreur lors de la validation.');
+      setError(err.message || 'Erreur lors de la mise à jour.');
     } finally {
       setLoading(false);
     }
@@ -92,7 +93,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Save size={20} className="text-blue-500" /> Valider pour la Vente
+            <Save size={20} className="text-blue-500" /> Mettre à jour le produit
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors">
             <X size={24} />
@@ -105,11 +106,11 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
           <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex justify-between items-center">
             <div>
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">QR Code</p>
-              <p className="font-mono text-lg text-white">{product.qrCode}</p>
+              <p className="font-mono text-lg text-white">{product.qr_code}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">Coût Revient</p>
-              <p className="text-lg font-bold text-orange-400">{product.prixRevient.toFixed(2)} €</p>
+              <p className="text-lg font-bold text-orange-400">{product.prix_revient.toFixed(2)} €</p>
             </div>
           </div>
 
@@ -121,7 +122,6 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
               value={nom} 
               onChange={(e) => setNom(e.target.value)}
               className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none transition-colors"
-              placeholder="Ex: Dreame L10s Pro Ultra Heat"
             />
           </div>
 
@@ -139,7 +139,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
                 <option value="tres_bon_etat">🟡 Très bon état</option>
                 <option value="bon_etat"> Bon état</option>
                 <option value="occasion_comme_neuf">✨ Occasion comme neuf</option>
-                <option value="a_reparer">🔧 À réparer</option>
+                <option value="a_reparer"> À réparer</option>
                 <option value="casser_a_jeter">❌ Casser / À jeter</option>
               </select>
             </div>
@@ -180,7 +180,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">€</span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Marge estimée : {((parseFloat(prixVente || '0') - product.prixRevient) / Math.max(parseFloat(prixVente || '1'), 1) * 100).toFixed(1)}%
+              Marge estimée : {((parseFloat(prixVente || '0') - product.prix_revient) / Math.max(parseFloat(prixVente || '1'), 1) * 100).toFixed(1)}%
             </p>
           </div>
 
@@ -221,11 +221,11 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  Validation...
+                  Enregistrement...
                 </>
               ) : (
                 <>
-                  <Save size={18} /> Valider & Mettre en Vente
+                  <Save size={18} /> Enregistrer les modifications
                 </>
               )}
             </button>
