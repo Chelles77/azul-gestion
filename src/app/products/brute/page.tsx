@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { QrCode, Upload, Edit2, CheckCircle, Package, Filter } from 'lucide-react';
+import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 interface LotDB { id: string; numerolot: string; couttotal: number; prixneuftotal: number; coef_brut: number | null; }
@@ -66,7 +66,6 @@ export default function ProduitsBrutePage() {
     
     try {
       // 1. NETTOYAGE : On supprime TOUS les produits bruts existants pour ce lot
-      // Cela évite les doublons si on réimporte le même fichier
       await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
 
       const data = await file.arrayBuffer();
@@ -147,6 +146,37 @@ export default function ProduitsBrutePage() {
     }
   }
 
+  // === VIDER LA LISTE DU LOT ACTUEL (NOUVELLE FONCTION) ===
+  async function viderListeLot() {
+    if (!selectedLotId) return;
+    
+    const lot = lots.find(l => l.id === selectedLotId);
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer TOUS les produits bruts du ${lot?.numerolot} ? Cette action est irréversible.`;
+    
+    if (!window.confirm(confirmMessage)) return;
+
+    setUploading(true);
+    try {
+      const { error } = await supabase
+        .from('produits')
+        .delete()
+        .eq('lot_id', selectedLotId)
+        .eq('statut', 'brute');
+
+      if (!error) {
+        fetchProduits();
+        alert(`La liste du ${lot?.numerolot} a été vidée avec succès.`);
+      } else {
+        alert('Erreur lors de la suppression: ' + error.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Une erreur inattendue est survenue.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function mettreEnVente(id: string) {
     const { error } = await supabase.from('produits').update({ statut: 'en_vente', updated_at: new Date().toISOString() }).eq('id', id);
     if (!error) { setProduits(prev => prev.filter(p => p.id !== id)); router.push('/products/vente'); }
@@ -168,6 +198,8 @@ export default function ProduitsBrutePage() {
             <h1 className="text-3xl font-bold text-white">Produits Bruts</h1>
             <p className="text-gray-400 mt-1">Inspection et préparation avant mise en vente</p>
           </div>
+          
+          {/* BOUTONS D'ACTION */}
           <div className="flex flex-wrap gap-3">
             <select value={selectedLotId} onChange={(e) => setSelectedLotId(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm">
               {lots.map(lot => <option key={lot.id} value={lot.id}>Lot #{lot.numerolot} • Coef: {((lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0)) * 100).toFixed(1)}%</option>)}
@@ -175,9 +207,19 @@ export default function ProduitsBrutePage() {
             
             <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all font-medium">
               <Upload size={18} />
-              <span>{uploading ? 'Mise à jour...' : 'Importer Excel'}</span>
+              <span>{uploading ? 'Traitement...' : 'Importer Excel'}</span>
               <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
             </label>
+
+            {/* NOUVEAU BOUTON : VIDER LA LISTE */}
+            <button 
+              onClick={viderListeLot}
+              disabled={uploading || produits.length === 0}
+              className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 hover:text-red-300 border border-red-600/30 rounded-lg flex items-center gap-2 shadow-sm active:scale-[0.98] transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 size={18} />
+              <span>Vider la liste</span>
+            </button>
           </div>
         </div>
 
