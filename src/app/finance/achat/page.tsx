@@ -157,12 +157,12 @@ export default function PageGestionAchats() {
     if (!user) return;
     setSaving(true);
     
-    const newLotData = {
+       const newLotData = {
       user_id: user.id,
       numerolot: formData.numeroLot,
       dateachat: formData.dateAchat,
       source: formData.source,
-      prixAchat: prixAchatNum,
+      prixachat: prixAchatNum, // ✅ CORRIGÉ : tout en minuscules comme dans Supabase
       fraisport: fraisPortNum,
       fraisencheres: fraisEncheresNum,
       couttotal: coutTotal,
