@@ -26,36 +26,38 @@ export default function ProductModal({ product, isOpen, onClose, onUpdate }: Pro
   if (!isOpen) return null;
 
   // Gestion upload photo
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !product.id) return;
+// Gestion upload photo
+async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  const file = e.target.files?.[0];
+  if (!file || !product.id) return;
+  
+  setUploadingPhoto(true);
+  try {
+    const filePath = `${product.lot_id}/${product.id}/${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage
+      .from('product-photos')
+      .upload(filePath, file);
     
-    setUploadingPhoto(true);
-    try {
-      const filePath = `${product.lot_id}/${product.id}/${Date.now()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from('product-photos') // Assure-toi que ce bucket existe dans Supabase
-        .upload(filePath, file);
-      
-      if (uploadError) throw uploadError;
+    if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-photos')
-        .getPublicUrl(filePath);
+    const { data: { publicUrl } } = supabase.storage
+      .from('product-photos')
+      .getPublicUrl(filePath);
 
-      // Mettre à jour la DB
-      const newPhotos = [...(formData.photos || []), publicUrl];
-      await supabase.from('produits').update({ photos: newPhotos }).eq('id', product.id);
-      
-      setFormData(prev => ({ ...prev, photos: newPhotos }));
-      onUpdate();
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'upload");
-    } finally {
-      setUploadingPhoto(false);
-    }
+    // Mettre à jour la DB
+    const newPhotos = [...(formData.photos || []), publicUrl];
+    await supabase.from('produits').update({ photos: newPhotos }).eq('id', product.id);
+    
+    // ✅ CORRECTION ICI : ajout du type 'any' pour prev
+    setFormData((prev: any) => ({ ...prev, photos: newPhotos }));
+    onUpdate();
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de l'upload");
+  } finally {
+    setUploadingPhoto(false);
   }
+}
 
   // Sauvegarde des modifications texte
   async function handleSave() {
