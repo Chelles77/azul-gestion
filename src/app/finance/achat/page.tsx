@@ -143,12 +143,33 @@ export default function PageGestionAchats() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Supprimer ce lot ?')) {
-      const supabase = createClient();
+  // ✅ MODIFICATION 1 : Fonction de suppression sécurisée avec archivage
+  const handleDelete = async (id: string, numerolot: string) => {
+    if (!window.confirm(`⚠️ ATTENTION !\n\nVoulez-vous vraiment SUPPRIMER le lot ${numerolot} ?\n\nLes produits associés seront automatiquement ARCHIVÉS (statut 'archive') et non supprimés définitivement.`)) {
+      return;
+    }
+    
+    const supabase = createClient();
+    
+    try {
+      // 1. Archiver tous les produits du lot avant suppression
+      await supabase
+        .from('produits')
+        .update({ statut: 'archive', updated_at: new Date().toISOString() })
+        .eq('lot_id', id);
+
+      // 2. Supprimer le lot lui-même
       const { error } = await supabase.from('lots').delete().eq('id', id);
-      if (!error) setLots(lots.filter(l => l.id !== id));
-      else alert('Erreur: ' + error.message);
+      
+      if (error) throw error;
+
+      // 3. Mettre à jour l'état local
+      setLots(prev => prev.filter(l => l.id !== id));
+      alert(`Lot ${numerolot} supprimé avec succès. Produits archivés.`);
+      
+    } catch (err: any) {
+      console.error(err);
+      alert('Erreur lors de la suppression: ' + err.message);
     }
   };
 
@@ -157,12 +178,12 @@ export default function PageGestionAchats() {
     if (!user) return;
     setSaving(true);
     
-    const newLotData = {
+       const newLotData = {
       user_id: user.id,
       numerolot: formData.numeroLot,
       dateachat: formData.dateAchat,
       source: formData.source,
-      prixAchat: prixAchatNum,
+      prixachat: prixAchatNum, // ✅ CORRIGÉ : tout en minuscules comme dans Supabase
       fraisport: fraisPortNum,
       fraisencheres: fraisEncheresNum,
       couttotal: coutTotal,
@@ -211,61 +232,7 @@ export default function PageGestionAchats() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white font-sans">
-      {/* NAVBAR */}
-      <nav className="bg-[#1a1a1a] border-b border-gray-800 sticky top-0 z-40 shadow-md">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 w-full">
-            <div className="flex-shrink-0 flex items-center gap-3 cursor-pointer" onClick={() => router.push('/')}>
-              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-blue-900/50">A</div>
-              <span className="font-bold text-xl tracking-tight text-white hidden sm:block">AZUL<span className="text-blue-500">GESTION</span></span>
-            </div>
-            
-            <div className="hidden md:flex flex-1 justify-center items-center h-full">
-              <button onClick={() => router.push('/')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Accueil</button>
-              
-              <div className="relative group h-full flex items-center">
-                <button className="h-full flex items-center gap-1 px-4 text-white font-medium transition-colors border-b-2 border-blue-500">Produits <ChevronDown size={16} /></button>
-                <div className="absolute top-full left-0 mt-0 w-48 bg-[#252525] border border-gray-700 rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
-                  <button onClick={() => router.push('/products/brute')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Produit Brute</button>
-                  <button onClick={() => router.push('/products/vente')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Vente</button>
-                  <button onClick={() => router.push('/products/archives')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Vendu / Archiver</button>
-                </div>
-              </div>
-
-              <div className="relative group h-full flex items-center">
-                <button className="h-full flex items-center gap-1 px-4 text-white font-medium transition-colors border-b-2 border-blue-500">Finance <ChevronDown size={16} /></button>
-                <div className="absolute top-full left-0 mt-0 w-56 bg-[#252525] border border-gray-700 rounded-b-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
-                  <button onClick={() => router.push('/finance/achat')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Achat</button>
-                  <button onClick={() => router.push('/finance/suivi')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Suivi / Entrée / Sortie</button>
-                  <button onClick={() => router.push('/finance/analytics')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Analytique</button>
-                  <button onClick={() => router.push('/finance/simulateur')} className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">Simulateur d'achat</button>
-                </div>
-              </div>
-
-              <button onClick={() => router.push('/organizer')} className="h-full flex items-center px-4 text-gray-400 font-medium hover:text-white transition-colors border-b-2 border-transparent hover:border-blue-500">Organisateur</button>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <span className="hidden lg:block text-sm text-gray-400 bg-[#252525] px-3 py-1.5 rounded-full border border-gray-700 truncate max-w-[200px]">{user.email}</span>
-              <button onClick={handleLogout} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-all shadow-lg shadow-red-900/20 active:scale-95 whitespace-nowrap">Déconnexion</button>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden text-gray-400 hover:text-white p-2">{mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}</button>
-            </div>
-          </div>
-        </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-[#1a1a1a] border-t border-gray-800 px-4 py-4 space-y-2 animate-in slide-in-from-top-2">
-            <button onClick={() => { router.push('/'); setMobileMenuOpen(false); }} className="block w-full text-left text-white font-medium py-3 px-2 rounded hover:bg-white/5">Accueil</button>
-            <button className="block w-full text-left text-gray-400 font-medium py-3 px-2 rounded hover:bg-white/5">Produits</button>
-            <button className="block w-full text-left text-gray-400 font-medium py-3 px-2 rounded hover:bg-white/5">Finance</button>
-            <button className="block w-full text-left text-gray-400 font-medium py-3 px-2 rounded hover:bg-white/5">Organisateur</button>
-            <div className="pt-4 mt-2 border-t border-gray-800">
-              <p className="text-xs text-gray-500 mb-2 px-2">{user.email}</p>
-              <button onClick={handleLogout} className="w-full py-2 bg-red-600/20 text-red-400 rounded-lg text-sm font-bold">Se déconnecter</button>
-            </div>
-          </div>
-        )}
-      </nav>
+   
 
       {/* MAIN CONTENT */}
       <div className="p-6">
@@ -375,9 +342,11 @@ export default function PageGestionAchats() {
                     >
                       <Pencil size={16} /> Modifier
                     </button>
+                    {/* ✅ MODIFICATION 2 : Ajout de lot.numerolot dans l'appel */}
                     <button 
-                      onClick={() => handleDelete(lot.id)}
-                      className="px-3 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 rounded-lg transition-colors"
+                      onClick={() => handleDelete(lot.id, lot.numerolot)}
+                      className="px-3 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 rounded-lg transition-colors flex items-center justify-center"
+                      title="Supprimer ce lot (les produits seront archivés)"
                     >
                       <Trash2 size={16} />
                     </button>
