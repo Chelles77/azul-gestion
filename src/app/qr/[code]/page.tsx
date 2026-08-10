@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
 import { Edit2, Save, X, Check, AlertCircle } from 'lucide-react';
@@ -9,11 +9,13 @@ import { Edit2, Save, X, Check, AlertCircle } from 'lucide-react';
 export default function QRProductPage() {
   const params = useParams();
   const code = params.code as string;
+  const router = useRouter();
 
   const [product, setProduct] = useState<Produit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
   const [editData, setEditData] = useState({
     nom: '',
     description: '',
@@ -24,10 +26,25 @@ export default function QRProductPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (code) {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (code && authenticated) {
       loadProduct();
     }
-  }, [code]);
+  }, [code, authenticated]);
+
+  const checkAuth = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    setAuthenticated(true);
+  };
 
   const loadProduct = async () => {
     try {

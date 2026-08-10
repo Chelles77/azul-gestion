@@ -69,6 +69,9 @@ export default function Navbar() {
 
             {/* Organisateur */}
             <Link href="/organisateur" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Organisateur</Link>
+
+            {/* Collaborateurs */}
+            <Link href="/collaborateurs" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Collaborateurs</Link>
           </div>
 
           {/* 3. ACTIONS DROITE (Déconnexion + Hamburger) */}
@@ -128,7 +131,9 @@ export default function Navbar() {
             )}
           </div>
 
-          <Link href="/organisateur" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium">Organisateur</Link>
+          <Link href="/organisateur" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium border-b border-gray-800/50 pb-3">Organisateur</Link>
+
+          <Link href="/collaborateurs" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium">Collaborateurs</Link>
         </div>
       )}
     </nav>
