@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, Upload, CheckCircle2, Download, Printer } from 'lucide-react';
-import QRCode from 'qrcode.react';
+import QRCode from 'qrcode';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
 
@@ -23,7 +23,6 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const qrRef = useRef<any>(null);
 
   // Checklist
   const [checks, setChecks] = useState({
@@ -32,8 +31,18 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
     emballage: false,
     prix: false,
   });
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   const prixSuggere = product ? Math.round(product.prix_neuf * 0.85) : 0;
+
+  // Générer le QR code
+  useEffect(() => {
+    if (product && isOpen) {
+      QRCode.toDataURL(product.qr_code)
+        .then(url => setQrDataUrl(url))
+        .catch(err => console.error('QR Error:', err));
+    }
+  }, [product, isOpen]);
 
   useEffect(() => {
     if (product && isOpen) {
@@ -84,25 +93,21 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   };
 
   const handleDownloadQR = () => {
-    if (!qrRef.current) return;
-    const canvas = qrRef.current.querySelector('canvas');
-    if (!canvas) return;
+    if (!qrDataUrl) return;
     const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
+    link.href = qrDataUrl;
     link.download = `QR-${product?.qr_code}.png`;
     link.click();
   };
 
   const handlePrintQR = () => {
-    if (!qrRef.current) return;
-    const canvas = qrRef.current.querySelector('canvas');
-    if (!canvas) return;
+    if (!qrDataUrl) return;
     const printWindow = window.open('', '_blank');
     printWindow?.document.write(`
       <html>
         <head><title>QR Code - ${product?.qr_code}</title></head>
         <body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
-          <img src="${canvas.toDataURL('image/png')}" style="max-width: 400px;" />
+          <img src="${qrDataUrl}" style="max-width: 400px;" />
         </body>
       </html>
     `);
@@ -225,21 +230,27 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
             {/* QR Code */}
             <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
               <p className="text-sm font-bold text-gray-300 uppercase">QR Code Identifiant</p>
-              <div ref={qrRef} className="border border-gray-700 rounded-lg bg-white p-2">
-                <QRCode value={product.qr_code} size={160} level="H" includeMargin={false} />
-              </div>
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
+              ) : (
+                <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
+                  <span className="text-gray-400 text-sm">Génération...</span>
+                </div>
+              )}
               <div className="flex gap-2 w-full">
                 <button
                   type="button"
                   onClick={handlePrintQR}
-                  className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1"
+                  disabled={!qrDataUrl}
+                  className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
                 >
                   <Printer size={14} /> Imprimer
                 </button>
                 <button
                   type="button"
                   onClick={handleDownloadQR}
-                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1"
+                  disabled={!qrDataUrl}
+                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
                 >
                   <Download size={14} /> Télécharger
                 </button>
