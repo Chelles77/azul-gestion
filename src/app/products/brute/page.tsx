@@ -276,6 +276,7 @@ export default function ProduitsBrutePage() {
         )}
       </div>
 
+      {/* MODAL DE VALIDATION */}
       {selectedProduct && (
         <ValidationModal 
           product={selectedProduct} 
