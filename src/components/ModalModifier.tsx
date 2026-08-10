@@ -128,6 +128,56 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* INFO FINANCIÈRE + QR CODE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Infos Financières */}
+            <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 space-y-3">
+              <p className="text-sm font-bold text-gray-300 uppercase">💰 Infos Financières</p>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Prix Neuf</p>
+                <p className="text-lg font-bold text-white">{product?.prix_neuf.toFixed(2)} €</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Prix de Revient</p>
+                <p className="text-lg font-bold text-orange-400">{product?.prix_revient.toFixed(2)} €</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Coeff. d'Achat</p>
+                <p className="text-lg font-bold text-blue-400">{(product?.coef_revient || 0).toFixed(1)}x ({((product?.coef_revient || 0) * 100).toFixed(1)}%)</p>
+              </div>
+            </div>
+
+            {/* QR Code */}
+            <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
+              <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code</p>
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
+              ) : (
+                <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
+                  <span className="text-gray-400 text-sm">Génération...</span>
+                </div>
+              )}
+              <div className="flex gap-2 w-full">
+                <button
+                  type="button"
+                  onClick={handlePrintQR}
+                  disabled={!qrDataUrl}
+                  className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  <Printer size={14} /> Imprimer
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadQR}
+                  disabled={!qrDataUrl}
+                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+                >
+                  <Download size={14} /> Télécharger
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Photo */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Photo du Produit</label>
@@ -179,36 +229,6 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
               rows={4}
               className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none resize-none"
             />
-          </div>
-
-          {/* QR Code */}
-          <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
-            <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code Identifiant</p>
-            {qrDataUrl ? (
-              <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
-            ) : (
-              <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
-                <span className="text-gray-400 text-sm">Génération...</span>
-              </div>
-            )}
-            <div className="flex gap-2 w-full">
-              <button
-                type="button"
-                onClick={handlePrintQR}
-                disabled={!qrDataUrl}
-                className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-              >
-                <Printer size={14} /> Imprimer
-              </button>
-              <button
-                type="button"
-                onClick={handleDownloadQR}
-                disabled={!qrDataUrl}
-                className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-              >
-                <Download size={14} /> Télécharger
-              </button>
-            </div>
           </div>
 
           {/* Erreur */}
