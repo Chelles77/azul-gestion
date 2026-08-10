@@ -129,22 +129,26 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* INFO FINANCIÈRE + QR CODE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Infos Financières */}
-            <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 space-y-3">
-              <p className="text-sm font-bold text-gray-300 uppercase">💰 Infos Financières</p>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Prix Neuf</p>
-                <p className="text-lg font-bold text-white">{product?.prix_neuf.toFixed(2)} €</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Prix de Revient</p>
-                <p className="text-lg font-bold text-orange-400">{product?.prix_revient.toFixed(2)} €</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Coeff. d'Achat</p>
-                <p className="text-lg font-bold text-blue-400">{(product?.coef_revient || 0).toFixed(1)}x ({((product?.coef_revient || 0) * 100).toFixed(1)}%)</p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Prix Neuf */}
+            <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">💵 Prix Neuf</p>
+              <p className="text-4xl font-bold text-white">{product?.prix_neuf.toFixed(0)}</p>
+              <p className="text-lg text-gray-400">€</p>
+            </div>
+
+            {/* Prix Revient */}
+            <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">💰 Prix Revient</p>
+              <p className="text-4xl font-bold text-orange-400">{product?.prix_revient.toFixed(0)}</p>
+              <p className="text-lg text-gray-400">€</p>
+            </div>
+
+            {/* Coefficient */}
+            <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">📊 Coeff. Achat</p>
+              <p className="text-4xl font-bold text-blue-400">{((product?.coef_revient || 0) * 100).toFixed(1)}%</p>
+              <p className="text-xs text-gray-400">= {(product?.coef_revient || 0).toFixed(3)}x</p>
             </div>
 
             {/* QR Code */}
