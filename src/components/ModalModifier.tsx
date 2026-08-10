@@ -21,6 +21,7 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const [lotInfo, setLotInfo] = useState<any>(null);
 
   useEffect(() => {
     if (product && isOpen) {
@@ -28,6 +29,18 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
       setDescription(product.description || '');
       setPhotoPreview(product.photos?.[0] || null);
       setError('');
+
+      // Charger les infos du lot
+      const supabase = createClient();
+      supabase
+        .from('lots')
+        .select('*')
+        .eq('id', product.lot_id)
+        .single()
+        .then(({ data }) => {
+          if (data) setLotInfo(data);
+        })
+        .catch(err => console.error('Lot Error:', err));
 
       // Générer QR code
       QRCode.toDataURL(product.qr_code)
@@ -129,7 +142,14 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* INFO FINANCIÈRE + QR CODE */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            {/* Numéro Lot */}
+            <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">📦 Lot</p>
+              <p className="text-2xl font-bold text-purple-400">{lotInfo?.numerolot || '...'}</p>
+              <p className="text-xs text-gray-500 mt-1">{lotInfo?.dateachat ? new Date(lotInfo.dateachat).toLocaleDateString('fr-FR') : ''}</p>
+            </div>
+
             {/* Prix Neuf */}
             <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
               <p className="text-xs text-gray-400 uppercase font-bold mb-2">💵 Prix Neuf</p>
