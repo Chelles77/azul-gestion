@@ -34,10 +34,10 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
     if (isOpen) {
       setNom(product.nom);
       setDescription(product.description || '');
-      setPrixVente(product.prix_estime_vente?.toString() || prixSuggere.toString());
-      setEtatProduit(product.etat_produit || '');
-      setEtatEmballage(product.etat_emballage || '');
-      setPhotoPreview(product.photos?.[0] || null); // ✅ Reset preview on open
+      setPrixVente(product.prixEstimeVente?.toString() || prixSuggere.toString());
+      setEtatProduit(product.etatProduit || '');
+      setEtatEmballage(product.etatEmballage || '');
+      setPhotoPreview(product.photos?.[0] || null);
       setError('');
     }
   }, [isOpen, product]);
