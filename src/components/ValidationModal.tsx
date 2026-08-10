@@ -87,7 +87,8 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
           etat_produit: etatProduit,
           etat_emballage: etatEmballage,
           prix_estime_vente: parseFloat(prixVente),
-          photos: photosArray, // ✅ Mise à jour de la colonne photos
+          photos: photosArray,
+          statut: 'en_vente',
           updated_at: new Date().toISOString()
         })
         .eq('id', product.id);
