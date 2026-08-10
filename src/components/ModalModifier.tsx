@@ -42,8 +42,9 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         if (error) console.error('Lot Error:', error);
       })();
 
-      // Générer QR code
-      QRCode.toDataURL(product.qr_code)
+      // Générer QR code avec URL complète
+      const qrUrl = `https://azul-gestion.vercel.app/qr/${product.qr_code}`;
+      QRCode.toDataURL(qrUrl)
         .then(url => setQrDataUrl(url))
         .catch(err => console.error('QR Error:', err));
     }

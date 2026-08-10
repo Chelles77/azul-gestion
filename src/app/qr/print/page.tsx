@@ -47,11 +47,12 @@ export default function QRPrintPage() {
       const { data } = await query.order('created_at', { ascending: false });
       setProducts(data || []);
 
-      // Générer tous les QR codes
+      // Générer tous les QR codes avec URL complète
       const qrMap: Record<string, string> = {};
       for (const product of data || []) {
         try {
-          const url = await QRCode.toDataURL(product.qr_code, {
+          const qrUrl = `https://azul-gestion.vercel.app/qr/${product.qr_code}`;
+          const url = await QRCode.toDataURL(qrUrl, {
             width: 200,
             margin: 1,
             color: { dark: '#000000', light: '#FFFFFF' }

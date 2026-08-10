@@ -73,3 +73,5 @@ Au caractère Ligne:1 : 1
  GET /login 200 in 40ms (next.js: 12ms, application-code: 28ms)
 ✓ Compiled in 327ms
  GET /login 200 in 58ms (next.js: 23ms, application-code: 36ms)
+✓ Compiled in 201ms
+ GET /login 200 in 51ms (next.js: 21ms, application-code: 30ms)
