@@ -134,19 +134,19 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
           .scrollbar-hide::-webkit-scrollbar { display: none; }
         `}</style>
         {/* Header */}
-        <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
-          <div className="flex items-center gap-4">
+        <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-4 z-10">
+          <div className="flex justify-between items-start mb-2">
             <div className="flex items-center gap-2">
               <Save size={20} className="text-blue-500" />
-              <div>
-                <h2 className="text-lg font-bold text-white">Modifier le produit</h2>
-                <p className="text-xs text-purple-400 font-bold">📦 Lot: {lotInfo?.numerolot || 'Chargement...'}</p>
-              </div>
+              <span className="text-white font-bold">Modifier le produit</span>
             </div>
+            <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white -mr-2">
+              <X size={24} />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
-            <X size={24} />
-          </button>
+          <div className="bg-purple-900/30 border border-purple-700 rounded-lg px-3 py-2">
+            <p className="text-lg font-bold text-purple-300">📦 {lotInfo?.numerolot || '...'}</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
