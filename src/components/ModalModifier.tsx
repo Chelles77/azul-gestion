@@ -150,13 +150,6 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* NUMÉRO LOT - BIEN EN ÉVIDENCE */}
-          <div className="bg-gradient-to-r from-purple-900/40 to-purple-900/20 p-6 rounded-xl border border-purple-600 shadow-lg">
-            <p className="text-xs text-purple-300 uppercase font-bold mb-2">📦 Lot</p>
-            <p className="text-3xl font-bold text-purple-300">{lotInfo?.numerolot || '...'}</p>
-            <p className="text-sm text-purple-400 mt-1">{lotInfo?.dateachat ? new Date(lotInfo.dateachat).toLocaleDateString('fr-FR') : ''}</p>
-          </div>
-
           {/* INFO FINANCIÈRE + QR CODE */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Prix Neuf */}
