@@ -129,7 +129,10 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+        `}</style>
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -141,15 +144,15 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* INFO FINANCIÈRE + QR CODE */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            {/* Numéro Lot */}
-            <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700 shadow-lg">
-              <p className="text-xs text-gray-400 uppercase font-bold mb-2">📦 Lot</p>
-              <p className="text-2xl font-bold text-purple-400">{lotInfo?.numerolot || '...'}</p>
-              <p className="text-xs text-gray-500 mt-1">{lotInfo?.dateachat ? new Date(lotInfo.dateachat).toLocaleDateString('fr-FR') : ''}</p>
-            </div>
+          {/* NUMÉRO LOT - BIEN EN ÉVIDENCE */}
+          <div className="bg-gradient-to-r from-purple-900/40 to-purple-900/20 p-6 rounded-xl border border-purple-600 shadow-lg">
+            <p className="text-xs text-purple-300 uppercase font-bold mb-2">📦 Lot</p>
+            <p className="text-3xl font-bold text-purple-300">{lotInfo?.numerolot || '...'}</p>
+            <p className="text-sm text-purple-400 mt-1">{lotInfo?.dateachat ? new Date(lotInfo.dateachat).toLocaleDateString('fr-FR') : ''}</p>
+          </div>
 
+          {/* INFO FINANCIÈRE + QR CODE */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Prix Neuf */}
             <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
               <p className="text-xs text-gray-400 uppercase font-bold mb-2">💵 Prix Neuf</p>
@@ -170,35 +173,35 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
               <p className="text-4xl font-bold text-blue-400">{((product?.coef_revient || 0) * 100).toFixed(1)}%</p>
               <p className="text-xs text-gray-400">= {(product?.coef_revient || 0).toFixed(3)}x</p>
             </div>
+          </div>
 
-            {/* QR Code */}
-            <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
-              <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code</p>
-              {qrDataUrl ? (
-                <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
-              ) : (
-                <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
-                  <span className="text-gray-400 text-sm">Génération...</span>
-                </div>
-              )}
-              <div className="flex gap-2 w-full">
-                <button
-                  type="button"
-                  onClick={handlePrintQR}
-                  disabled={!qrDataUrl}
-                  className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-                >
-                  <Printer size={14} /> Imprimer
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadQR}
-                  disabled={!qrDataUrl}
-                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-                >
-                  <Download size={14} /> Télécharger
-                </button>
+          {/* QR Code */}
+          <div className="bg-[#252525] p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
+            <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code</p>
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
+            ) : (
+              <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
+                <span className="text-gray-400 text-sm">Génération...</span>
               </div>
+            )}
+            <div className="flex gap-2 w-full max-w-xs">
+              <button
+                type="button"
+                onClick={handlePrintQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Printer size={14} /> Imprimer
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Download size={14} /> Télécharger
+              </button>
             </div>
           </div>
 
