@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Upload } from 'lucide-react';
+import { X, Save, AlertCircle, Upload, Download, Printer } from 'lucide-react';
+import QRCode from 'qrcode';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
 
@@ -19,6 +20,7 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   useEffect(() => {
     if (product && isOpen) {
@@ -26,8 +28,36 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
       setDescription(product.description || '');
       setPhotoPreview(product.photos?.[0] || null);
       setError('');
+
+      // Générer QR code
+      QRCode.toDataURL(product.qr_code)
+        .then(url => setQrDataUrl(url))
+        .catch(err => console.error('QR Error:', err));
     }
   }, [product, isOpen]);
+
+  const handleDownloadQR = () => {
+    if (!qrDataUrl) return;
+    const link = document.createElement('a');
+    link.href = qrDataUrl;
+    link.download = `QR-${product?.qr_code}.png`;
+    link.click();
+  };
+
+  const handlePrintQR = () => {
+    if (!qrDataUrl) return;
+    const printWindow = window.open('', '_blank');
+    printWindow?.document.write(`
+      <html>
+        <head><title>QR Code - ${product?.qr_code}</title></head>
+        <body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+          <img src="${qrDataUrl}" style="max-width: 400px;" />
+        </body>
+      </html>
+    `);
+    printWindow?.document.close();
+    printWindow?.print();
+  };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -149,6 +179,36 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
               rows={4}
               className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none resize-none"
             />
+          </div>
+
+          {/* QR Code */}
+          <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
+            <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code Identifiant</p>
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
+            ) : (
+              <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
+                <span className="text-gray-400 text-sm">Génération...</span>
+              </div>
+            )}
+            <div className="flex gap-2 w-full">
+              <button
+                type="button"
+                onClick={handlePrintQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Printer size={14} /> Imprimer
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Download size={14} /> Télécharger
+              </button>
+            </div>
           </div>
 
           {/* Erreur */}
