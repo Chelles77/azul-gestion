@@ -188,7 +188,7 @@ export default function ProduitsBrutePage() {
             </select>
             <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm transition-all font-medium">
               <Upload size={18} /> <span>{uploading ? 'Traitement...' : 'Importer Excel'}</span>
-              <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="hidden" disabled={uploading || !userId} />
+              <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="absolute w-0 h-0 opacity-0" disabled={uploading || !userId} />
             </label>
             <button onClick={viderListeLot} disabled={uploading || produits.length === 0} className="px-4 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg flex items-center gap-2 shadow-sm transition-all font-medium disabled:opacity-50">
               <Trash2 size={18} /> <span>Vider la liste</span>
