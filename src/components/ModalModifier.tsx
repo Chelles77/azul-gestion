@@ -135,9 +135,15 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         `}</style>
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Save size={20} className="text-blue-500" /> Modifier le produit
-          </h2>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Save size={20} className="text-blue-500" />
+              <div>
+                <h2 className="text-lg font-bold text-white">Modifier le produit</h2>
+                <p className="text-xs text-purple-400 font-bold">📦 Lot: {lotInfo?.numerolot || 'Chargement...'}</p>
+              </div>
+            </div>
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
             <X size={24} />
           </button>
