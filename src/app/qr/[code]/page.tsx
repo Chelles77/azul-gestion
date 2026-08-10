@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
 import { Edit2, Save, X, Check, AlertCircle } from 'lucide-react';
 
-export default function QRProductPage({ params }: { params: { code: string } }) {
+export default function QRProductPage() {
+  const params = useParams();
+  const code = params.code as string;
+
   const [product, setProduct] = useState<Produit | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -20,8 +24,10 @@ export default function QRProductPage({ params }: { params: { code: string } }) 
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadProduct();
-  }, [params.code]);
+    if (code) {
+      loadProduct();
+    }
+  }, [code]);
 
   const loadProduct = async () => {
     try {
@@ -97,7 +103,9 @@ export default function QRProductPage({ params }: { params: { code: string } }) 
           <AlertCircle size={48} className="mx-auto text-red-400 mb-4" />
           <p className="text-lg font-bold mb-2">Produit non trouvé</p>
           <p className="text-sm text-gray-400 mb-4">{error || 'Le QR code ne correspond à aucun produit'}</p>
-          <p className="text-xs text-gray-500 bg-[#252525] p-2 rounded font-mono">Code: {params.code}</p>
+          <p className="text-xs text-gray-500 bg-[#252525] p-3 rounded font-mono break-all">
+            Code scanné:<br/><span className="text-blue-400 font-bold">{code || 'N/A'}</span>
+          </p>
         </div>
       </div>
     );
