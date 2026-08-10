@@ -284,7 +284,8 @@ export default function ProduitsBrutePage() {
             setSelectedProduct(null);
           }}
         />
-      )}
+           )}
     </div>
   );
 }
+}   ← ← ← AJOUTE CETTE DEUXIÈME ACCOLADE ICI
