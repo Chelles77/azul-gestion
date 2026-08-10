@@ -96,7 +96,8 @@ export default function QRProductPage({ params }: { params: { code: string } }) 
         <div className="bg-red-900/20 border border-red-800 rounded-lg p-6 text-center max-w-sm">
           <AlertCircle size={48} className="mx-auto text-red-400 mb-4" />
           <p className="text-lg font-bold mb-2">Produit non trouvé</p>
-          <p className="text-sm text-gray-400">{error || 'Le QR code ne correspond à aucun produit'}</p>
+          <p className="text-sm text-gray-400 mb-4">{error || 'Le QR code ne correspond à aucun produit'}</p>
+          <p className="text-xs text-gray-500 bg-[#252525] p-2 rounded font-mono">Code: {params.code}</p>
         </div>
       </div>
     );
