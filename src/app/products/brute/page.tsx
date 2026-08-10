@@ -218,9 +218,10 @@ export default function ProduitsBrutePage() {
           </select>
         </div>
 
-        {produitsFiltres.length === 0 ? (
+               {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800 shadow-lg">
-            <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut</p>
+            <Package size={48} className="mx-auto text-gray-600 mb-4" />
+            <p className="text-gray-400 text-lg">Aucun produit brut</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -239,7 +240,6 @@ export default function ProduitsBrutePage() {
                     {produit.qrCode}
                   </div>
                 </div>
-
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">{produit.categorie}</span>
@@ -274,19 +274,3 @@ export default function ProduitsBrutePage() {
             ))}
           </div>
         )}
-      </div>
-
-      {selectedProduct && (
-        <ValidationModal 
-          product={selectedProduct} 
-          isOpen={!!selectedProduct} 
-          onClose={() => setSelectedProduct(null)}
-          onSuccess={() => {
-            fetchProduits();
-            setSelectedProduct(null);
-          }}
-        />
-      )}
-    </div>
-  );
-}
