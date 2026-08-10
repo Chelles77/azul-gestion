@@ -260,7 +260,7 @@ export default function ProduitsBrutePage() {
                     <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center transition-all" title="Voir QR Code">
                       <QrCode size={16} className="text-gray-400" />
                     </button>
-                    <button onClick={() => mettreEnVente(produit.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all shadow-sm" title="Valider pour la vente">
+                    <button onClick={() => setSelectedProduct(produit)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all shadow-sm" title="Valider pour la vente">
                       <CheckCircle size={16} />
                     </button>
                   </div>
