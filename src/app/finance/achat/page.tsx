@@ -39,6 +39,7 @@ export default function PageGestionAchats() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingLot, setEditingLot] = useState<Lot | null>(null);
   const [saving, setSaving] = useState(false);
+  const [productCounts, setProductCounts] = useState<Record<string, { total: number; brute: number; vente: number; vendu: number }>>({});
 
   // Chargement initial
   useEffect(() => {
@@ -60,7 +61,10 @@ export default function PageGestionAchats() {
           .order('created_at', { ascending: false });
 
         if (error) console.error('Erreur chargement:', error);
-        else setLots(data || []);
+        else {
+          setLots(data || []);
+          if (data) await loadProductCounts(data);
+        }
 
       } catch (error) {
         console.error(error);
@@ -141,6 +145,28 @@ export default function PageGestionAchats() {
       tauxRebut: (lot.tauxrebut || 0).toString()
     });
     setIsModalOpen(true);
+  };
+
+  const loadProductCounts = async (lotsData: Lot[]) => {
+    const supabase = createClient();
+    const counts: Record<string, { total: number; brute: number; vente: number; vendu: number }> = {};
+
+    for (const lot of lotsData) {
+      const { data } = await supabase
+        .from('produits')
+        .select('statut')
+        .eq('lot_id', lot.id);
+
+      if (data) {
+        const total = data.length;
+        const brute = data.filter(p => p.statut === 'brute').length;
+        const vente = data.filter(p => p.statut === 'en_vente').length;
+        const vendu = data.filter(p => p.statut === 'vendu' || p.statut === 'archive').length;
+        counts[lot.id] = { total, brute, vente, vendu };
+      }
+    }
+
+    setProductCounts(counts);
   };
 
   // ✅ MODIFICATION 1 : Fonction de suppression sécurisée avec archivage
@@ -225,6 +251,10 @@ export default function PageGestionAchats() {
     if (val < 25) return 'text-blue-400 border-blue-500/30 bg-blue-900/10';
     if (val < 40) return 'text-yellow-400 border-yellow-500/30 bg-yellow-900/10';
     return 'text-red-400 border-red-500/30 bg-red-900/10';
+  };
+
+  const navigateToProducts = (lotId: string) => {
+    router.push(`/products/brute?lot=${lotId}`);
   };
 
   if (loading) return <div className="min-h-screen bg-[#121212] flex items-center justify-center text-white"><Loader2 className="animate-spin mr-2"/> Chargement...</div>;
@@ -333,17 +363,63 @@ export default function PageGestionAchats() {
                       <span className="text-gray-500">Coût Réel / Pièce</span>
                       <span className="font-bold text-white">{(lot.coutreelparpiece || 0).toFixed(2)} €</span>
                     </div>
+
+                    {/* Compteurs Produits */}
+                    {productCounts[lot.id] && (
+                      <div className="pt-3 border-t border-gray-700 space-y-2">
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="bg-[#252525] p-2 rounded-lg text-center">
+                            <p className="text-gray-500 text-xs">Brut</p>
+                            <p className="text-white font-bold">{productCounts[lot.id].brute}</p>
+                          </div>
+                          <div className="bg-[#252525] p-2 rounded-lg text-center">
+                            <p className="text-gray-500 text-xs">Vente</p>
+                            <p className="text-white font-bold">{productCounts[lot.id].vente}</p>
+                          </div>
+                          <div className="bg-[#252525] p-2 rounded-lg text-center">
+                            <p className="text-gray-500 text-xs">Vendus</p>
+                            <p className="text-white font-bold">{productCounts[lot.id].vendu}</p>
+                          </div>
+                        </div>
+
+                        {/* Barre Progression */}
+                        {productCounts[lot.id].total > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-500">Progression</span>
+                              <span className="text-green-400 font-bold">
+                                {((productCounts[lot.id].vendu / productCounts[lot.id].total) * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-green-500 to-emerald-400 h-full transition-all duration-300"
+                                style={{
+                                  width: `${(productCounts[lot.id].vendu / productCounts[lot.id].total) * 100}%`
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="p-4 bg-[#1a1a1a] border-t border-gray-800 flex gap-2">
-                    <button 
+                    <button
+                      onClick={() => navigateToProducts(lot.id)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Package size={16} /> Voir produits
+                    </button>
+                    <button
                       onClick={() => openEditModal(lot)}
                       className="flex-1 bg-[#252525] hover:bg-[#333] border border-gray-700 text-gray-300 text-sm font-medium py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
                     >
                       <Pencil size={16} /> Modifier
                     </button>
                     {/* ✅ MODIFICATION 2 : Ajout de lot.numerolot dans l'appel */}
-                    <button 
+                    <button
                       onClick={() => handleDelete(lot.id, lot.numerolot)}
                       className="px-3 bg-red-900/20 hover:bg-red-900/40 border border-red-800/50 text-red-400 rounded-lg transition-colors flex items-center justify-center"
                       title="Supprimer ce lot (les produits seront archivés)"
