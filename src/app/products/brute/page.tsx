@@ -172,7 +172,11 @@ export default function ProduitsBrutePage() {
   const marquesUniques = [...new Set(produits.map(p => p.marque).filter(Boolean))] as string[];
   const categoriesUniques = [...new Set(produits.map(p => p.categorie))];
 
-  if (loading) return <div className="min-h-screen bg-[#111111] flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div></div>;
+  if (loading) return (
+    <div className="min-h-screen bg-[#111111] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
