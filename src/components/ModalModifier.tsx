@@ -31,16 +31,16 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
       setError('');
 
       // Charger les infos du lot
-      const supabase = createClient();
-      supabase
-        .from('lots')
-        .select('*')
-        .eq('id', product.lot_id)
-        .single()
-        .then(({ data }) => {
-          if (data) setLotInfo(data);
-        })
-        .catch(err => console.error('Lot Error:', err));
+      (async () => {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('lots')
+          .select('*')
+          .eq('id', product.lot_id)
+          .single();
+        if (data) setLotInfo(data);
+        if (error) console.error('Lot Error:', error);
+      })();
 
       // Générer QR code
       QRCode.toDataURL(product.qr_code)
