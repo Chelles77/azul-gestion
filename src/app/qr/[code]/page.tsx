@@ -29,19 +29,19 @@ export default function QRProductPage({ params }: { params: { code: string } }) 
       const { data, error: fetchError } = await supabase
         .from('produits')
         .select('*')
-        .eq('qr_code', params.code)
-        .single();
+        .eq('qr_code', params.code);
 
       if (fetchError) throw fetchError;
-      if (!data) throw new Error('Produit non trouvé');
+      if (!data || data.length === 0) throw new Error('Produit non trouvé');
 
-      setProduct(data);
+      const product = data[0];
+      setProduct(product);
       setEditData({
-        nom: data.nom,
-        description: data.description || '',
-        prix_estime_vente: data.prix_estime_vente || 0,
-        statut: data.statut,
-        plateforme_vente: (data as any).plateforme_vente || ''
+        nom: product.nom,
+        description: product.description || '',
+        prix_estime_vente: product.prix_estime_vente || 0,
+        statut: product.statut,
+        plateforme_vente: (product as any).plateforme_vente || ''
       });
     } catch (err: any) {
       setError(err.message || 'Erreur lors du chargement');
