@@ -238,14 +238,15 @@ export default function ProduitsBrutePage() {
           </select>
         </div>
 
-        {/* GRILLE PRODUITS */}
+               {/* GRILLE PRODUITS */}
         {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800 shadow-lg">
-            <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut</p>
+            <Package size={48} className="mx-auto text-gray-600 mb-4" />
+            <p className="text-gray-400 text-lg">Aucun produit brut</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {produitsFiltres.map(produit => (
+            {produitsFiltres.map((produit) => (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-all duration-200 flex flex-col shadow-lg overflow-hidden">
                 {/* ZONE IMAGE */}
                 <div className="relative bg-[#252525] border-b border-gray-800 flex items-center justify-center h-48">
@@ -266,7 +267,11 @@ export default function ProduitsBrutePage() {
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">{produit.categorie}</span>
-                    {produit.marque && <span className="text-xs font-bold text-blue-400 bg-blue-900/30 border border-blue-800/50 px-2.5 py-1 rounded-full">{produit.marque}</span>}
+                    {produit.marque && (
+                      <span className="text-xs font-bold text-blue-400 bg-blue-900/30 border border-blue-800/50 px-2.5 py-1 rounded-full">
+                        {produit.marque}
+                      </span>
+                    )}
                   </div>
                   <h3 className="font-bold text-white mb-2 line-clamp-2 leading-tight">{produit.nom}</h3>
                   <p className="text-sm text-gray-400 mb-4 line-clamp-2 flex-1">{produit.description}</p>
@@ -284,7 +289,6 @@ export default function ProduitsBrutePage() {
                     <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333333] flex items-center justify-center transition-all" title="Voir QR Code">
                       <QrCode size={16} className="text-gray-400" />
                     </button>
-                    {/* ✅ BOUTON VERT */}
                     <button onClick={() => mettreEnVente(produit.id)} className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center transition-all shadow-sm" title="Valider pour la vente">
                       <CheckCircle size={16} />
                     </button>
@@ -296,7 +300,7 @@ export default function ProduitsBrutePage() {
         )}
       </div>
 
-      {/* ✅ MODAL DE VALIDATION INTEGRÉE */}
+      {/* MODAL DE VALIDATION */}
       {selectedProduct && (
         <ValidationModal 
           product={selectedProduct} 
