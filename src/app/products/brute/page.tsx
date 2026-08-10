@@ -186,7 +186,7 @@ export default function ProduitsBrutePage() {
             <select value={selectedLotId} onChange={(e) => setSelectedLotId(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 shadow-sm">
               {lots.map(lot => <option key={lot.id} value={lot.id}>Lot #{lot.numerolot} • Coef: {((lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0)) * 100).toFixed(1)}%</option>)}
             </select>
-            <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm transition-all font-medium">
+            <label className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer flex items-center gap-2 shadow-sm transition-all font-medium relative">
               <Upload size={18} /> <span>{uploading ? 'Traitement...' : 'Importer Excel'}</span>
               <input type="file" accept=".xlsx,.xls,.csv" onChange={handleExcelImport} className="absolute w-0 h-0 opacity-0" disabled={uploading || !userId} />
             </label>
