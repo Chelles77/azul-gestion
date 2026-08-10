@@ -274,7 +274,7 @@ export default function ProduitsBrutePage() {
             ))}
           </div>
         )}
-              {selectedProduct && (
+                    {selectedProduct && (
         <ValidationModal 
           product={selectedProduct} 
           isOpen={!!selectedProduct} 
