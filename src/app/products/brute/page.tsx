@@ -274,3 +274,17 @@ export default function ProduitsBrutePage() {
             ))}
           </div>
         )}
+              {selectedProduct && (
+        <ValidationModal 
+          product={selectedProduct} 
+          isOpen={!!selectedProduct} 
+          onClose={() => setSelectedProduct(null)}
+          onSuccess={() => {
+            fetchProduits();
+            setSelectedProduct(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
