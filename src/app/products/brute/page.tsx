@@ -6,10 +6,8 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-// ✅ Import de la modal
 import ValidationModal from '@/components/ValidationModal'; 
 
-// Interfaces
 interface LotDB { 
   id: string; numerolot: string; couttotal: number; prixneuftotal: number; coef_brut: number | null; 
 }
@@ -30,7 +28,6 @@ export default function ProduitsBrutePage() {
   const router = useRouter();
   const supabase = createClient();
   
-  // États
   const [lots, setLots] = useState<LotDB[]>([]);
   const [selectedLotId, setSelectedLotId] = useState<string>('');
   const [coefBrut, setCoefBrut] = useState<number>(0);
@@ -40,11 +37,8 @@ export default function ProduitsBrutePage() {
   const [filterMarque, setFilterMarque] = useState('');
   const [filterCategorie, setFilterCategorie] = useState('');
   const [userId, setUserId] = useState<string>('');
-  
-  // ✅ État pour la modal
   const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
-  // Chargement initial
   useEffect(() => {
     async function fetchLots() {
       const { data } = await supabase.from('lots').select('id, numerolot, couttotal, prixneuftotal, coef_brut').order('created_at', { ascending: false });
@@ -58,14 +52,12 @@ export default function ProduitsBrutePage() {
     supabase.auth.getUser().then(({ data }) => { if (data.user) setUserId(data.user.id); });
   }, []);
 
-  // Mise à jour quand le lot change
   useEffect(() => {
     if (selectedLotId) {
       const lot = lots.find(l => l.id === selectedLotId);
       if (lot) {
         const coef = lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0);
         setCoefBrut(coef);
-        // Sauvegarde du coef s'il est manquant
         if (!lot.coef_brut && lot.prixneuftotal > 0) {
           supabase.from('lots').update({ coef_brut: coef }).eq('id', selectedLotId).then();
         }
@@ -86,7 +78,6 @@ export default function ProduitsBrutePage() {
     if (data) setProduits(data.map(mapDBToProduit));
   }
 
-  // Mapping DB -> Frontend
   function mapDBToProduit(db: ProduitDB): Produit {
     return { 
       id: db.id, lotId: db.lot_id, userId: db.user_id, nom: db.nom, marque: db.marque, 
@@ -104,16 +95,13 @@ export default function ProduitsBrutePage() {
     return `PROD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`; 
   }
 
-  // Import Excel
   async function handleExcelImport(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !selectedLotId || !userId) return;
     setUploading(true);
     
     try {
-      // Vider le lot actuel avant import (optionnel, selon ta logique)
       await supabase.from('produits').delete().eq('lot_id', selectedLotId).eq('statut', 'brute');
-      
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -123,7 +111,6 @@ export default function ProduitsBrutePage() {
 
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
-      // Détection automatique des colonnes (approximative)
       const descKey = rawKeys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('nom')) || rawKeys[0];
       const priceKey = rawKeys.find(k => k.toLowerCase().includes('price') || k.toLowerCase().includes('prix') || k.toLowerCase().includes('retail')) || rawKeys[1];
 
@@ -136,7 +123,6 @@ export default function ProduitsBrutePage() {
         
         if (!desc || prixNeuf <= 0) continue;
 
-        // Détection marque/catégorie simplifiée
         const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
         const marque = marques.find(m => desc.toLowerCase().includes(m.toLowerCase())) || null;
         
@@ -165,7 +151,6 @@ export default function ProduitsBrutePage() {
     finally { setUploading(false); e.target.value = ''; }
   }
 
-  // Vider la liste
   async function viderListeLot() {
     if (!selectedLotId) return;
     const lot = lots.find(l => l.id === selectedLotId);
@@ -179,13 +164,11 @@ export default function ProduitsBrutePage() {
     finally { setUploading(false); }
   }
 
-  // ✅ Fonction du bouton vert : Ouvre la modal
   function mettreEnVente(id: string) {
     const prod = produits.find(p => p.id === id);
     if (prod) setSelectedProduct(prod);
   }
 
-  // Filtres
   const produitsFiltres = useMemo(() => produits.filter(p => 
     (!filterMarque || p.marque?.toLowerCase().includes(filterMarque.toLowerCase())) && 
     (!filterCategorie || p.categorie.toLowerCase().includes(filterCategorie.toLowerCase()))
@@ -199,7 +182,6 @@ export default function ProduitsBrutePage() {
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white">Produits Bruts</h1>
@@ -219,13 +201,11 @@ export default function ProduitsBrutePage() {
           </div>
         </div>
 
-        {/* KPI COEF */}
         <div className="bg-[#1a1a1a] rounded-xl p-6 mb-6 border border-gray-800 flex justify-between items-center shadow-lg">
           <div><span className="text-xs text-gray-400 uppercase tracking-wider block mb-1">Coefficient d'achat</span><span className="text-3xl font-bold text-blue-400">{(coefBrut * 100).toFixed(1)}%</span></div>
           <div className="text-right"><span className="text-xs text-gray-400 uppercase tracking-wider block mb-1">Produits en attente</span><span className="text-3xl font-bold text-white">{produits.length}</span></div>
         </div>
 
-        {/* FILTRES */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative">
             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -238,17 +218,14 @@ export default function ProduitsBrutePage() {
           </select>
         </div>
 
-               {/* GRILLE PRODUITS */}
         {produitsFiltres.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800 shadow-lg">
-            <Package size={48} className="mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-400 text-lg">Aucun produit brut</p>
+            <Package size={48} className="mx-auto text-gray-600 mb-4" /><p className="text-gray-400 text-lg">Aucun produit brut</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map((produit) => (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-all duration-200 flex flex-col shadow-lg overflow-hidden">
-                {/* ZONE IMAGE */}
                 <div className="relative bg-[#252525] border-b border-gray-800 flex items-center justify-center h-48">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-contain p-2" />
@@ -263,7 +240,6 @@ export default function ProduitsBrutePage() {
                   </div>
                 </div>
 
-                {/* CONTENU DE LA CARTE */}
                 <div className="p-5 flex-1 flex flex-col">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400 font-medium">{produit.categorie}</span>
@@ -300,7 +276,6 @@ export default function ProduitsBrutePage() {
         )}
       </div>
 
-      {/* MODAL DE VALIDATION */}
       {selectedProduct && (
         <ValidationModal 
           product={selectedProduct} 
