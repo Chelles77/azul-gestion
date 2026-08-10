@@ -2,23 +2,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Upload } from 'lucide-react'; // ✅ Ajout de Upload
+import { X, Save, AlertCircle, Upload } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
-
-interface Produit {
-  id: string;
-  nom: string;
-  marque: string | null;
-  categorie: string;
-  prix_neuf: number;
-  prix_revient: number;
-  qr_code: string;
-  photos: string[] | null;
-  description: string | null;
-  etat_produit: string | null;
-  etat_emballage: string | null;
-  prix_estime_vente: number | null;
-}
+import { Produit } from '@/lib/interfaces';
 
 interface ValidationModalProps {
   product: Produit;
@@ -29,9 +15,9 @@ interface ValidationModalProps {
 
 export default function ValidationModal({ product, isOpen, onClose, onSuccess }: ValidationModalProps) {
   const [nom, setNom] = useState(product.nom);
-  const [etatProduit, setEtatProduit] = useState(product.etat_produit || '');
-  const [etatEmballage, setEtatEmballage] = useState(product.etat_emballage || '');
-  const [prixVente, setPrixVente] = useState(product.prix_estime_vente?.toString() || '');
+  const [etatProduit, setEtatProduit] = useState(product.etatProduit || '');
+  const [etatEmballage, setEtatEmballage] = useState(product.etatEmballage || '');
+  const [prixVente, setPrixVente] = useState(product.prixEstimeVente?.toString() || '');
   const [description, setDescription] = useState(product.description || '');
   
   // ✅ AJOUT 1 : États pour la photo
@@ -42,7 +28,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
   const [error, setError] = useState('');
 
   // Prix suggéré si aucun prix n'existe
-  const prixSuggere = Math.round(product.prix_neuf * 0.85); 
+  const prixSuggere = Math.round(product.prixNeuf * 0.85); 
 
   useEffect(() => {
     if (isOpen) {
@@ -139,11 +125,11 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
           <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex justify-between items-center">
             <div>
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">QR Code</p>
-              <p className="font-mono text-lg text-white">{product.qr_code}</p>
+              <p className="font-mono text-lg text-white">{product.qrCode}</p>
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500 uppercase font-bold mb-1">Coût Revient</p>
-              <p className="text-lg font-bold text-orange-400">{product.prix_revient.toFixed(2)} €</p>
+              <p className="text-lg font-bold text-orange-400">{product.prixRevient.toFixed(2)} €</p>
             </div>
           </div>
 
@@ -251,7 +237,7 @@ export default function ValidationModal({ product, isOpen, onClose, onSuccess }:
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">€</span>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Marge estimée : {((parseFloat(prixVente || '0') - product.prix_revient) / Math.max(parseFloat(prixVente || '1'), 1) * 100).toFixed(1)}%
+              Marge estimée : {((parseFloat(prixVente || '0') - product.prixRevient) / Math.max(parseFloat(prixVente || '1'), 1) * 100).toFixed(1)}%
             </p>
           </div>
 

@@ -6,7 +6,8 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { QrCode, Upload, Edit2, CheckCircle, Package, Filter, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import ValidationModal from '@/components/ValidationModal'; 
+import ValidationModal from '@/components/ValidationModal';
+import { Produit } from '@/lib/interfaces'; 
 
 interface LotDB { 
   id: string; numerolot: string; couttotal: number; prixneuftotal: number; coef_brut: number | null; 
@@ -16,12 +17,6 @@ interface ProduitDB {
   categorie: string; description: string | null; prix_neuf: number; coef_revient: number; 
   prix_revient: number; qr_code: string; statut: string; photos: string[] | null; 
   etat_produit: string | null; etat_emballage: string | null; 
-}
-interface Produit { 
-  id: string; lotId: string; userId: string; nom: string; marque: string | null; 
-  categorie: string; description: string | null; prixNeuf: number; coefRevient: number; 
-  prixRevient: number; qrCode: string; statut: string; photos: string[] | null; 
-  etatProduit: string | null; etatEmballage: string | null; 
 }
 
 export default function ProduitsBrutePage() {
