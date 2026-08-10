@@ -145,7 +145,9 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
             </button>
           </div>
           <div className="bg-purple-900/30 border border-purple-700 rounded-lg px-3 py-2">
-            <p className="text-lg font-bold text-purple-300">📦 {lotInfo?.numerolot || '...'}</p>
+            <p className="text-lg font-bold text-purple-300">
+              📦 {lotInfo?.numerolot || product?.lot_id || '...'}
+            </p>
           </div>
         </div>
 
