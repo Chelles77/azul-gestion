@@ -199,25 +199,25 @@ export default function ProduitsArchivesPage() {
                   </div>
                 </div>
 
-                <div className="mt-auto flex gap-2 px-5 py-5 border-t border-gray-800">
+                <div className="mt-auto flex gap-2 px-5 py-4 border-t border-gray-800 h-14 items-center">
                     <button
                       onClick={() => openRetourModal(produit)}
-                      className="flex-1 px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center gap-1 text-sm"
+                      className="flex-1 px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center gap-1 text-sm h-10"
                     >
                       <RotateCcw size={14} /> Retour
                     </button>
                     <button
-                      className="px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center"
+                      className="px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center h-10 w-10"
                       title="Modifier"
                     >
-                      <Edit2 size={14} />
+                      <Edit2 size={16} />
                     </button>
                     <button
                       onClick={() => deleteProduit(produit.id, produit.nom)}
-                      className="px-3 py-2 bg-red-900/30 border border-red-700 rounded-lg hover:bg-red-900/50 text-red-400 flex items-center justify-center"
+                      className="px-3 py-2 bg-red-900/30 border border-red-700 rounded-lg hover:bg-red-900/50 text-red-400 flex items-center justify-center h-10 w-10"
                       title="Supprimer"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                 </div>
               </div>
