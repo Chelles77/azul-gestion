@@ -187,6 +187,7 @@ export default function ProduitsArchivesPage() {
         {/* Modal Retour Client */}
         <ModalRetourClient
           produit={selectedProduct}
+          lotInfo={selectedProduct ? lotInfo[selectedProduct.lot_id] : null}
           isOpen={modalRetourOpen}
           onClose={() => setModalRetourOpen(false)}
           onSuccess={handleRetourSuccess}
