@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Package, QrCode, Edit2, Trash2, Archive } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
+import ModalArchiver from '@/components/ModalArchiver';
 
 export default function ProduitsEnVentePage() {
   const supabase = createClient();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [lotInfo, setLotInfo] = useState<Record<string, any>>({});
+  const [modalArchiverOpen, setModalArchiverOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
     async function fetchProduits() {
@@ -50,9 +53,24 @@ export default function ProduitsEnVentePage() {
     }
   }
 
-  async function archiveProduct(produitId: string, nom: string) {
-    if (!window.confirm(`Archiver "${nom}" (marquer comme vendu) ?`)) return;
-    updateProduitStatut(produitId, 'vendu');
+  function openArchiverModal(product: Produit) {
+    setSelectedProduct(product);
+    setModalArchiverOpen(true);
+  }
+
+  function handleArchiverSuccess() {
+    setModalArchiverOpen(false);
+    setSelectedProduct(null);
+    // Recharger la liste
+    const fetchProduits = async () => {
+      const { data } = await supabase
+        .from('produits')
+        .select('*')
+        .eq('statut', 'en_vente')
+        .order('updated_at', { ascending: false });
+      if (data) setProduits(data);
+    };
+    fetchProduits();
   }
 
   async function unvalidateProduct(produitId: string, nom: string) {
@@ -148,7 +166,7 @@ export default function ProduitsEnVentePage() {
                       <Trash2 size={16} />
                     </button>
                     <button
-                      onClick={() => archiveProduct(produit.id, produit.nom)}
+                      onClick={() => openArchiverModal(produit)}
                       className="px-3 py-2 bg-green-900/30 border border-green-700 rounded-lg hover:bg-green-900/50 text-green-400"
                       title="Marquer comme vendu"
                     >
@@ -161,6 +179,13 @@ export default function ProduitsEnVentePage() {
           </div>
         )}
       </div>
+
+      <ModalArchiver
+        product={selectedProduct}
+        isOpen={modalArchiverOpen}
+        onClose={() => setModalArchiverOpen(false)}
+        onSuccess={handleArchiverSuccess}
+      />
     </div>
   );
 }

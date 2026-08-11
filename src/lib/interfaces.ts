@@ -18,6 +18,9 @@ export interface Produit {
   prix_estime_vente: number | null;
   product_number?: string;
   plateformes_vente?: string[];
+  prix_vente_final?: number;
+  plateforme_vente_finale?: string;
+  date_vente?: string;
   created_at: string;
   updated_at: string;
 }
