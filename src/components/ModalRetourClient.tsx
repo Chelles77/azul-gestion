@@ -251,7 +251,7 @@ export default function ModalRetourClient({ produit, lotInfo, isOpen, onClose, o
                     : 'border-gray-700 bg-[#252525] hover:border-orange-500/50'
                 }`}
               >
-                <div size={20} className={`flex-shrink-0 text-lg ${etatProduit === 'remboursement' ? 'text-orange-400' : 'text-gray-500'}`}>
+                <div className={`flex-shrink-0 text-lg ${etatProduit === 'remboursement' ? 'text-orange-400' : 'text-gray-500'}`}>
                   💳
                 </div>
                 <div className={etatProduit === 'remboursement' ? 'text-orange-400 font-bold' : 'text-gray-300'}>
@@ -268,7 +268,7 @@ export default function ModalRetourClient({ produit, lotInfo, isOpen, onClose, o
                     : 'border-gray-700 bg-[#252525] hover:border-purple-500/50'
                 }`}
               >
-                <div size={20} className={`flex-shrink-0 text-lg ${etatProduit === 'casse' ? 'text-purple-400' : 'text-gray-500'}`}>
+                <div className={`flex-shrink-0 text-lg ${etatProduit === 'casse' ? 'text-purple-400' : 'text-gray-500'}`}>
                   💔
                 </div>
                 <div className={etatProduit === 'casse' ? 'text-purple-400 font-bold' : 'text-gray-300'}>
