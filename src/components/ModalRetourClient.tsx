@@ -225,10 +225,18 @@ export default function ModalRetourClient({ produit, lotInfo, isOpen, onClose, o
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-red-900/30 to-orange-900/30 p-4 rounded-lg border border-red-800/50">
-                <p className="text-xs text-gray-400 mb-2">Remboursement Total</p>
-                <p className="text-3xl font-bold text-red-400">{totalRemboursement.toFixed(2)} €</p>
-                <p className="text-xs text-gray-500 mt-2">Vente: {montantNum.toFixed(2)}€ + Port: {fraisNum.toFixed(2)}€</p>
+              <div className="space-y-3">
+                <div className="bg-gradient-to-r from-red-900/30 to-orange-900/30 p-4 rounded-lg border border-red-800/50">
+                  <p className="text-xs text-gray-400 mb-2">Remboursement Client</p>
+                  <p className="text-2xl font-bold text-red-400">{totalRemboursement.toFixed(2)} €</p>
+                  <p className="text-xs text-gray-500 mt-2">Vente: {montantNum.toFixed(2)}€ + Port: {fraisNum.toFixed(2)}€</p>
+                </div>
+
+                <div className="bg-gradient-to-r from-orange-900/30 to-red-900/30 p-4 rounded-lg border border-orange-800/50">
+                  <p className="text-xs text-orange-400 mb-2">Coût Réel (Achat + Port)</p>
+                  <p className="text-2xl font-bold text-orange-400">{((produit.prix_revient || 0) + fraisNum).toFixed(2)} €</p>
+                  <p className="text-xs text-gray-500 mt-2">Achat: {(produit.prix_revient || 0).toFixed(2)}€ + Port: {fraisNum.toFixed(2)}€</p>
+                </div>
               </div>
             </>
           )}
