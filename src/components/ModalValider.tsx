@@ -25,6 +25,8 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   const [error, setError] = useState('');
   const [lotInfo, setLotInfo] = useState<any>(null);
   const [plateformesVente, setPlateformesVente] = useState<string[]>([]);
+  const [selectedPlateforme, setSelectedPlateforme] = useState('');
+  const [customPlateforme, setCustomPlateforme] = useState('');
 
   // Checklist
   const [checks, setChecks] = useState({
@@ -35,7 +37,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   });
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
-  const PLATEFORMES = [
+  const PLATEFORMES_PREDEFINIES = [
     { id: 'mon-site', label: 'Mon Site', emoji: '🏪' },
     { id: 'vinted', label: 'Vinted', emoji: '🛍️' },
     { id: 'leboncoin', label: 'Le Bon Coin', emoji: '📌' },
@@ -44,10 +46,27 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
     { id: 'facebook', label: 'Facebook Marketplace', emoji: '👥' },
   ];
 
-  const togglePlateforme = (id: string) => {
-    setPlateformesVente(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-    );
+  const addPlateforme = () => {
+    if (selectedPlateforme && !plateformesVente.includes(selectedPlateforme)) {
+      setPlateformesVente([...plateformesVente, selectedPlateforme]);
+      setSelectedPlateforme('');
+    }
+  };
+
+  const addCustomPlateforme = () => {
+    if (customPlateforme.trim() && !plateformesVente.includes(customPlateforme)) {
+      setPlateformesVente([...plateformesVente, customPlateforme]);
+      setCustomPlateforme('');
+    }
+  };
+
+  const removePlateforme = (plateforme: string) => {
+    setPlateformesVente(plateformesVente.filter(p => p !== plateforme));
+  };
+
+  const getPlateformeLabel = (id: string) => {
+    const predefined = PLATEFORMES_PREDEFINIES.find(p => p.id === id);
+    return predefined ? `${predefined.emoji} ${predefined.label}` : id;
   };
 
   const prixSuggere = product ? Math.round(product.prix_neuf * 0.85) : 0;
@@ -396,19 +415,72 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
 
           {/* Plateformes de Vente */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-3">🛍️ Plateformes de Vente</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {PLATEFORMES.map(plateforme => (
-                <label key={plateforme.id} className="flex items-center gap-2 p-3 bg-[#252525] border border-gray-700 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={plateformesVente.includes(plateforme.id)}
-                    onChange={() => togglePlateforme(plateforme.id)}
-                    className="w-4 h-4 rounded"
-                  />
-                  <span className="text-sm text-gray-300">{plateforme.emoji} {plateforme.label}</span>
-                </label>
-              ))}
+            <label className="block text-sm font-medium text-gray-300 mb-2">🛍️ Plateformes de Vente</label>
+            <div className="space-y-3">
+              {/* Dropdown */}
+              <div className="flex gap-2">
+                <select
+                  value={selectedPlateforme}
+                  onChange={e => setSelectedPlateforme(e.target.value)}
+                  className="flex-1 bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none appearance-none"
+                >
+                  <option value="">Sélectionner une plateforme...</option>
+                  {PLATEFORMES_PREDEFINIES.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.emoji} {p.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={addPlateforme}
+                  disabled={!selectedPlateforme}
+                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 text-white rounded-lg font-medium disabled:cursor-not-allowed"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Champ Custom */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={customPlateforme}
+                  onChange={e => setCustomPlateforme(e.target.value)}
+                  placeholder="Ajouter une plateforme personnalisée..."
+                  className="flex-1 bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none text-sm"
+                  onKeyPress={e => e.key === 'Enter' && addCustomPlateforme()}
+                />
+                <button
+                  type="button"
+                  onClick={addCustomPlateforme}
+                  disabled={!customPlateforme.trim()}
+                  className="px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white rounded-lg font-medium disabled:cursor-not-allowed"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Plateformes Sélectionnées */}
+              {plateformesVente.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-3 bg-[#252525] border border-gray-700 rounded-lg">
+                  {plateformesVente.map(plateforme => (
+                    <div
+                      key={plateforme}
+                      className="flex items-center gap-2 bg-blue-900/30 border border-blue-700 rounded-full px-3 py-1 text-sm text-blue-300"
+                    >
+                      <span>{getPlateformeLabel(plateforme)}</span>
+                      <button
+                        type="button"
+                        onClick={() => removePlateforme(plateforme)}
+                        className="ml-1 text-blue-400 hover:text-blue-200"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
