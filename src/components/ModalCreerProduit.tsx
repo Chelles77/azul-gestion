@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { X, AlertCircle, Upload, Download, Printer } from 'lucide-react';
 import QRCode from 'qrcode';
 import { createClient } from '@/lib/supabase';
+import SelectWithAdd from './SelectWithAdd';
 
 interface ModalCreerProduitProps {
   lotId: string;
@@ -20,7 +21,9 @@ function generateQRCode(): string {
 export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
   const [nom, setNom] = useState('');
   const [marque, setMarque] = useState('');
-  const [categorie, setCategorie] = useState('Autres');
+  const [marques, setMarques] = useState<string[]>([]);
+  const [categorie, setCategorie] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
   const [prixNeuf, setPrixNeuf] = useState('');
   const [coefRevient, setCoefRevient] = useState(coefBrut.toString());
   const [description, setDescription] = useState('');
@@ -41,8 +44,20 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
       QRCode.toDataURL(qrUrl)
         .then(url => setQrDataUrl(url))
         .catch(err => console.error('QR Error:', err));
+
+      // Charger marques et catégories
+      loadOptions();
     }
   }, [isOpen]);
+
+  const loadOptions = async () => {
+    const supabase = createClient();
+    const { data: marqueData } = await supabase.from('marques').select('nom').order('nom');
+    const { data: categData } = await supabase.from('categories').select('nom').order('nom');
+
+    if (marqueData) setMarques(marqueData.map(m => m.nom));
+    if (categData) setCategories(categData.map(c => c.nom));
+  };
 
   if (!isOpen) return null;
 
@@ -291,29 +306,22 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
 
           {/* Marque et Catégorie */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Marque</label>
-              <input
-                type="text"
-                value={marque}
-                onChange={e => setMarque(e.target.value)}
-                placeholder="Dreame"
-                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Catégorie</label>
-              <select
-                value={categorie}
-                onChange={e => setCategorie(e.target.value)}
-                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-              >
-                <option>Autres</option>
-                <option>Robot Aspirateur</option>
-                <option>Cuisine</option>
-                <option>Électroménager</option>
-              </select>
-            </div>
+            <SelectWithAdd
+              label="Marque"
+              value={marque}
+              onChange={setMarque}
+              options={marques}
+              onAddOption={val => setMarques([...marques, val])}
+              table="marques"
+            />
+            <SelectWithAdd
+              label="Catégorie"
+              value={categorie}
+              onChange={setCategorie}
+              options={categories}
+              onAddOption={val => setCategories([...categories, val])}
+              table="categories"
+            />
           </div>
 
           {/* États */}
