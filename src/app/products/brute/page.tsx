@@ -8,6 +8,7 @@ import { Produit } from '@/lib/interfaces';
 import ModalModifier from '@/components/ModalModifier';
 import ModalValider from '@/components/ModalValider';
 import ModalCreerProduit from '@/components/ModalCreerProduit';
+import ModalMarquerCasse from '@/components/ModalMarquerCasse';
 
 export default function ProduitsBrutePage() {
   const supabase = createClient();
@@ -25,6 +26,7 @@ export default function ProduitsBrutePage() {
   const [isModifying, setIsModifying] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isMarquingCasse, setIsMarquingCasse] = useState(false);
 
   // Charger les lots
   useEffect(() => {
@@ -465,6 +467,16 @@ export default function ProduitsBrutePage() {
                       <CheckCircle size={14} />
                     </button>
                     <button
+                      onClick={() => {
+                        setSelectedProduct(produit);
+                        setIsMarquingCasse(true);
+                      }}
+                      className="px-2 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 rounded border border-red-700/50 transition-all"
+                      title="Marquer comme cassé"
+                    >
+                      💔
+                    </button>
+                    <button
                       onClick={() => deleteProduit(produit.id, produit.nom)}
                       className="px-2 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded border border-red-600/30 transition-all"
                       title="Supprimer ce produit"
@@ -507,6 +519,21 @@ export default function ProduitsBrutePage() {
         onSuccess={() => {
           fetchProduits();
           setIsValidating(false);
+          setSelectedProduct(null);
+        }}
+      />
+
+      {/* Modal Marquer Cassé */}
+      <ModalMarquerCasse
+        produit={selectedProduct}
+        isOpen={isMarquingCasse}
+        onClose={() => {
+          setIsMarquingCasse(false);
+          setSelectedProduct(null);
+        }}
+        onSuccess={() => {
+          fetchProduits();
+          setIsMarquingCasse(false);
           setSelectedProduct(null);
         }}
       />
