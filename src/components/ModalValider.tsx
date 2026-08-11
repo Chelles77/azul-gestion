@@ -24,6 +24,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lotInfo, setLotInfo] = useState<any>(null);
+  const [plateformesVente, setPlateformesVente] = useState<string[]>([]);
 
   // Checklist
   const [checks, setChecks] = useState({
@@ -33,6 +34,21 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
     prix: false,
   });
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  const PLATEFORMES = [
+    { id: 'mon-site', label: 'Mon Site', emoji: '🏪' },
+    { id: 'vinted', label: 'Vinted', emoji: '🛍️' },
+    { id: 'leboncoin', label: 'Le Bon Coin', emoji: '📌' },
+    { id: 'ebay', label: 'eBay', emoji: '🌐' },
+    { id: 'amazon', label: 'Amazon', emoji: '🛒' },
+    { id: 'facebook', label: 'Facebook Marketplace', emoji: '👥' },
+  ];
+
+  const togglePlateforme = (id: string) => {
+    setPlateformesVente(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
+  };
 
   const prixSuggere = product ? Math.round(product.prix_neuf * 0.85) : 0;
 
@@ -152,6 +168,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
           etat_emballage: etatEmballage,
           prix_estime_vente: parseFloat(prixVente),
           photos: photoPreview ? [photoPreview] : product?.photos,
+          plateformes_vente: plateformesVente,
           statut: 'en_vente',
           updated_at: new Date().toISOString(),
         })
@@ -374,6 +391,24 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
                 className="w-full bg-[#252525] border border-gray-700 rounded-lg pl-4 pr-12 py-3 text-white text-lg font-bold focus:border-green-500 outline-none"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">€</span>
+            </div>
+          </div>
+
+          {/* Plateformes de Vente */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">🛍️ Plateformes de Vente</label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {PLATEFORMES.map(plateforme => (
+                <label key={plateforme.id} className="flex items-center gap-2 p-3 bg-[#252525] border border-gray-700 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={plateformesVente.includes(plateforme.id)}
+                    onChange={() => togglePlateforme(plateforme.id)}
+                    className="w-4 h-4 rounded"
+                  />
+                  <span className="text-sm text-gray-300">{plateforme.emoji} {plateforme.label}</span>
+                </label>
+              ))}
             </div>
           </div>
 
