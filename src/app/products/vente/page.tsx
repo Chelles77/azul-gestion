@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase';
 import { Package, QrCode, Edit2, Trash2, Archive } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
 import ModalArchiver from '@/components/ModalArchiver';
+import ModalModifier from '@/components/ModalModifier';
 
 export default function ProduitsEnVentePage() {
   const supabase = createClient();
@@ -12,6 +13,7 @@ export default function ProduitsEnVentePage() {
   const [loading, setLoading] = useState(true);
   const [lotInfo, setLotInfo] = useState<Record<string, any>>({});
   const [modalArchiverOpen, setModalArchiverOpen] = useState(false);
+  const [modalModifierOpen, setModalModifierOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
@@ -56,6 +58,25 @@ export default function ProduitsEnVentePage() {
   function openArchiverModal(product: Produit) {
     setSelectedProduct(product);
     setModalArchiverOpen(true);
+  }
+
+  function openModifierModal(product: Produit) {
+    setSelectedProduct(product);
+    setModalModifierOpen(true);
+  }
+
+  function handleModifierSuccess() {
+    setModalModifierOpen(false);
+    // Recharger la liste
+    const fetchProduits = async () => {
+      const { data } = await supabase
+        .from('produits')
+        .select('*')
+        .eq('statut', 'en_vente')
+        .order('updated_at', { ascending: false });
+      if (data) setProduits(data);
+    };
+    fetchProduits();
   }
 
   function handleArchiverSuccess() {
@@ -155,7 +176,10 @@ export default function ProduitsEnVentePage() {
                   </div>
 
                   <div className="flex gap-2 pt-4 border-t border-gray-800">
-                    <button className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center gap-1 text-sm text-gray-300">
+                    <button
+                      onClick={() => openModifierModal(produit)}
+                      className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center gap-1 text-sm text-gray-300"
+                    >
                       <Edit2 size={14} /> Modifier
                     </button>
                     <button
@@ -179,6 +203,13 @@ export default function ProduitsEnVentePage() {
           </div>
         )}
       </div>
+
+      <ModalModifier
+        product={selectedProduct}
+        isOpen={modalModifierOpen}
+        onClose={() => setModalModifierOpen(false)}
+        onSuccess={handleModifierSuccess}
+      />
 
       <ModalArchiver
         product={selectedProduct}
