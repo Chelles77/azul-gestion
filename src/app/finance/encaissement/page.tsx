@@ -17,6 +17,7 @@ export default function PageEncaissement() {
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [showFullYear, setShowFullYear] = useState(false);
 
   const fetchVentes = async () => {
     try {
@@ -199,7 +200,7 @@ export default function PageEncaissement() {
         {/* Ventes du Mois Sélectionné */}
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6 mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-white">📅 Ventes du Mois</h2>
+            <h2 className="text-xl font-bold text-white">📅 {showFullYear ? 'Ventes de l\'année' : 'Ventes du Mois'}</h2>
             <div className="flex gap-3">
               <button
                 onClick={handleRefresh}
@@ -219,13 +220,21 @@ export default function PageEncaissement() {
                 ))}
               </select>
               <select
-                value={selectedMonth}
-                onChange={e => setSelectedMonth(parseInt(e.target.value))}
+                value={showFullYear ? 'year' : selectedMonth}
+                onChange={e => {
+                  if (e.target.value === 'year') {
+                    setShowFullYear(true);
+                  } else {
+                    setShowFullYear(false);
+                    setSelectedMonth(parseInt(e.target.value));
+                  }
+                }}
                 className="bg-[#252525] border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500"
               >
                 {['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'].map((m, i) => (
                   <option key={i} value={i}>{m}</option>
                 ))}
+                <option value="year">Année entière</option>
               </select>
             </div>
           </div>
@@ -281,7 +290,13 @@ export default function PageEncaissement() {
                 </tr>
               </thead>
               <tbody>
-                {ventes.map(vente => {
+                {ventes.filter(vente => {
+                  const date = new Date(vente.date_vente || new Date());
+                  if (showFullYear) {
+                    return date.getFullYear() === selectedYear;
+                  }
+                  return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
+                }).map(vente => {
                   const benefice = (vente.prix_vente_final || 0) - (vente.prix_revient || 0);
                   return (
                     <tr key={vente.id} className="border-b border-gray-800 hover:bg-[#252525]">
