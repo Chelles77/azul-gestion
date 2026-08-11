@@ -20,8 +20,8 @@ interface LotDetail {
   id: string;
   numerolot: string;
   couttotal: number;
-  nb_pieces_total: number;
-  nb_pieces_vendables?: number;
+  nbpieces: number;
+  coutreelparpiece: number;
   venduCount: number;
 }
 
@@ -257,11 +257,8 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold text-white mb-4">📦 Détails par Lot</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lots.map(lot => {
-                const prixParProduit = lot.nb_pieces_total && lot.nb_pieces_total > 0
-                  ? lot.couttotal / lot.nb_pieces_total
-                  : 0;
-                const tauxVente = lot.nb_pieces_total && lot.nb_pieces_total > 0
-                  ? (lot.venduCount / lot.nb_pieces_total) * 100
+                const tauxVente = lot.nbpieces && lot.nbpieces > 0
+                  ? (lot.venduCount / lot.nbpieces) * 100
                   : 0;
 
                 return (
@@ -276,15 +273,15 @@ export default function DashboardPage() {
                     <div className="space-y-3 mb-4">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-400">Prix de Revient</span>
-                        <span className="font-bold text-blue-400">{lot.couttotal.toFixed(0)} €</span>
+                        <span className="font-bold text-blue-400">{lot.couttotal.toFixed(2)} €</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-400">Produits Total</span>
-                        <span className="font-bold text-white">{lot.nb_pieces_total || 0}</span>
+                        <span className="font-bold text-white">{lot.nbpieces}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-400">Prix / Produit</span>
-                        <span className="font-bold text-orange-400">{prixParProduit.toFixed(2)} €</span>
+                        <span className="font-bold text-orange-400">{lot.coutreelparpiece.toFixed(2)} €</span>
                       </div>
                     </div>
 
@@ -292,7 +289,7 @@ export default function DashboardPage() {
                     <div className="mb-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-gray-400">Ventes</span>
-                        <span className="text-xs font-bold text-green-400">{lot.venduCount}/{lot.nb_pieces_total} ({tauxVente.toFixed(1)}%)</span>
+                        <span className="text-xs font-bold text-green-400">{lot.venduCount}/{lot.nbpieces} ({tauxVente.toFixed(1)}%)</span>
                       </div>
                       <div className="w-full bg-[#252525] rounded-full h-2 border border-gray-700">
                         <div
