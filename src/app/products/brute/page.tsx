@@ -157,6 +157,25 @@ export default function ProduitsBrutePage() {
     }
   }
 
+  async function deleteProduit(produitId: string, nom: string) {
+    if (!window.confirm(`Supprimer "${nom}" ?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('produits')
+        .delete()
+        .eq('id', produitId);
+
+      if (error) {
+        alert('❌ Erreur: ' + error.message);
+      } else {
+        fetchProduits();
+      }
+    } catch (err: any) {
+      alert('❌ Erreur inattendue: ' + err.message);
+    }
+  }
+
   async function viderListeLot() {
     if (!selectedLotId) return;
     if (!window.confirm(`Vider TOUS les produits bruts de ce lot ?`)) return;
@@ -366,6 +385,13 @@ export default function ProduitsBrutePage() {
                       className="px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all flex items-center justify-center"
                     >
                       <CheckCircle size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteProduit(produit.id, produit.nom)}
+                      className="px-2 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded border border-red-600/30 transition-all"
+                      title="Supprimer ce produit"
+                    >
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </div>
