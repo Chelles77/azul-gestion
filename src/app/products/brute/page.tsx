@@ -142,10 +142,9 @@ export default function ProduitsBrutePage() {
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
         const nomTrimmed = nom.substring(0, 100);
 
-        nouveauxProduits.push({
+        const produit: any = {
           lot_id: selectedLotId,
           user_id: userId,
-          product_number: productNumber || `${nouveauxProduits.length + 1}`,
           nom: nomTrimmed,
           marque,
           categorie,
@@ -161,7 +160,14 @@ export default function ProduitsBrutePage() {
           prix_estime_vente: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        });
+        };
+
+        // Ajouter product_number si la colonne existe en Supabase
+        if (productNumber) {
+          produit.product_number = productNumber;
+        }
+
+        nouveauxProduits.push(produit);
       }
 
       if (nouveauxProduits.length === 0) {
