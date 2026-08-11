@@ -16,6 +16,8 @@ export interface Produit {
   etat_produit: string | null;
   etat_emballage: string | null;
   prix_estime_vente: number | null;
+  product_number?: string;
+  plateformes_vente?: string[];
   created_at: string;
   updated_at: string;
 }
