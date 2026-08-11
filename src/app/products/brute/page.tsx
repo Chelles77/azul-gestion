@@ -100,11 +100,25 @@ export default function ProduitsBrutePage() {
 
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
-      const descKey = rawKeys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('nom')) || rawKeys[0];
-      const priceKey = rawKeys.find(k => k.toLowerCase().includes('price') || k.toLowerCase().includes('prix') || k.toLowerCase().includes('retail')) || rawKeys[1];
+      console.log('Colonnes détectées:', rawKeys);
+
+      // Détection flexible des colonnes
+      const descKey = rawKeys.find(k => {
+        const lower = k.toLowerCase();
+        return lower.includes('desc') || lower.includes('nom') || lower.includes('article') || lower.includes('produit') || lower.includes('name');
+      }) || rawKeys[0];
+
+      const priceKey = rawKeys.find(k => {
+        const lower = k.toLowerCase();
+        return lower.includes('price') || lower.includes('prix') || lower.includes('retail') || lower.includes('montant') || lower.includes('valeur') || lower.includes('coût') || lower.includes('cost');
+      }) || rawKeys[1];
+
+      console.log('Colonne Description:', descKey);
+      console.log('Colonne Prix:', priceKey);
 
       const nouveauxProduits: any[] = [];
       let doublons = 0;
+      let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       for (const row of jsonData) {
@@ -113,7 +127,11 @@ export default function ProduitsBrutePage() {
         const prixNeuf = parseFloat(rawPrice) || 0;
         const desc = row[descKey]?.toString() || '';
 
-        if (!desc || prixNeuf <= 0) continue;
+        if (!desc || prixNeuf <= 0) {
+          skipped++;
+          console.log('Skipped:', { desc, prixNeuf, reason: !desc ? 'no desc' : 'no price' });
+          continue;
+        }
 
         const marque = marques.find(m => desc.toLowerCase().includes(m.toLowerCase())) || null;
         let categorie = 'Autres';
@@ -155,14 +173,11 @@ export default function ProduitsBrutePage() {
         });
       }
 
-      if (nouveauxProduits.length === 0 && doublons === 0) {
-        alert('Aucun produit valide trouvé.');
-        setUploading(false);
-        return;
-      }
-
-      if (nouveauxProduits.length === 0 && doublons > 0) {
-        alert(`⚠️ ${doublons} doublons détectés et ignorés. Aucun nouveau produit.`);
+      if (nouveauxProduits.length === 0) {
+        let msg = `⚠️ Aucun produit importé.`;
+        if (doublons > 0) msg += ` ${doublons} doublons.`;
+        if (skipped > 0) msg += ` ${skipped} lignes invalides (prix/nom manquant).`;
+        alert(msg);
         setUploading(false);
         return;
       }
@@ -171,7 +186,8 @@ export default function ProduitsBrutePage() {
       if (!error) {
         fetchProduits();
         let message = `✅ ${nouveauxProduits.length} produits importés`;
-        if (doublons > 0) message += ` (${doublons} doublons ignorés)`;
+        if (doublons > 0) message += ` (${doublons} doublons)`;
+        if (skipped > 0) message += ` (${skipped} invalides)`;
         alert(message);
       } else {
         alert('Erreur Supabase: ' + error.message);
