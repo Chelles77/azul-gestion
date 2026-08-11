@@ -526,6 +526,7 @@ export default function ProduitsBrutePage() {
       {/* Modal Marquer Cassé */}
       <ModalMarquerCasse
         produit={selectedProduct}
+        lotInfo={lots.find(l => l.id === selectedLotId)}
         isOpen={isMarquingCasse}
         onClose={() => {
           setIsMarquingCasse(false);

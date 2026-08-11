@@ -7,12 +7,13 @@ import { Produit } from '@/lib/interfaces';
 
 interface ModalMarquerCasseProps {
   produit: Produit | null;
+  lotInfo?: any;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function ModalMarquerCasse({ produit, isOpen, onClose, onSuccess }: ModalMarquerCasseProps) {
+export default function ModalMarquerCasse({ produit, lotInfo, isOpen, onClose, onSuccess }: ModalMarquerCasseProps) {
   const [raison, setRaison] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,15 +67,41 @@ export default function ModalMarquerCasse({ produit, isOpen, onClose, onSuccess 
         </div>
 
         <div className="p-6 space-y-4">
-          {/* Produit Info */}
-          <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
-            <p className="text-xs text-gray-400 mb-1">Produit</p>
-            <p className="text-white font-bold line-clamp-2">{produit.nom}</p>
-            {produit.prix_revient && (
-              <p className="text-sm text-gray-400 mt-2">
-                Perte: <span className="text-red-400 font-bold">{produit.prix_revient.toFixed(2)} €</span>
-              </p>
-            )}
+          {/* Info Produit avec Image */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="col-span-1">
+              {produit.photos && produit.photos.length > 0 ? (
+                <img src={produit.photos[0]} alt={produit.nom} className="w-full h-32 object-contain rounded-lg bg-[#252525] border border-gray-700" />
+              ) : (
+                <div className="w-full h-32 bg-[#252525] border border-gray-700 rounded-lg flex items-center justify-center text-gray-500 text-sm">
+                  Pas de photo
+                </div>
+              )}
+            </div>
+
+            <div className="col-span-2 space-y-2">
+              <div className="bg-[#252525] p-3 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400 mb-1">Produit</p>
+                <p className="text-white font-bold text-sm line-clamp-2">{produit.nom}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#252525] p-3 rounded-lg border border-gray-700">
+                  <p className="text-xs text-gray-400">Lot</p>
+                  <p className="text-white font-bold text-sm">#{lotInfo?.numerolot || produit.lot_id?.substring(0, 8)}</p>
+                </div>
+                <div className="bg-[#252525] p-3 rounded-lg border border-gray-700">
+                  <p className="text-xs text-gray-400">Produit #</p>
+                  <p className="text-white font-bold text-sm">{produit.product_number || '...'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Prix Revient */}
+          <div className="bg-gradient-to-br from-orange-900/30 to-[#1a1a1a] p-4 rounded-lg border border-orange-700">
+            <p className="text-xs text-orange-400 font-bold mb-1">Prix de Revient</p>
+            <p className="text-2xl font-bold text-orange-400">-{(produit.prix_revient || 0).toFixed(2)} €</p>
+            <p className="text-xs text-gray-500 mt-1">Perte si cassé</p>
           </div>
 
           {/* Warning */}
