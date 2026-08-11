@@ -85,8 +85,8 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Lire en commençant à la ligne 4 (skip les 3 premières lignes vides)
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 3 });
+      // Lire à partir de la ligne 1
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 0 });
 
       if (jsonData.length === 0) {
         alert('Le fichier Excel semble vide.');
