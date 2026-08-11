@@ -66,7 +66,7 @@ export default function ProduitsBrutePage() {
       .select('*')
       .eq('lot_id', selectedLotId)
       .eq('statut', 'brute')
-      .order('created_at', { ascending: false });
+      .order('product_number', { ascending: true });
 
     if (data) setProduits(data);
   }
