@@ -2,27 +2,63 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Package, QrCode, Edit2 } from 'lucide-react';
+import { Package, QrCode, Edit2, Trash2, Archive } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
 
 export default function ProduitsEnVentePage() {
   const supabase = createClient();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lotInfo, setLotInfo] = useState<Record<string, any>>({});
 
   useEffect(() => {
     async function fetchProduits() {
       const { data } = await supabase
         .from('produits')
         .select('*')
-        .eq('statut', 'en_vente')
+        .eq('statut', 'vente')
         .order('updated_at', { ascending: false });
 
-      if (data) setProduits(data);
+      if (data) {
+        setProduits(data);
+        // Charger les infos des lots
+        const lotIds = [...new Set(data.map(p => p.lot_id))];
+        for (const lotId of lotIds) {
+          const { data: lot } = await supabase
+            .from('lots')
+            .select('*')
+            .eq('id', lotId)
+            .single();
+          if (lot) setLotInfo(prev => ({ ...prev, [lotId]: lot }));
+        }
+      }
       setLoading(false);
     }
     fetchProduits();
   }, []);
+
+  async function updateProduitStatut(produitId: string, newStatut: string) {
+    const { error } = await supabase
+      .from('produits')
+      .update({ statut: newStatut, updated_at: new Date().toISOString() })
+      .eq('id', produitId);
+
+    if (!error) {
+      setProduits(produits.filter(p => p.id !== produitId));
+    } else {
+      alert('Erreur: ' + error.message);
+    }
+  }
+
+  async function archiveProduct(produitId: string, nom: string) {
+    if (!window.confirm(`Archiver "${nom}" (marquer comme vendu) ?`)) return;
+    updateProduitStatut(produitId, 'vendu');
+  }
+
+  async function unvalidateProduct(produitId: string, nom: string) {
+    if (!window.confirm(`Retirer "${nom}" de la vente (retour aux Produits Bruts) ?`)) return;
+    updateProduitStatut(produitId, 'brute');
+  }
 
   if (loading)
     return (
@@ -46,6 +82,13 @@ export default function ProduitsEnVentePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produits.map(produit => (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all">
+                {/* Header avec lot et produit number */}
+                <div className="bg-[#252525] px-5 py-3 border-b border-gray-800">
+                  <p className="text-xs text-gray-400">
+                    Lot #{lotInfo[produit.lot_id]?.numerolot || produit.lot_id || '...'} | Prod #{produit.product_number || '...'}
+                  </p>
+                </div>
+
                 <div className="relative h-48 bg-[#252525] flex items-center justify-center">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-contain" />
@@ -97,8 +140,19 @@ export default function ProduitsEnVentePage() {
                     <button className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center gap-1 text-sm text-gray-300">
                       <Edit2 size={14} /> Modifier
                     </button>
-                    <button className="px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center">
-                      <QrCode size={16} className="text-gray-400" />
+                    <button
+                      onClick={() => unvalidateProduct(produit.id, produit.nom)}
+                      className="px-3 py-2 bg-red-900/30 border border-red-700 rounded-lg hover:bg-red-900/50 text-red-400"
+                      title="Retour aux Produits Bruts"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => archiveProduct(produit.id, produit.nom)}
+                      className="px-3 py-2 bg-green-900/30 border border-green-700 rounded-lg hover:bg-green-900/50 text-green-400"
+                      title="Marquer comme vendu"
+                    >
+                      <Archive size={16} />
                     </button>
                   </div>
                 </div>
