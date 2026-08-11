@@ -88,15 +88,9 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Récupérer les produits existants du lot
-      const { data: existingProducts } = await supabase
-        .from('produits')
-        .select('nom, prix_neuf')
-        .eq('lot_id', selectedLotId);
-
-      const existingSet = new Set(
-        (existingProducts || []).map(p => `${p.nom}|${Math.round(p.prix_neuf)}`)
-      );
+      // Note: Un lot peut avoir plusieurs exemplaires du même produit
+      // Chaque produit a un QR unique, donc pas de doublon réel
+      const existingSet = new Set();
 
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
@@ -117,7 +111,6 @@ export default function ProduitsBrutePage() {
       console.log('Colonne Prix:', priceKey);
 
       const nouveauxProduits: any[] = [];
-      let doublons = 0;
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
@@ -144,14 +137,6 @@ export default function ProduitsBrutePage() {
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
         const nomTrimmed = nom.substring(0, 100);
 
-        // Vérifier doublon
-        const key = `${nomTrimmed}|${Math.round(prixNeuf)}`;
-        if (existingSet.has(key)) {
-          doublons++;
-          continue;
-        }
-        existingSet.add(key);
-
         nouveauxProduits.push({
           lot_id: selectedLotId,
           user_id: userId,
@@ -175,7 +160,6 @@ export default function ProduitsBrutePage() {
 
       if (nouveauxProduits.length === 0) {
         let msg = `⚠️ Aucun produit importé.`;
-        if (doublons > 0) msg += ` ${doublons} doublons.`;
         if (skipped > 0) msg += ` ${skipped} lignes invalides (prix/nom manquant).`;
         alert(msg);
         setUploading(false);
@@ -186,8 +170,7 @@ export default function ProduitsBrutePage() {
       if (!error) {
         fetchProduits();
         let message = `✅ ${nouveauxProduits.length} produits importés`;
-        if (doublons > 0) message += ` (${doublons} doublons)`;
-        if (skipped > 0) message += ` (${skipped} invalides)`;
+        if (skipped > 0) message += ` (${skipped} lignes invalides ignorées)`;
         alert(message);
       } else {
         alert('Erreur Supabase: ' + error.message);
