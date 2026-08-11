@@ -24,6 +24,7 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
   const [lotInfo, setLotInfo] = useState<any>(null);
   const [etatProduit, setEtatProduit] = useState('');
   const [etatEmballage, setEtatEmballage] = useState('');
+  const [categorie, setCategorie] = useState('');
 
   useEffect(() => {
     if (product && isOpen) {
@@ -32,6 +33,7 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
       setPhotoPreview(product.photos?.[0] || null);
       setEtatProduit(product.etat_produit || '');
       setEtatEmballage(product.etat_emballage || '');
+      setCategorie(product.categorie || '');
       setError('');
 
       // Charger les infos du lot
@@ -114,6 +116,7 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         .update({
           nom,
           description,
+          categorie,
           etat_produit: etatProduit,
           etat_emballage: etatEmballage,
           photos: photoPreview ? [photoPreview] : product.photos,
@@ -163,9 +166,25 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
             </div>
 
             {/* Catégorie */}
-            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
-              <p className="text-xs text-gray-400 font-bold mb-1">📂 Catégorie</p>
-              <p className="text-lg font-bold text-white">{product?.categorie || '—'}</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">📂 Catégorie</label>
+              <select
+                value={categorie}
+                onChange={e => setCategorie(e.target.value)}
+                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
+              >
+                <option value="">— Sélectionner —</option>
+                <option value="Électronique">Électronique</option>
+                <option value="Électroménager">Électroménager</option>
+                <option value="Informatique">Informatique</option>
+                <option value="Mobilier">Mobilier</option>
+                <option value="Décoration">Décoration</option>
+                <option value="Vêtements">Vêtements</option>
+                <option value="Sports">Sports</option>
+                <option value="Jouets">Jouets</option>
+                <option value="Livres">Livres</option>
+                <option value="Autre">Autre</option>
+              </select>
             </div>
           </div>
 
