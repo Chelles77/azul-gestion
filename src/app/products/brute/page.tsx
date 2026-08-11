@@ -351,8 +351,17 @@ export default function ProduitsBrutePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {produitsFiltres.map(produit => (
+            {produitsFiltres.map((produit, index) => {
+              const lotNumber = lots.find(l => l.id === selectedLotId)?.numerolot || selectedLotId;
+              const productNumber = index + 1;
+              return (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all flex flex-col">
+                {/* Header avec numéros */}
+                <div className="bg-[#252525] border-b border-gray-700 px-4 py-2 flex justify-between items-center">
+                  <span className="text-xs text-gray-400">Lot #{lotNumber}</span>
+                  <span className="text-xs font-bold text-blue-400">Prod #{ productNumber}</span>
+                </div>
+
                 <div className="relative bg-[#252525] h-48 flex items-center justify-center">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-contain p-2" />
@@ -423,7 +432,9 @@ export default function ProduitsBrutePage() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
+
           </div>
         )}
       </div>
