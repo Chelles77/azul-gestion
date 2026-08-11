@@ -93,26 +93,6 @@ export default function PageEncaissement() {
 
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200">
-      {/* Navigation */}
-      <nav className="bg-[#1a1a1a] border-b border-gray-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-white">📊 ENCAISSEMENT</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden">
-              <Menu size={24} />
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
-            >
-              Déconnexion
-            </button>
-          </div>
-        </div>
-      </nav>
-
       <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header */}
         <div className="mb-8">
