@@ -12,6 +12,7 @@ export default function PageEncaissement() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [ventes, setVentes] = useState<Produit[]>([]);
+  const [tauxURSSAF, setTauxURSSAF] = useState(12.3);
 
   useEffect(() => {
     const init = async () => {
@@ -53,6 +54,7 @@ export default function PageEncaissement() {
 
   // Calculs
   const totalVentes = ventes.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0);
+  const totalCoutsAchat = ventes.reduce((sum, v) => sum + (v.prix_revient || 0), 0);
   const totalFrais = ventes.reduce((sum, v) => {
     const prixVente = v.prix_vente_final || 0;
     // Estimation simple des frais (à affiner)
@@ -64,7 +66,8 @@ export default function PageEncaissement() {
     else frais = prixVente * 0.05; // 5% par défaut
     return sum + frais;
   }, 0);
-  const beneficeNet = totalVentes - totalFrais - ventes.reduce((sum, v) => sum + (v.prix_revient || 0), 0);
+  const beneficeNet = totalVentes - totalFrais - totalCoutsAchat;
+  const urssaf = totalVentes * (tauxURSSAF / 100);
 
   // Grouper par plateforme
   const parPlateforme = ventes.reduce((acc, v) => {
@@ -101,7 +104,12 @@ export default function PageEncaissement() {
         </div>
 
         {/* Résumé */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700">
+            <p className="text-xs text-blue-400 uppercase font-bold mb-2">📥 Coûts Achat</p>
+            <p className="text-3xl font-bold text-blue-400">{totalCoutsAchat.toFixed(0)} €</p>
+          </div>
+
           <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700">
             <p className="text-xs text-green-400 uppercase font-bold mb-2">💰 Total Ventes</p>
             <p className="text-3xl font-bold text-green-400">{totalVentes.toFixed(0)} €</p>
@@ -112,16 +120,24 @@ export default function PageEncaissement() {
             <p className="text-3xl font-bold text-red-400">{totalFrais.toFixed(0)} €</p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700">
-            <p className="text-xs text-blue-400 uppercase font-bold mb-2">📊 Coût Achat Total</p>
-            <p className="text-3xl font-bold text-blue-400">
-              {ventes.reduce((sum, v) => sum + (v.prix_revient || 0), 0).toFixed(0)} €
-            </p>
+          <div className="bg-gradient-to-br from-orange-900/30 to-[#1a1a1a] p-6 rounded-xl border border-orange-700">
+            <p className="text-xs text-orange-400 uppercase font-bold mb-2">🇫🇷 URSSAF</p>
+            <div className="flex items-end gap-2">
+              <p className="text-3xl font-bold text-orange-400">{urssaf.toFixed(0)} €</p>
+              <input
+                type="number"
+                value={tauxURSSAF}
+                onChange={e => setTauxURSSAF(parseFloat(e.target.value) || 12.3)}
+                step="0.1"
+                className="w-16 bg-[#252525] border border-gray-700 rounded px-2 py-1 text-white text-sm outline-none focus:border-orange-500"
+              />
+              <span className="text-orange-400 text-sm font-bold">%</span>
+            </div>
           </div>
 
-          <div className={`bg-gradient-to-br ${beneficeNet >= 0 ? 'from-emerald-900/30' : 'from-orange-900/30'} to-[#1a1a1a] p-6 rounded-xl border ${beneficeNet >= 0 ? 'border-emerald-700' : 'border-orange-700'}`}>
-            <p className={`text-xs ${beneficeNet >= 0 ? 'text-emerald-400' : 'text-orange-400'} uppercase font-bold mb-2`}>🎯 Bénéfice Net</p>
-            <p className={`text-3xl font-bold ${beneficeNet >= 0 ? 'text-emerald-400' : 'text-orange-400'}`}>
+          <div className={`bg-gradient-to-br ${beneficeNet >= 0 ? 'from-emerald-900/30' : 'from-rose-900/30'} to-[#1a1a1a] p-6 rounded-xl border ${beneficeNet >= 0 ? 'border-emerald-700' : 'border-rose-700'}`}>
+            <p className={`text-xs ${beneficeNet >= 0 ? 'text-emerald-400' : 'text-rose-400'} uppercase font-bold mb-2`}>🎯 Bénéfice Brut</p>
+            <p className={`text-3xl font-bold ${beneficeNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               {beneficeNet.toFixed(0)} €
             </p>
           </div>
