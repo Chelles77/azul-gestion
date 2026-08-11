@@ -16,6 +16,15 @@ interface DashboardStats {
   tauxRotation: number;
 }
 
+interface LotDetail {
+  id: string;
+  numerolot: string;
+  couttotal: number;
+  nb_pieces_total: number;
+  nb_pieces_vendables?: number;
+  venduCount: number;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -31,6 +40,7 @@ export default function DashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const [recentSales, setRecentSales] = useState<any[]>([]);
+  const [lots, setLots] = useState<LotDetail[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -45,7 +55,8 @@ export default function DashboardPage() {
         const { data: lotsData } = await supabase
           .from('lots')
           .select('*')
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
         // Produits bruts
         const { data: produitsData } = await supabase
@@ -62,6 +73,22 @@ export default function DashboardPage() {
           .eq('statut', 'vendu')
           .order('date_vente', { ascending: false })
           .limit(5);
+
+        // Compter les produits vendus par lot
+        const lotsWithSales = await Promise.all(
+          (lotsData || []).map(async (lot) => {
+            const { data: soldProducts } = await supabase
+              .from('produits')
+              .select('*', { count: 'exact' })
+              .eq('lot_id', lot.id)
+              .eq('statut', 'vendu');
+
+            return {
+              ...lot,
+              venduCount: soldProducts?.length || 0
+            };
+          })
+        );
 
         const totalCapital = lotsData?.reduce((sum, lot) => sum + (lot.couttotal || 0), 0) || 0;
         const totalVentes = ventesData?.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0) || 0;
@@ -83,6 +110,7 @@ export default function DashboardPage() {
         });
 
         setRecentSales(ventesData || []);
+        setLots(lotsWithSales);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -222,6 +250,71 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* DÉTAILS DES LOTS */}
+        {lots.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-lg font-bold text-white mb-4">📦 Détails par Lot</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {lots.map(lot => {
+                const prixParProduit = lot.nb_pieces_total && lot.nb_pieces_total > 0
+                  ? lot.couttotal / lot.nb_pieces_total
+                  : 0;
+                const tauxVente = lot.nb_pieces_total && lot.nb_pieces_total > 0
+                  ? (lot.venduCount / lot.nb_pieces_total) * 100
+                  : 0;
+
+                return (
+                  <div key={lot.id} className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-all">
+                    {/* Header */}
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-white">Lot #{lot.numerolot}</h3>
+                      <p className="text-xs text-gray-500 mt-1">ID: {lot.id.substring(0, 8)}</p>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="space-y-3 mb-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-400">Prix de Revient</span>
+                        <span className="font-bold text-blue-400">{lot.couttotal.toFixed(0)} €</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-400">Produits Total</span>
+                        <span className="font-bold text-white">{lot.nb_pieces_total || 0}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-400">Prix / Produit</span>
+                        <span className="font-bold text-orange-400">{prixParProduit.toFixed(2)} €</span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs text-gray-400">Ventes</span>
+                        <span className="text-xs font-bold text-green-400">{lot.venduCount}/{lot.nb_pieces_total} ({tauxVente.toFixed(1)}%)</span>
+                      </div>
+                      <div className="w-full bg-[#252525] rounded-full h-2 border border-gray-700">
+                        <div
+                          className="bg-gradient-to-r from-green-500 to-emerald-400 h-2 rounded-full transition-all"
+                          style={{ width: `${tauxVente}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Button */}
+                    <button
+                      onClick={() => router.push(`/products/brute?lot=${lot.id}`)}
+                      className="w-full px-4 py-2 bg-[#252525] hover:bg-[#333] text-gray-300 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      Voir produits <ArrowRight size={14} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* VENTES RÉCENTES */}
         {recentSales.length > 0 && (
