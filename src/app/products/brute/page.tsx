@@ -80,7 +80,9 @@ export default function ProduitsBrutePage() {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
+
+      // Lire en commençant à la ligne 4 (skip les 3 premières lignes vides)
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 3 });
 
       if (jsonData.length === 0) {
         alert('Le fichier Excel semble vide.');
@@ -88,25 +90,27 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Note: Un lot peut avoir plusieurs exemplaires du même produit
-      // Chaque produit a un QR unique, donc pas de doublon réel
-      const existingSet = new Set();
-
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
       console.log('Colonnes détectées:', rawKeys);
 
       // Détection flexible des colonnes
+      const numberKey = rawKeys.find(k => {
+        const lower = k.toLowerCase();
+        return lower.includes('numero') || lower.includes('number') || lower.includes('id') || lower === 'n°' || lower === '1';
+      }) || rawKeys[0];
+
       const descKey = rawKeys.find(k => {
         const lower = k.toLowerCase();
-        return lower.includes('desc') || lower.includes('nom') || lower.includes('article') || lower.includes('produit') || lower.includes('name');
-      }) || rawKeys[0];
+        return lower.includes('desc') || lower.includes('item') || lower.includes('produit') || lower.includes('name');
+      }) || rawKeys[1];
 
       const priceKey = rawKeys.find(k => {
         const lower = k.toLowerCase();
-        return lower.includes('price') || lower.includes('prix') || lower.includes('retail') || lower.includes('montant') || lower.includes('valeur') || lower.includes('coût') || lower.includes('cost');
-      }) || rawKeys[1];
+        return lower.includes('retail') || lower.includes('total') || lower.includes('price') || lower.includes('prix');
+      }) || rawKeys[2];
 
+      console.log('Colonne Numéro:', numberKey);
       console.log('Colonne Description:', descKey);
       console.log('Colonne Prix:', priceKey);
 
@@ -115,6 +119,7 @@ export default function ProduitsBrutePage() {
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       for (const row of jsonData) {
+        const productNumber = row[numberKey]?.toString() || '';
         let rawPrice = row[priceKey]?.toString() || '0';
         rawPrice = rawPrice.replace(/[^\d.]/g, '');
         const prixNeuf = parseFloat(rawPrice) || 0;
@@ -122,7 +127,7 @@ export default function ProduitsBrutePage() {
 
         if (!desc || prixNeuf <= 0) {
           skipped++;
-          console.log('Skipped:', { desc, prixNeuf, reason: !desc ? 'no desc' : 'no price' });
+          console.log('Skipped:', { productNumber, desc, prixNeuf, reason: !desc ? 'no desc' : 'no price' });
           continue;
         }
 
@@ -140,6 +145,7 @@ export default function ProduitsBrutePage() {
         nouveauxProduits.push({
           lot_id: selectedLotId,
           user_id: userId,
+          product_number: productNumber || `${nouveauxProduits.length + 1}`,
           nom: nomTrimmed,
           marque,
           categorie,
