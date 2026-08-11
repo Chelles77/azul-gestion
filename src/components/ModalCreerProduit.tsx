@@ -24,11 +24,13 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
   const [marques, setMarques] = useState<string[]>([]);
   const [categorie, setCategorie] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
+  const [etatProduit, setEtatProduit] = useState('');
+  const [etatsProduit, setEtatsProduit] = useState<string[]>([]);
+  const [etatEmballage, setEtatEmballage] = useState('');
+  const [etatsEmballage, setEtatsEmballage] = useState<string[]>([]);
   const [prixNeuf, setPrixNeuf] = useState('');
   const [coefRevient, setCoefRevient] = useState(coefBrut.toString());
   const [description, setDescription] = useState('');
-  const [etatProduit, setEtatProduit] = useState('');
-  const [etatEmballage, setEtatEmballage] = useState('');
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -54,9 +56,13 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
     const supabase = createClient();
     const { data: marqueData } = await supabase.from('marques').select('nom').order('nom');
     const { data: categData } = await supabase.from('categories').select('nom').order('nom');
+    const { data: etatProdData } = await supabase.from('etat_produit').select('nom').order('nom');
+    const { data: etatEmbalData } = await supabase.from('etat_emballage').select('nom').order('nom');
 
     if (marqueData) setMarques(marqueData.map(m => m.nom));
     if (categData) setCategories(categData.map(c => c.nom));
+    if (etatProdData) setEtatsProduit(etatProdData.map(e => e.nom));
+    if (etatEmbalData) setEtatsEmballage(etatEmbalData.map(e => e.nom));
   };
 
   if (!isOpen) return null;
@@ -326,35 +332,22 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
 
           {/* États */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">État Produit</label>
-              <select
-                value={etatProduit}
-                onChange={e => setEtatProduit(e.target.value)}
-                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-              >
-                <option value="">Sélectionner...</option>
-                <option value="Neuf">Neuf</option>
-                <option value="Très bon état">Très bon état</option>
-                <option value="Bon état">Bon état</option>
-                <option value="Acceptable">Acceptable</option>
-                <option value="À réviser">À réviser</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">État Emballage</label>
-              <select
-                value={etatEmballage}
-                onChange={e => setEtatEmballage(e.target.value)}
-                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-              >
-                <option value="">Sélectionner...</option>
-                <option value="Emballage neuf">Emballage neuf</option>
-                <option value="Emballage ouvert">Emballage ouvert</option>
-                <option value="Emballage abîmé">Emballage abîmé</option>
-                <option value="Sans emballage">Sans emballage</option>
-              </select>
-            </div>
+            <SelectWithAdd
+              label="État Produit"
+              value={etatProduit}
+              onChange={setEtatProduit}
+              options={etatsProduit}
+              onAddOption={val => setEtatsProduit([...etatsProduit, val])}
+              table="etat_produit"
+            />
+            <SelectWithAdd
+              label="État Emballage"
+              value={etatEmballage}
+              onChange={setEtatEmballage}
+              options={etatsEmballage}
+              onAddOption={val => setEtatsEmballage([...etatsEmballage, val])}
+              table="etat_emballage"
+            />
           </div>
 
           {/* Description */}
