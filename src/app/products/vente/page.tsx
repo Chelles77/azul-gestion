@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase';
 import { Package, QrCode, Edit2, Trash2, Archive } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
 import ModalArchiver from '@/components/ModalArchiver';
-import ModalModifier from '@/components/ModalModifier';
+import ModalValider from '@/components/ModalValider';
 
 export default function ProduitsEnVentePage() {
   const supabase = createClient();
@@ -13,7 +13,7 @@ export default function ProduitsEnVentePage() {
   const [loading, setLoading] = useState(true);
   const [lotInfo, setLotInfo] = useState<Record<string, any>>({});
   const [modalArchiverOpen, setModalArchiverOpen] = useState(false);
-  const [modalModifierOpen, setModalModifierOpen] = useState(false);
+  const [modalValiderOpen, setModalValiderOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
@@ -60,13 +60,13 @@ export default function ProduitsEnVentePage() {
     setModalArchiverOpen(true);
   }
 
-  function openModifierModal(product: Produit) {
+  function openValiderModal(product: Produit) {
     setSelectedProduct(product);
-    setModalModifierOpen(true);
+    setModalValiderOpen(true);
   }
 
-  function handleModifierSuccess() {
-    setModalModifierOpen(false);
+  function handleValiderSuccess() {
+    setModalValiderOpen(false);
     // Recharger la liste
     const fetchProduits = async () => {
       const { data } = await supabase
@@ -177,7 +177,7 @@ export default function ProduitsEnVentePage() {
 
                   <div className="flex gap-2 pt-4 border-t border-gray-800">
                     <button
-                      onClick={() => openModifierModal(produit)}
+                      onClick={() => openValiderModal(produit)}
                       className="flex-1 px-3 py-2 bg-[#252525] border border-gray-700 rounded-lg hover:bg-[#333] flex items-center justify-center gap-1 text-sm text-gray-300"
                     >
                       <Edit2 size={14} /> Modifier
@@ -204,11 +204,11 @@ export default function ProduitsEnVentePage() {
         )}
       </div>
 
-      <ModalModifier
+      <ModalValider
         product={selectedProduct}
-        isOpen={modalModifierOpen}
-        onClose={() => setModalModifierOpen(false)}
-        onSuccess={handleModifierSuccess}
+        isOpen={modalValiderOpen}
+        onClose={() => setModalValiderOpen(false)}
+        onSuccess={handleValiderSuccess}
       />
 
       <ModalArchiver
