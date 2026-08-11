@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Package, Archive, RotateCcw } from 'lucide-react';
+import { Package, Archive, RotateCcw, Edit2, Trash2 } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
 import ModalRetourClient from '@/components/ModalRetourClient';
 
@@ -43,6 +43,34 @@ export default function ProduitsArchivesPage() {
   function openRetourModal(product: Produit) {
     setSelectedProduct(product);
     setModalRetourOpen(true);
+  }
+
+  async function deleteProduit(produitId: string, nom: string) {
+    if (!window.confirm(`Supprimer "${nom}" ?`)) return;
+
+    try {
+      const { error } = await supabase
+        .from('produits')
+        .delete()
+        .eq('id', produitId);
+
+      if (error) {
+        alert('❌ Erreur: ' + error.message);
+      } else {
+        // Recharger la liste
+        const { data } = await supabase
+          .from('produits')
+          .select('*')
+          .eq('statut', 'vendu')
+          .order('updated_at', { ascending: false });
+
+        if (data) {
+          setProduits(data);
+        }
+      }
+    } catch (err: any) {
+      alert('❌ Erreur inattendue: ' + err.message);
+    }
   }
 
   function handleRetourSuccess() {
@@ -176,7 +204,20 @@ export default function ProduitsArchivesPage() {
                       onClick={() => openRetourModal(produit)}
                       className="flex-1 px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center gap-1 text-sm"
                     >
-                      <RotateCcw size={14} /> Retour client
+                      <RotateCcw size={14} /> Retour
+                    </button>
+                    <button
+                      className="px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center"
+                      title="Modifier"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => deleteProduit(produit.id, produit.nom)}
+                      className="px-3 py-2 bg-red-900/30 border border-red-700 rounded-lg hover:bg-red-900/50 text-red-400 flex items-center justify-center"
+                      title="Supprimer"
+                    >
+                      <Trash2 size={14} />
                     </button>
                 </div>
               </div>
