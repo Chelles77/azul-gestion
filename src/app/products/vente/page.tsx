@@ -110,7 +110,38 @@ export default function ProduitsEnVentePage() {
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-2">Produits En Vente</h1>
-        <p className="text-gray-400 mb-8">{produits.length} produits actuellement en vente</p>
+        <p className="text-gray-400 mb-6">{produits.length} produits actuellement en vente</p>
+
+        {/* KPI CARDS */}
+        {produits.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700">
+              <p className="text-xs text-purple-400 uppercase font-bold mb-2">📊 Produits En Vente</p>
+              <p className="text-3xl font-bold text-purple-400">{produits.length}</p>
+            </div>
+
+            <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700">
+              <p className="text-xs text-green-400 uppercase font-bold mb-2">💰 CA Estimé</p>
+              <p className="text-3xl font-bold text-green-400">
+                {produits.reduce((sum, p) => sum + (p.prix_estime_vente || 0), 0).toFixed(0)} €
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700">
+              <p className="text-xs text-blue-400 uppercase font-bold mb-2">📥 Coûts Achat</p>
+              <p className="text-3xl font-bold text-blue-400">
+                {produits.reduce((sum, p) => sum + (p.prix_revient || 0), 0).toFixed(0)} €
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-emerald-900/30 to-[#1a1a1a] p-6 rounded-xl border border-emerald-700">
+              <p className="text-xs text-emerald-400 uppercase font-bold mb-2">🎯 Bénéfice Potentiel</p>
+              <p className="text-3xl font-bold text-emerald-400">
+                {(produits.reduce((sum, p) => sum + (p.prix_estime_vente || 0), 0) - produits.reduce((sum, p) => sum + (p.prix_revient || 0), 0)).toFixed(0)} €
+              </p>
+            </div>
+          </div>
+        )}
 
         {produits.length === 0 ? (
           <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800">
