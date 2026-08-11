@@ -238,11 +238,11 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
               <p className="text-lg text-gray-400">€</p>
             </div>
 
-            {/* Prix de Vente Conseillé */}
-            <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg">
-              <p className="text-xs text-gray-400 uppercase font-bold mb-2">🏷️ Prix Vente</p>
-              <p className="text-4xl font-bold text-green-400">{prixSuggere.toFixed(0)}</p>
-              <p className="text-xs text-gray-400">Suggéré</p>
+            {/* Coefficient */}
+            <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">📊 Coeff. Achat</p>
+              <p className="text-4xl font-bold text-blue-400">{((product.coef_revient || 0) * 100).toFixed(1)}%</p>
+              <p className="text-xs text-gray-400">= {(product.coef_revient || 0).toFixed(3)}x</p>
             </div>
           </div>
 
