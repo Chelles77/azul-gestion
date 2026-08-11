@@ -320,23 +320,32 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">État Produit</label>
-              <input
-                type="text"
+              <select
                 value={etatProduit}
                 onChange={e => setEtatProduit(e.target.value)}
-                placeholder="Très bon état"
                 className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-              />
+              >
+                <option value="">Sélectionner...</option>
+                <option value="Neuf">Neuf</option>
+                <option value="Très bon état">Très bon état</option>
+                <option value="Bon état">Bon état</option>
+                <option value="Acceptable">Acceptable</option>
+                <option value="À réviser">À réviser</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">État Emballage</label>
-              <input
-                type="text"
+              <select
                 value={etatEmballage}
                 onChange={e => setEtatEmballage(e.target.value)}
-                placeholder="Emballage ouvert"
                 className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-              />
+              >
+                <option value="">Sélectionner...</option>
+                <option value="Emballage neuf">Emballage neuf</option>
+                <option value="Emballage ouvert">Emballage ouvert</option>
+                <option value="Emballage abîmé">Emballage abîmé</option>
+                <option value="Sans emballage">Sans emballage</option>
+              </select>
             </div>
           </div>
 
