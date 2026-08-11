@@ -178,11 +178,32 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      const { error } = await supabase.from('produits').insert(nouveauxProduits);
+      // Récupérer les produits existants pour éviter les doublons
+      const { data: existingProducts } = await supabase
+        .from('produits')
+        .select('product_number')
+        .eq('lot_id', selectedLotId);
+
+      const existingNumbers = new Set(
+        (existingProducts || [])
+          .map((p: any) => p.product_number)
+          .filter(Boolean)
+      );
+
+      // Filtrer pour ne garder que les nouveaux produits
+      const produitsAjouter = nouveauxProduits.filter(p => !existingNumbers.has(p.product_number));
+
+      if (produitsAjouter.length === 0) {
+        alert('✅ Tous les produits existent déjà dans ce lot.');
+        setUploading(false);
+        return;
+      }
+
+      const { error } = await supabase.from('produits').insert(produitsAjouter);
       if (!error) {
         fetchProduits();
-        let message = `✅ ${nouveauxProduits.length} produits importés`;
-        if (skipped > 0) message += ` (${skipped} lignes invalides ignorées)`;
+        let message = `✅ ${produitsAjouter.length} produits importés (${nouveauxProduits.length - produitsAjouter.length} déjà existants)`;
+        if (skipped > 0) message += ` - ${skipped} lignes invalides ignorées`;
         alert(message);
       } else {
         alert('Erreur Supabase: ' + error.message);
