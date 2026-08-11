@@ -148,6 +148,36 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* INFOS LOT + PRODUIT */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Numéro Produit */}
+            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+              <p className="text-xs text-gray-400 font-bold mb-1">🏷️ Numéro Produit</p>
+              <p className="text-lg font-bold text-white">{product?.product_number || '—'}</p>
+            </div>
+
+            {/* Catégorie */}
+            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+              <p className="text-xs text-gray-400 font-bold mb-1">📂 Catégorie</p>
+              <p className="text-lg font-bold text-white">{product?.categorie || '—'}</p>
+            </div>
+          </div>
+
+          {/* ÉTATS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* État Produit */}
+            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+              <p className="text-xs text-gray-400 font-bold mb-1">✔️ État Produit</p>
+              <p className="text-lg font-bold text-yellow-400">{product?.etat_produit || '—'}</p>
+            </div>
+
+            {/* État Emballage */}
+            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+              <p className="text-xs text-gray-400 font-bold mb-1">📦 État Emballage</p>
+              <p className="text-lg font-bold text-yellow-400">{product?.etat_emballage || '—'}</p>
+            </div>
+          </div>
+
           {/* INFO FINANCIÈRE + QR CODE */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Prix Neuf */}

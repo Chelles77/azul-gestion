@@ -49,7 +49,6 @@ export default function Navbar() {
                 <Link href="/products/brute" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm first:rounded-t-lg border-b border-gray-800/50">Produits Bruts</Link>
                 <Link href="/products/vente" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm border-b border-gray-800/50">En Vente</Link>
                 <Link href="/products/archives" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm border-b border-gray-800/50">Vendu / Archiver</Link>
-                <Link href="/products/casse" className="block px-4 py-3 text-red-400 hover:bg-gray-800 hover:text-red-300 text-sm border-b border-gray-800/50 font-medium">💔 Cassés</Link>
                 <Link href="/qr/print" className="block px-4 py-3 text-blue-400 hover:bg-gray-800 hover:text-blue-300 text-sm last:rounded-b-lg font-medium">📋 Imprimer QR</Link>
               </div>
             </div>
@@ -112,7 +111,6 @@ export default function Navbar() {
                 <Link href="/products/brute" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Produits Bruts</Link>
                 <Link href="/products/vente" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">En Vente</Link>
                 <Link href="/products/archives" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Vendu / Archiver</Link>
-                <Link href="/products/casse" onClick={() => setIsMobileMenuOpen(false)} className="block text-red-400 hover:text-red-300 py-1 text-sm font-medium">💔 Cassés</Link>
                 <Link href="/qr/print" onClick={() => setIsMobileMenuOpen(false)} className="block text-blue-400 hover:text-blue-300 py-1 text-sm font-medium">📋 Imprimer QR</Link>
               </div>
             )}
