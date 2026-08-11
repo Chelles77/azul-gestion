@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { Menu, ChevronDown, Euro, TrendingUp, AlertCircle } from 'lucide-react';
+import { Menu, ChevronDown, Euro, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
 
 export default function PageEncaissement() {
@@ -13,9 +13,37 @@ export default function PageEncaissement() {
   const [loading, setLoading] = useState(true);
   const [ventes, setVentes] = useState<Produit[]>([]);
   const [tauxURSSAF, setTauxURSSAF] = useState(12.3);
+  const [refreshing, setRefreshing] = useState(false);
   const now = new Date();
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+
+  const fetchVentes = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('produits')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('statut', 'vendu')
+        .order('date_vente', { ascending: false });
+
+      if (error) console.error('Erreur chargement:', error);
+      else setVentes(data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchVentes();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -28,17 +56,7 @@ export default function PageEncaissement() {
           return;
         }
         setUser(user);
-
-        // Charger tous les produits vendus
-        const { data, error } = await supabase
-          .from('produits')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('statut', 'vendu')
-          .order('date_vente', { ascending: false });
-
-        if (error) console.error('Erreur chargement:', error);
-        else setVentes(data || []);
+        await fetchVentes();
       } catch (error) {
         console.error(error);
         router.push('/login');
@@ -48,6 +66,15 @@ export default function PageEncaissement() {
     };
     init();
   }, [router]);
+
+  // Rafraîchissement automatique toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchVentes();
+    }, 30000); // 30 secondes
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -174,6 +201,14 @@ export default function PageEncaissement() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-white">📅 Ventes du Mois</h2>
             <div className="flex gap-3">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg flex items-center gap-2 text-sm font-medium"
+              >
+                <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+                {refreshing ? 'Actualisation...' : 'Rafraîchir'}
+              </button>
               <select
                 value={selectedYear}
                 onChange={e => setSelectedYear(parseInt(e.target.value))}
