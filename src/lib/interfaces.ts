@@ -11,7 +11,7 @@ export interface Produit {
   coef_revient: number;
   prix_revient: number;
   qr_code: string;
-  statut: 'brute' | 'en_vente' | 'vendu' | 'archive';
+  statut: 'brute' | 'en_vente' | 'vendu' | 'archive' | 'rebut' | 'casse';
   photos: string[] | null;
   etat_produit: string | null;
   etat_emballage: string | null;
