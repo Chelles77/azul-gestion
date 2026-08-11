@@ -10,7 +10,7 @@ interface SelectWithAddProps {
   onChange: (value: string) => void;
   options: string[];
   onAddOption: (option: string) => void;
-  table: 'marques' | 'categories';
+  table: 'marques' | 'categories' | 'etat_produit' | 'etat_emballage';
 }
 
 export default function SelectWithAdd({ label, value, onChange, options, onAddOption, table }: SelectWithAddProps) {
