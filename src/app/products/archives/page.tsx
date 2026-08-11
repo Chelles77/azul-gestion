@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { Package, Archive, RotateCcw } from 'lucide-react';
 import { Produit } from '@/lib/interfaces';
+import ModalRetourClient from '@/components/ModalRetourClient';
 
 export default function ProduitsArchivesPage() {
   const supabase = createClient();
   const [produits, setProduits] = useState<Produit[]>([]);
   const [loading, setLoading] = useState(true);
   const [lotInfo, setLotInfo] = useState<Record<string, any>>({});
+  const [modalRetourOpen, setModalRetourOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
 
   useEffect(() => {
     async function fetchProduits() {
@@ -37,18 +40,27 @@ export default function ProduitsArchivesPage() {
     fetchProduits();
   }, []);
 
-  async function restoreProduct(produitId: string, nom: string) {
-    if (!window.confirm(`Retirer "${nom}" de l'archive (retour en vente) ?`)) return;
-    const { error } = await supabase
-      .from('produits')
-      .update({ statut: 'en_vente', updated_at: new Date().toISOString() })
-      .eq('id', produitId);
+  function openRetourModal(product: Produit) {
+    setSelectedProduct(product);
+    setModalRetourOpen(true);
+  }
 
-    if (!error) {
-      setProduits(produits.filter(p => p.id !== produitId));
-    } else {
-      alert('Erreur: ' + error.message);
-    }
+  function handleRetourSuccess() {
+    setModalRetourOpen(false);
+    setSelectedProduct(null);
+    // Recharger la liste
+    const fetchProduits = async () => {
+      const { data } = await supabase
+        .from('produits')
+        .select('*')
+        .eq('statut', 'vendu')
+        .order('updated_at', { ascending: false });
+
+      if (data) {
+        setProduits(data);
+      }
+    };
+    fetchProduits();
   }
 
   if (loading)
@@ -161,16 +173,24 @@ export default function ProduitsArchivesPage() {
 
                 <div className="mt-auto flex gap-2 px-5 py-5 border-t border-gray-800">
                     <button
-                      onClick={() => restoreProduct(produit.id, produit.nom)}
+                      onClick={() => openRetourModal(produit)}
                       className="flex-1 px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center gap-1 text-sm"
                     >
-                      <RotateCcw size={14} /> Retour vente
+                      <RotateCcw size={14} /> Retour client
                     </button>
                 </div>
               </div>
             ))}
           </div>
         )}
+
+        {/* Modal Retour Client */}
+        <ModalRetourClient
+          produit={selectedProduct}
+          isOpen={modalRetourOpen}
+          onClose={() => setModalRetourOpen(false)}
+          onSuccess={handleRetourSuccess}
+        />
       </div>
     </div>
   );
