@@ -97,11 +97,47 @@ export default function ModalMarquerCasse({ produit, lotInfo, isOpen, onClose, o
             </div>
           </div>
 
-          {/* Prix Revient */}
-          <div className="bg-gradient-to-br from-orange-900/30 to-[#1a1a1a] p-4 rounded-lg border border-orange-700">
-            <p className="text-xs text-orange-400 font-bold mb-1">Prix de Revient</p>
-            <p className="text-2xl font-bold text-orange-400">-{(produit.prix_revient || 0).toFixed(2)} €</p>
-            <p className="text-xs text-gray-500 mt-1">Perte si cassé</p>
+          {/* Prix & Coeff */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-3 rounded-lg border border-blue-700">
+              <p className="text-xs text-blue-400 font-bold mb-1">Prix Neuf</p>
+              <p className="text-lg font-bold text-blue-400">{(produit.prix_neuf || 0).toFixed(0)} €</p>
+            </div>
+            <div className="bg-gradient-to-br from-orange-900/30 to-[#1a1a1a] p-3 rounded-lg border border-orange-700">
+              <p className="text-xs text-orange-400 font-bold mb-1">Prix Revient</p>
+              <p className="text-lg font-bold text-orange-400">{(produit.prix_revient || 0).toFixed(2)} €</p>
+            </div>
+          </div>
+
+          {/* Coeff Achat */}
+          {produit.coef_revient && (
+            <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-3 rounded-lg border border-purple-700">
+              <p className="text-xs text-purple-400 font-bold mb-1">Coefficient d'Achat</p>
+              <p className="text-lg font-bold text-purple-400">{(produit.coef_revient * 100).toFixed(1)}%</p>
+            </div>
+          )}
+
+          {/* Catégorie & Marque */}
+          <div className="grid grid-cols-2 gap-3">
+            {produit.categorie && (
+              <div className="bg-[#252525] p-3 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400">Catégorie</p>
+                <p className="text-white font-bold text-sm">{produit.categorie}</p>
+              </div>
+            )}
+            {produit.marque && (
+              <div className="bg-[#252525] p-3 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400">Marque</p>
+                <p className="text-white font-bold text-sm">{produit.marque}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Perte */}
+          <div className="bg-gradient-to-br from-red-900/30 to-[#1a1a1a] p-4 rounded-lg border border-red-700">
+            <p className="text-xs text-red-400 font-bold mb-1">Perte si Cassé</p>
+            <p className="text-2xl font-bold text-red-400">-{(produit.prix_revient || 0).toFixed(2)} €</p>
+            <p className="text-xs text-gray-500 mt-1">Sera ajouté aux rebuts</p>
           </div>
 
           {/* Warning */}
