@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Upload, Edit2, CheckCircle, Package, Filter, Trash2, QrCode } from 'lucide-react';
+import { Upload, Edit2, CheckCircle, Package, Filter, Trash2, QrCode, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Produit } from '@/lib/interfaces';
 import ModalModifier from '@/components/ModalModifier';
 import ModalValider from '@/components/ModalValider';
+import ModalCreerProduit from '@/components/ModalCreerProduit';
 
 export default function ProduitsBrutePage() {
   const supabase = createClient();
@@ -23,6 +24,7 @@ export default function ProduitsBrutePage() {
   const [coefBrut, setCoefBrut] = useState<number>(0);
   const [isModifying, setIsModifying] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Charger les lots
   useEffect(() => {
@@ -318,6 +320,13 @@ export default function ProduitsBrutePage() {
             >
               <Trash2 size={18} /> Vider la liste
             </button>
+            <button
+              onClick={() => setIsCreating(true)}
+              disabled={uploading || !selectedLotId}
+              className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            >
+              <Plus size={18} /> Créer un produit
+            </button>
           </div>
         </div>
 
@@ -499,6 +508,17 @@ export default function ProduitsBrutePage() {
           fetchProduits();
           setIsValidating(false);
           setSelectedProduct(null);
+        }}
+      />
+
+      {/* Modal Créer Produit */}
+      <ModalCreerProduit
+        lotId={selectedLotId}
+        isOpen={isCreating}
+        onClose={() => setIsCreating(false)}
+        onSuccess={() => {
+          fetchProduits();
+          setIsCreating(false);
         }}
       />
     </div>
