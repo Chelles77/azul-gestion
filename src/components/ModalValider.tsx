@@ -200,61 +200,57 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
             </div>
           </div>
 
-          {/* INFO FINANCIÈRE & QR CODE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Infos */}
-            <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 space-y-3">
-              <p className="text-sm font-bold text-gray-300 uppercase">Informations Financières</p>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Prix Neuf</p>
-                <p className="text-lg font-bold text-white">{product.prix_neuf.toFixed(2)} €</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Prix de Revient</p>
-                <p className="text-lg font-bold text-orange-400">{product.prix_revient.toFixed(2)} €</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase font-bold mb-1">Prix de Vente Conseillé</p>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={prixVente}
-                    disabled
-                    className="w-full bg-[#1a1a1a] border border-green-600/30 rounded-lg px-3 py-2 text-white text-sm font-bold"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">€</span>
-                </div>
-              </div>
+          {/* INFO FINANCIÈRE EN CARTES */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Prix Neuf */}
+            <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">💵 Prix Neuf</p>
+              <p className="text-4xl font-bold text-white">{product.prix_neuf.toFixed(0)}</p>
+              <p className="text-lg text-gray-400">€</p>
             </div>
 
-            {/* QR Code */}
-            <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
-              <p className="text-sm font-bold text-gray-300 uppercase">QR Code Identifiant</p>
-              {qrDataUrl ? (
-                <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
-              ) : (
-                <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
-                  <span className="text-gray-400 text-sm">Génération...</span>
-                </div>
-              )}
-              <div className="flex gap-2 w-full">
-                <button
-                  type="button"
-                  onClick={handlePrintQR}
-                  disabled={!qrDataUrl}
-                  className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-                >
-                  <Printer size={14} /> Imprimer
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownloadQR}
-                  disabled={!qrDataUrl}
-                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
-                >
-                  <Download size={14} /> Télécharger
-                </button>
+            {/* Prix Revient */}
+            <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">💰 Prix Revient</p>
+              <p className="text-4xl font-bold text-orange-400">{product.prix_revient.toFixed(0)}</p>
+              <p className="text-lg text-gray-400">€</p>
+            </div>
+
+            {/* Prix de Vente Conseillé */}
+            <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">🏷️ Prix Vente</p>
+              <p className="text-4xl font-bold text-green-400">{prixSuggere.toFixed(0)}</p>
+              <p className="text-xs text-gray-400">Suggéré</p>
+            </div>
+          </div>
+
+          {/* QR CODE */}
+          <div className="bg-[#252525] p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
+            <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code Identifiant</p>
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
+            ) : (
+              <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
+                <span className="text-gray-400 text-sm">Génération...</span>
               </div>
+            )}
+            <div className="flex gap-2 w-full max-w-xs">
+              <button
+                type="button"
+                onClick={handlePrintQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Printer size={14} /> Imprimer
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 border border-green-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Download size={14} /> Télécharger
+              </button>
             </div>
           </div>
 
