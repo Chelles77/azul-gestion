@@ -22,12 +22,16 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [lotInfo, setLotInfo] = useState<any>(null);
+  const [etatProduit, setEtatProduit] = useState('');
+  const [etatEmballage, setEtatEmballage] = useState('');
 
   useEffect(() => {
     if (product && isOpen) {
       setNom(product.nom);
       setDescription(product.description || '');
       setPhotoPreview(product.photos?.[0] || null);
+      setEtatProduit(product.etat_produit || '');
+      setEtatEmballage(product.etat_emballage || '');
       setError('');
 
       // Charger les infos du lot
@@ -110,6 +114,8 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
         .update({
           nom,
           description,
+          etat_produit: etatProduit,
+          etat_emballage: etatEmballage,
           photos: photoPreview ? [photoPreview] : product.photos,
           updated_at: new Date().toISOString(),
         })
@@ -166,15 +172,38 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
           {/* ÉTATS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {/* État Produit */}
-            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
-              <p className="text-xs text-gray-400 font-bold mb-1">✔️ État Produit</p>
-              <p className="text-lg font-bold text-yellow-400">{product?.etat_produit || '—'}</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">✔️ État Produit</label>
+              <select
+                value={etatProduit}
+                onChange={e => setEtatProduit(e.target.value)}
+                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:border-yellow-500"
+              >
+                <option value="">— Sélectionner —</option>
+                <option value="Neuf">Neuf</option>
+                <option value="Très bon état">Très bon état</option>
+                <option value="Bon état">Bon état</option>
+                <option value="Acceptable">Acceptable</option>
+                <option value="Mauvais état">Mauvais état</option>
+                <option value="Cassé">Cassé</option>
+              </select>
             </div>
 
             {/* État Emballage */}
-            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
-              <p className="text-xs text-gray-400 font-bold mb-1">📦 État Emballage</p>
-              <p className="text-lg font-bold text-yellow-400">{product?.etat_emballage || '—'}</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">📦 État Emballage</label>
+              <select
+                value={etatEmballage}
+                onChange={e => setEtatEmballage(e.target.value)}
+                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:border-yellow-500"
+              >
+                <option value="">— Sélectionner —</option>
+                <option value="Neuf">Neuf</option>
+                <option value="Bon">Bon</option>
+                <option value="Acceptable">Acceptable</option>
+                <option value="Endommagé">Endommagé</option>
+                <option value="Absent">Absent</option>
+              </select>
             </div>
           </div>
 
