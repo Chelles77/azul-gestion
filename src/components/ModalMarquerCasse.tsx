@@ -21,6 +21,8 @@ export default function ModalMarquerCasse({ produit, lotInfo, isOpen, onClose, o
   if (!isOpen || !produit) return null;
 
   async function handleMarquerCasse() {
+    if (!produit) return;
+
     setLoading(true);
     setError('');
     const supabase = createClient();
