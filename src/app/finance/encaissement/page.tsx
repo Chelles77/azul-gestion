@@ -43,7 +43,7 @@ export default function PageEncaissement() {
       }
     };
     init();
-  }, []);
+  }, [router]);
 
   const handleLogout = async () => {
     const supabase = createClient();
