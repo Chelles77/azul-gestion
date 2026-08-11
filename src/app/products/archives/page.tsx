@@ -72,7 +72,7 @@ export default function ProduitsArchivesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produits.map(produit => (
-              <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all">
+              <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all flex flex-col">
                 {/* Header avec lot et produit number */}
                 <div className="bg-[#252525] px-5 py-3 border-b border-gray-800">
                   <p className="text-xs text-gray-400">
@@ -80,7 +80,7 @@ export default function ProduitsArchivesPage() {
                   </p>
                 </div>
 
-                <div className="relative h-48 bg-[#252525] flex items-center justify-center">
+                <div className="relative h-48 bg-[#252525] flex items-center justify-center flex-shrink-0">
                   {produit.photos && produit.photos.length > 0 ? (
                     <img src={produit.photos[0]} alt={produit.nom} className="w-full h-full object-contain" />
                   ) : (
@@ -91,7 +91,7 @@ export default function ProduitsArchivesPage() {
                   </div>
                 </div>
 
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-grow">
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-xs px-2.5 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400">
                       {produit.categorie}
@@ -126,15 +126,15 @@ export default function ProduitsArchivesPage() {
                       Revient: <span className="text-gray-200">{produit.prix_revient.toFixed(0)} €</span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="flex gap-2 pt-4 border-t border-gray-800">
+                <div className="mt-auto flex gap-2 px-5 py-5 border-t border-gray-800">
                     <button
                       onClick={() => restoreProduct(produit.id, produit.nom)}
                       className="flex-1 px-3 py-2 bg-blue-900/30 border border-blue-700 rounded-lg hover:bg-blue-900/50 text-blue-400 flex items-center justify-center gap-1 text-sm"
                     >
                       <RotateCcw size={14} /> Retour vente
                     </button>
-                  </div>
                 </div>
               </div>
             ))}
