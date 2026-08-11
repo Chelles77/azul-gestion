@@ -102,6 +102,24 @@ export default function QRProductPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!product || !window.confirm(`Supprimer "${product.nom}" ?`)) return;
+
+    try {
+      const supabase = createClient();
+      const { error: deleteError } = await supabase
+        .from('produits')
+        .delete()
+        .eq('id', product.id);
+
+      if (deleteError) throw deleteError;
+
+      router.push('/products/brute');
+    } catch (err: any) {
+      setError(err.message || 'Erreur lors de la suppression');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#121212] flex items-center justify-center text-white">
@@ -300,13 +318,21 @@ export default function QRProductPage() {
               </p>
             </div>
 
-            {/* Edit Button */}
-            <button
-              onClick={() => setEditing(true)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold text-lg"
-            >
-              <Edit2 size={20} /> Modifier
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditing(true)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold"
+              >
+                <Edit2 size={18} /> Modifier
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg flex items-center justify-center gap-2 font-bold"
+              >
+                ❌ Supp
+              </button>
+            </div>
           </div>
         )}
       </div>
