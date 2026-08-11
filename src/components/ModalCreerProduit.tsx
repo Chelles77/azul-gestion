@@ -1,11 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, AlertCircle, Upload, Download, Printer } from 'lucide-react';
+import QRCode from 'qrcode';
 import { createClient } from '@/lib/supabase';
 
 interface ModalCreerProduitProps {
   lotId: string;
+  coefBrut?: number;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -15,17 +17,78 @@ function generateQRCode(): string {
   return `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 }
 
-export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
+export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
   const [nom, setNom] = useState('');
   const [marque, setMarque] = useState('');
   const [categorie, setCategorie] = useState('Autres');
   const [prixNeuf, setPrixNeuf] = useState('');
-  const [coefRevient, setCoefRevient] = useState('0.087');
+  const [coefRevient, setCoefRevient] = useState(coefBrut.toString());
   const [description, setDescription] = useState('');
+  const [etatProduit, setEtatProduit] = useState('');
+  const [etatEmballage, setEtatEmballage] = useState('');
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [qrCode, setQrCode] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (isOpen) {
+      const newQrCode = generateQRCode();
+      setQrCode(newQrCode);
+      const qrUrl = `https://azul-gestion.vercel.app/qr/${newQrCode}`;
+      QRCode.toDataURL(qrUrl)
+        .then(url => setQrDataUrl(url))
+        .catch(err => console.error('QR Error:', err));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    const supabase = createClient();
+    const fileName = `${qrCode}-${Date.now()}.jpg`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('product-photos')
+      .upload(fileName, file);
+
+    if (!uploadError) {
+      const { data } = supabase.storage.from('product-photos').getPublicUrl(fileName);
+      setPhotoPreview(data.publicUrl);
+    } else {
+      alert('Erreur upload: ' + uploadError.message);
+    }
+    setUploading(false);
+  };
+
+  const handleDownloadQR = () => {
+    if (!qrDataUrl) return;
+    const link = document.createElement('a');
+    link.href = qrDataUrl;
+    link.download = `QR-${qrCode}.png`;
+    link.click();
+  };
+
+  const handlePrintQR = () => {
+    if (!qrDataUrl) return;
+    const printWindow = window.open('', '_blank');
+    printWindow?.document.write(`
+      <html>
+        <head><title>QR Code - ${qrCode}</title></head>
+        <body style="display: flex; align-items: center; justify-content: center; height: 100vh;">
+          <img src="${qrDataUrl}" style="max-width: 400px;" />
+        </body>
+      </html>
+    `);
+    printWindow?.document.close();
+    printWindow?.print();
+  };
 
   const handleCreate = async () => {
     if (!nom || !prixNeuf) {
@@ -52,7 +115,6 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Non authentifié');
 
-      const qrCode = generateQRCode();
       const prixRevient = Math.round(prix * coef * 100) / 100;
 
       const { error: insertError } = await supabase.from('produits').insert([
@@ -68,9 +130,9 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
           prix_revient: prixRevient,
           qr_code: qrCode,
           statut: 'brute',
-          photos: null,
-          etat_produit: null,
-          etat_emballage: null,
+          photos: photoPreview ? [photoPreview] : null,
+          etat_produit: etatProduit || null,
+          etat_emballage: etatEmballage || null,
           prix_estime_vente: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -81,13 +143,16 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
 
       onSuccess();
       onClose();
-      // Reset form
+      // Reset
       setNom('');
       setMarque('');
       setCategorie('Autres');
       setPrixNeuf('');
-      setCoefRevient('0.087');
+      setCoefRevient(coefBrut.toString());
       setDescription('');
+      setEtatProduit('');
+      setEtatEmballage('');
+      setPhotoPreview(null);
       setError('');
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la création');
@@ -100,8 +165,13 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="flex justify-between items-center p-6 border-b border-gray-800 sticky top-0 bg-[#1a1a1a]">
+      <div className="bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+        `}</style>
+
+        {/* Header */}
+        <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
           <h2 className="text-xl font-bold text-white">Créer un produit</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
             <X size={24} />
@@ -109,6 +179,104 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
         </div>
 
         <form onSubmit={e => { e.preventDefault(); handleCreate(); }} className="p-6 space-y-6">
+          {/* INFO FINANCIÈRE */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Prix Neuf */}
+            <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">💵 Prix Neuf</p>
+              <input
+                type="number"
+                value={prixNeuf}
+                onChange={e => setPrixNeuf(e.target.value)}
+                placeholder="1349"
+                className="w-full bg-transparent text-4xl font-bold text-white outline-none focus:ring-0"
+              />
+              <p className="text-lg text-gray-400">€</p>
+            </div>
+
+            {/* Prix Revient */}
+            <div className="bg-gradient-to-br from-[#252525] to-[#1a1a1a] p-6 rounded-xl border border-gray-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">💰 Prix Revient</p>
+              <p className="text-4xl font-bold text-orange-400">{prixRevient.toFixed(0)}</p>
+              <p className="text-lg text-gray-400">€</p>
+            </div>
+
+            {/* Coefficient */}
+            <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-2">📊 Coeff. Achat</p>
+              <input
+                type="number"
+                step="0.001"
+                value={coefRevient}
+                onChange={e => setCoefRevient(e.target.value)}
+                placeholder="0.087"
+                className="w-full bg-transparent text-4xl font-bold text-blue-400 outline-none focus:ring-0"
+              />
+              <p className="text-xs text-gray-400">{parseFloat(coefRevient || '0').toFixed(3)}x</p>
+            </div>
+          </div>
+
+          {/* QR Code */}
+          <div className="bg-[#252525] p-6 rounded-xl border border-gray-800 flex flex-col items-center justify-center space-y-3">
+            <p className="text-sm font-bold text-gray-300 uppercase">🔖 QR Code</p>
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="QR Code" className="border border-gray-700 rounded-lg bg-white p-2 w-40 h-40" />
+            ) : (
+              <div className="w-40 h-40 border border-gray-700 rounded-lg bg-white flex items-center justify-center animate-pulse">
+                <span className="text-gray-400 text-sm">Génération...</span>
+              </div>
+            )}
+            <div className="flex gap-2 w-full max-w-xs">
+              <button
+                type="button"
+                onClick={handlePrintQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-[#1a1a1a] hover:bg-[#333] border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Printer size={14} /> Imprimer
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadQR}
+                disabled={!qrDataUrl}
+                className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 border border-blue-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Download size={14} /> Télécharger
+              </button>
+            </div>
+          </div>
+
+          {/* Photo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Photo du Produit</label>
+            <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 text-center hover:border-blue-500 transition-colors relative bg-[#252525] min-h-[150px] flex items-center justify-center">
+              {photoPreview ? (
+                <div className="relative w-full h-full flex items-center justify-center">
+                  <img src={photoPreview} alt="Preview" className="max-h-48 mx-auto rounded-lg object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => setPhotoPreview(null)}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-500 pointer-events-none">
+                  <Upload size={32} />
+                  <span className="text-sm">Cliquer pour ajouter une photo</span>
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                disabled={uploading}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </div>
+          </div>
+
           {/* Nom */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Nom du Produit *</label>
@@ -121,71 +289,56 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
             />
           </div>
 
-          {/* Marque */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Marque</label>
-            <input
-              type="text"
-              value={marque}
-              onChange={e => setMarque(e.target.value)}
-              placeholder="Ex: Dreame, Ecovacs..."
-              className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-            />
-          </div>
-
-          {/* Catégorie */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Catégorie</label>
-            <select
-              value={categorie}
-              onChange={e => setCategorie(e.target.value)}
-              className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
-            >
-              <option>Autres</option>
-              <option>Robot Aspirateur</option>
-              <option>Cuisine</option>
-              <option>Électroménager</option>
-            </select>
-          </div>
-
-          {/* Prix et Coef */}
+          {/* Marque et Catégorie */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Prix Neuf (€) *</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Marque</label>
               <input
-                type="number"
-                value={prixNeuf}
-                onChange={e => setPrixNeuf(e.target.value)}
-                placeholder="Ex: 1349"
+                type="text"
+                value={marque}
+                onChange={e => setMarque(e.target.value)}
+                placeholder="Dreame"
                 className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Coeff. Revient</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Catégorie</label>
+              <select
+                value={categorie}
+                onChange={e => setCategorie(e.target.value)}
+                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
+              >
+                <option>Autres</option>
+                <option>Robot Aspirateur</option>
+                <option>Cuisine</option>
+                <option>Électroménager</option>
+              </select>
+            </div>
+          </div>
+
+          {/* États */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">État Produit</label>
               <input
-                type="number"
-                step="0.001"
-                value={coefRevient}
-                onChange={e => setCoefRevient(e.target.value)}
-                placeholder="Ex: 0.087"
+                type="text"
+                value={etatProduit}
+                onChange={e => setEtatProduit(e.target.value)}
+                placeholder="Très bon état"
+                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">État Emballage</label>
+              <input
+                type="text"
+                value={etatEmballage}
+                onChange={e => setEtatEmballage(e.target.value)}
+                placeholder="Emballage ouvert"
                 className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
               />
             </div>
           </div>
-
-          {/* Résumé financier */}
-          {prixNeuf && coefRevient && (
-            <div className="bg-[#252525] p-4 rounded-lg border border-gray-700 space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Prix Neuf:</span>
-                <span className="text-white font-bold">{parseFloat(prixNeuf).toFixed(2)} €</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Prix Revient:</span>
-                <span className="text-orange-400 font-bold">{prixRevient.toFixed(2)} €</span>
-              </div>
-            </div>
-          )}
 
           {/* Description */}
           <div>
@@ -193,7 +346,6 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Description du produit..."
               rows={3}
               className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none resize-none"
             />
@@ -218,7 +370,7 @@ export default function ModalCreerProduit({ lotId, isOpen, onClose, onSuccess }:
             </button>
             <button
               type="submit"
-              disabled={loading || !nom || !prixNeuf}
+              disabled={loading || uploading || !nom || !prixNeuf}
               className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold rounded-lg flex items-center justify-center gap-2"
             >
               {loading ? (

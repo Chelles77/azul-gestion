@@ -514,6 +514,7 @@ export default function ProduitsBrutePage() {
       {/* Modal Créer Produit */}
       <ModalCreerProduit
         lotId={selectedLotId}
+        coefBrut={coefBrut}
         isOpen={isCreating}
         onClose={() => setIsCreating(false)}
         onSuccess={() => {
