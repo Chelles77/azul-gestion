@@ -13,6 +13,9 @@ export default function PageEncaissement() {
   const [loading, setLoading] = useState(true);
   const [ventes, setVentes] = useState<Produit[]>([]);
   const [tauxURSSAF, setTauxURSSAF] = useState(12.3);
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
 
   useEffect(() => {
     const init = async () => {
@@ -166,25 +169,65 @@ export default function PageEncaissement() {
           </div>
         </div>
 
-        {/* Ventes par Mois */}
+        {/* Ventes du Mois Sélectionné */}
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">📅 Ventes par Mois</h2>
-          <div className="space-y-4">
-            {Object.entries(parMois).map(([mois, produits]) => {
-              const totalMois = produits.reduce((sum, p) => sum + (p.prix_vente_final || 0), 0);
-              return (
-                <div key={mois} className="bg-[#252525] p-4 rounded-lg border border-gray-700">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-bold text-white capitalize">{mois}</h3>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-green-400">{totalMois.toFixed(0)} €</p>
-                      <p className="text-xs text-gray-400">{produits.length} produit(s)</p>
-                    </div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-white">📅 Ventes du Mois</h2>
+            <div className="flex gap-3">
+              <select
+                value={selectedYear}
+                onChange={e => setSelectedYear(parseInt(e.target.value))}
+                className="bg-[#252525] border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500"
+              >
+                {[2024, 2025, 2026, 2027].map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+              <select
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(parseInt(e.target.value))}
+                className="bg-[#252525] border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-blue-500"
+              >
+                {['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'].map((m, i) => (
+                  <option key={i} value={i}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {(() => {
+            const filteredVentes = ventes.filter(v => {
+              const date = new Date(v.date_vente || new Date());
+              return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
+            });
+            const totalMoisVentes = filteredVentes.reduce((sum, p) => sum + (p.prix_vente_final || 0), 0);
+            const totalMoisCouts = filteredVentes.reduce((sum, p) => sum + (p.prix_revient || 0), 0);
+
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Coûts Achat</p>
+                    <p className="text-xl font-bold text-blue-400">{totalMoisCouts.toFixed(0)} €</p>
+                  </div>
+                  <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Total Ventes</p>
+                    <p className="text-xl font-bold text-green-400">{totalMoisVentes.toFixed(0)} €</p>
+                  </div>
+                  <div className="bg-[#252525] p-4 rounded-lg border border-gray-700">
+                    <p className="text-xs text-gray-400 mb-1">Produits</p>
+                    <p className="text-xl font-bold text-purple-400">{filteredVentes.length}</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+                {filteredVentes.length === 0 && (
+                  <div className="text-center py-8 text-gray-400">
+                    <AlertCircle size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>Aucune vente pour ce mois</p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Détail des Ventes */}
