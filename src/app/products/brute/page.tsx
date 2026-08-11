@@ -162,14 +162,10 @@ export default function ProduitsBrutePage() {
           etat_produit: null,
           etat_emballage: null,
           prix_estime_vente: null,
+          product_number: nouveauxProduits.length + 1,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-
-        // Ajouter product_number si la colonne existe en Supabase
-        if (productNumber) {
-          produit.product_number = productNumber;
-        }
 
         nouveauxProduits.push(produit);
       }
@@ -397,13 +393,13 @@ export default function ProduitsBrutePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {produitsFiltres.map((produit, index) => {
               const lotNumber = lots.find(l => l.id === selectedLotId)?.numerolot || selectedLotId;
-              const productNumber = index + 1;
+              const productNumber = produit.product_number || (index + 1);
               return (
               <div key={produit.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all flex flex-col">
                 {/* Header avec numéros */}
                 <div className="bg-[#252525] border-b border-gray-700 px-4 py-2 flex justify-between items-center">
                   <span className="text-xs text-gray-400">Lot #{lotNumber}</span>
-                  <span className="text-xs font-bold text-blue-400">Prod #{ productNumber}</span>
+                  <span className="text-xs font-bold text-blue-400">Prod #{productNumber}</span>
                 </div>
 
                 <div className="relative bg-[#252525] h-48 flex items-center justify-center">
