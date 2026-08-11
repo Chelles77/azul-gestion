@@ -16,7 +16,7 @@ export default function ProduitsEnVentePage() {
       const { data } = await supabase
         .from('produits')
         .select('*')
-        .eq('statut', 'vente')
+        .eq('statut', 'en_vente')
         .order('updated_at', { ascending: false });
 
       if (data) {
