@@ -174,9 +174,12 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] border border-green-600/30 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <style>{`
+          .scrollbar-hide::-webkit-scrollbar { display: none; }
+        `}</style>
         {/* Header */}
-        <div className="sticky top-0 bg-[#1a1a1a] border-b border-green-600/30 p-6 flex justify-between items-center z-10">
+        <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
           <div>
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <CheckCircle2 size={24} className="text-green-500" /> Valider pour la vente
