@@ -23,6 +23,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lotInfo, setLotInfo] = useState<any>(null);
 
   // Checklist
   const [checks, setChecks] = useState({
@@ -34,6 +35,22 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   const prixSuggere = product ? Math.round(product.prix_neuf * 0.85) : 0;
+
+  // Charger les infos du lot
+  useEffect(() => {
+    if (product && isOpen) {
+      (async () => {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('lots')
+          .select('*')
+          .eq('id', product.lot_id)
+          .single();
+        if (data) setLotInfo(data);
+        if (error) console.error('Lot Error:', error);
+      })();
+    }
+  }, [product, isOpen]);
 
   // Générer le QR code
   useEffect(() => {
@@ -160,10 +177,15 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
       <div className="bg-[#1a1a1a] border border-green-600/30 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-green-600/30 p-6 flex justify-between items-center z-10">
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <CheckCircle2 size={24} className="text-green-500" /> Valider pour la vente
-          </h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400">
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <CheckCircle2 size={24} className="text-green-500" /> Valider pour la vente
+            </h2>
+            <p className="text-sm text-green-400 font-bold mt-1">
+              📦 Lot: {lotInfo?.numerolot || product?.lot_id || '...'}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
             <X size={24} />
           </button>
         </div>
