@@ -88,12 +88,23 @@ export default function ProduitsBrutePage() {
         return;
       }
 
+      // Récupérer les produits existants du lot
+      const { data: existingProducts } = await supabase
+        .from('produits')
+        .select('nom, prix_neuf')
+        .eq('lot_id', selectedLotId);
+
+      const existingSet = new Set(
+        (existingProducts || []).map(p => `${p.nom}|${Math.round(p.prix_neuf)}`)
+      );
+
       const firstRow = jsonData[0];
       const rawKeys = Object.keys(firstRow);
       const descKey = rawKeys.find(k => k.toLowerCase().includes('desc') || k.toLowerCase().includes('nom')) || rawKeys[0];
       const priceKey = rawKeys.find(k => k.toLowerCase().includes('price') || k.toLowerCase().includes('prix') || k.toLowerCase().includes('retail')) || rawKeys[1];
 
       const nouveauxProduits: any[] = [];
+      let doublons = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       for (const row of jsonData) {
@@ -113,11 +124,20 @@ export default function ProduitsBrutePage() {
 
         const mots = desc.split(' ').slice(0, 5).join(' ');
         const nom = marque ? `${marque} ${mots.replace(new RegExp(marque, 'i'), '').trim()}` : mots;
+        const nomTrimmed = nom.substring(0, 100);
+
+        // Vérifier doublon
+        const key = `${nomTrimmed}|${Math.round(prixNeuf)}`;
+        if (existingSet.has(key)) {
+          doublons++;
+          continue;
+        }
+        existingSet.add(key);
 
         nouveauxProduits.push({
           lot_id: selectedLotId,
           user_id: userId,
-          nom: nom.substring(0, 100),
+          nom: nomTrimmed,
           marque,
           categorie,
           description: desc.substring(0, 200),
@@ -135,8 +155,14 @@ export default function ProduitsBrutePage() {
         });
       }
 
-      if (nouveauxProduits.length === 0) {
+      if (nouveauxProduits.length === 0 && doublons === 0) {
         alert('Aucun produit valide trouvé.');
+        setUploading(false);
+        return;
+      }
+
+      if (nouveauxProduits.length === 0 && doublons > 0) {
+        alert(`⚠️ ${doublons} doublons détectés et ignorés. Aucun nouveau produit.`);
         setUploading(false);
         return;
       }
@@ -144,7 +170,9 @@ export default function ProduitsBrutePage() {
       const { error } = await supabase.from('produits').insert(nouveauxProduits);
       if (!error) {
         fetchProduits();
-        alert(`${nouveauxProduits.length} produits importés !`);
+        let message = `✅ ${nouveauxProduits.length} produits importés`;
+        if (doublons > 0) message += ` (${doublons} doublons ignorés)`;
+        alert(message);
       } else {
         alert('Erreur Supabase: ' + error.message);
       }
