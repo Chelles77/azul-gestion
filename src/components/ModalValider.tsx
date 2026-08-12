@@ -383,10 +383,11 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
                 className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-green-500 outline-none appearance-none"
               >
                 <option value="">Sélectionner...</option>
-                <option value="emballage_neuf">📦 Emballage neuf</option>
-                <option value="emballage_coupe">✂️ Emballage coupé</option>
-                <option value="pas_d_emballage">❌ Pas d'emballage</option>
-                <option value="emballage_abime">⚠️ Emballage abîmé</option>
+                <option value="Neuf">📦 Emballage neuf</option>
+                <option value="Coupé">✂️ Emballage coupé</option>
+                <option value="Pas d'emballage">❌ Pas d'emballage</option>
+                <option value="Abîmé">⚠️ Emballage abîmé</option>
+                <option value="Bon">👍 Bon</option>
               </select>
             </div>
           </div>
