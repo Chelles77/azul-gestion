@@ -183,8 +183,8 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
         .update({
           nom,
           description,
-          etat_produit: etatProduit,
-          etat_emballage: etatEmballage,
+          etat_produit: etatProduit || null,
+          etat_emballage: etatEmballage || null,
           prix_estime_vente: parseFloat(prixVente),
           photos: photoPreview ? [photoPreview] : product?.photos,
           plateformes_vente: plateformesVente,
