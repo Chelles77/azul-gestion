@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, Upload, Download, Printer } from 'lucide-react';
+import QRCode from 'qrcode';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
 
@@ -18,12 +19,15 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
   const [etatEmballage, setEtatEmballage] = useState('');
   const [prixVente, setPrixVente] = useState('');
   const [description, setDescription] = useState('');
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lotInfo, setLotInfo] = useState<any>(null);
   const [plateformesVente, setPlateformesVente] = useState<string[]>([]);
   const [selectedPlateforme, setSelectedPlateforme] = useState('');
   const [customPlateforme, setCustomPlateforme] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
 
   const ETATS_PRODUIT = [
     { val: 'neuf_sous_plastique', label: '🟢 Neuf sous plastique' },
@@ -73,15 +77,34 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
         if (data) setLotInfo(data);
       })();
 
+      QRCode.toDataURL(product.qr_code).then(url => setQrDataUrl(url)).catch(console.error);
+
       setNom(product.nom || '');
       setDescription(product.description || '');
       setPrixVente(product.prix_estime_vente?.toString() || '');
       setEtatProduit(product.etat_produit || '');
       setEtatEmballage(product.etat_emballage || '');
+      setPhotoPreview(product.photos?.[0] || null);
       setPlateformesVente(product.plateformes_vente || []);
       setError('');
     }
   }, [product, isOpen]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !product) return;
+    setUploading(true);
+    const supabase = createClient();
+    const fileName = `${product.id}-${Date.now()}.jpg`;
+    const { error: uploadError } = await supabase.storage.from('product-photos').upload(fileName, file);
+    if (!uploadError) {
+      const { data } = supabase.storage.from('product-photos').getPublicUrl(fileName);
+      setPhotoPreview(data.publicUrl);
+    } else {
+      alert('Erreur: ' + uploadError.message);
+    }
+    setUploading(false);
+  };
 
   const addPlateforme = () => {
     if (selectedPlateforme && !plateformesVente.includes(selectedPlateforme)) {
@@ -122,6 +145,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
           etat_produit: etatProduit,
           etat_emballage: etatEmballage,
           prix_estime_vente: parseFloat(prixVente),
+          photos: photoPreview ? [photoPreview] : product?.photos,
           plateformes_vente: plateformesVente,
           statut: 'en_vente',
           updated_at: new Date().toISOString(),
@@ -148,7 +172,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center">
           <div>
             <h2 className="text-lg font-bold text-white">✅ Valider pour la vente</h2>
-            <p className="text-xs text-green-400 font-bold mt-1">📦 Lot: {lotInfo?.numerolot || '...'}</p>
+            <p className="text-xs text-green-400 font-bold mt-1">📦 Lot: {lotInfo?.numerolot || '...'} | Prod: {product.product_number || '...'}</p>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
             <X size={24} />
@@ -156,32 +180,57 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* ÉTATS AFFICHAGE */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-gray-500 uppercase font-bold mb-2 block">État du Produit *</label>
-              <div className="bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white text-sm font-medium">
-                {etatProduit ? getEtatProduitLabel(etatProduit) : 'Sélectionner...'}
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-500 uppercase font-bold mb-2 block">État Emballage *</label>
-              <div className="bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white text-sm font-medium">
-                {etatEmballage ? getEtatEmballageLabel(etatEmballage) : 'Sélectionner...'}
-              </div>
+          {/* QR CODE */}
+          <div className="bg-[#252525] p-4 rounded-xl border border-gray-800 flex flex-col items-center gap-3">
+            <p className="text-sm font-bold text-gray-300">🔖 QR Code</p>
+            {qrDataUrl && <img src={qrDataUrl} alt="QR" className="w-32 h-32 border border-gray-700 bg-white p-2 rounded" />}
+            <div className="flex gap-2">
+              <button type="button" onClick={() => { if (qrDataUrl) { const link = document.createElement('a'); link.href = qrDataUrl; link.download = `QR-${product.qr_code}.png`; link.click(); } }} className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded flex items-center gap-1">
+                <Download size={14} /> Download
+              </button>
+              <button type="button" onClick={() => { if (qrDataUrl) { const w = window.open(''); if (w) { w.document.write(`<img src="${qrDataUrl}" style="max-width:400px;"`); w.print(); } } }} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded flex items-center gap-1">
+                <Printer size={14} /> Print
+              </button>
             </div>
           </div>
 
-          {/* SÉLECTEURS CACHÉS */}
-          <div className="hidden">
-            <select value={etatProduit} onChange={e => setEtatProduit(e.target.value)}>
-              <option value="">Sélectionner...</option>
-              {ETATS_PRODUIT.map(e => <option key={e.val} value={e.val}>{e.label}</option>)}
-            </select>
-            <select value={etatEmballage} onChange={e => setEtatEmballage(e.target.value)}>
-              <option value="">Sélectionner...</option>
-              {ETATS_EMBALLAGE.map(e => <option key={e.val} value={e.val}>{e.label}</option>)}
-            </select>
+          {/* PHOTO */}
+          <div>
+            <label className="text-xs text-gray-500 uppercase font-bold mb-2 block">📸 Photo du Produit</label>
+            <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 bg-[#252525] text-center hover:border-green-500 relative min-h-[120px] flex items-center justify-center">
+              {photoPreview ? (
+                <>
+                  <img src={photoPreview} alt="Preview" className="max-h-32 rounded" />
+                  <button type="button" onClick={() => setPhotoPreview(null)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1">
+                    <X size={16} />
+                  </button>
+                </>
+              ) : (
+                <div className="text-gray-500 pointer-events-none text-center">
+                  <Upload size={28} className="mx-auto mb-2" />
+                  <span className="text-xs">Click pour ajouter une photo</span>
+                </div>
+              )}
+              <input type="file" accept="image/*" onChange={handlePhotoUpload} disabled={uploading} className="absolute inset-0 opacity-0 cursor-pointer" />
+            </div>
+          </div>
+
+          {/* ÉTATS */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-gray-500 uppercase font-bold mb-2 block">État du Produit *</label>
+              <select value={etatProduit} onChange={e => setEtatProduit(e.target.value)} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-green-500 outline-none text-sm">
+                <option value="">Sélectionner...</option>
+                {ETATS_PRODUIT.map(e => <option key={e.val} value={e.val}>{e.label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-500 uppercase font-bold mb-2 block">État Emballage *</label>
+              <select value={etatEmballage} onChange={e => setEtatEmballage(e.target.value)} className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-2 text-white focus:border-green-500 outline-none text-sm">
+                <option value="">Sélectionner...</option>
+                {ETATS_EMBALLAGE.map(e => <option key={e.val} value={e.val}>{e.label}</option>)}
+              </select>
+            </div>
           </div>
 
           {/* NOM */}
@@ -252,7 +301,7 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
             <button type="button" onClick={onClose} className="flex-1 px-4 py-3 bg-[#252525] hover:bg-[#333] border border-gray-700 text-gray-300 font-medium rounded-lg text-sm">
               Annuler
             </button>
-            <button type="submit" disabled={loading || !nom || !etatProduit || !etatEmballage || !prixVente} className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm">
+            <button type="submit" disabled={loading || uploading || !nom || !etatProduit || !etatEmballage || !prixVente} className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold rounded-lg flex items-center justify-center gap-2 text-sm">
               {loading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
