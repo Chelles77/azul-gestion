@@ -37,7 +37,17 @@ export default function SelectWithAdd({
     }
 
     const supabase = createClient();
-    const { error: insertError } = await supabase.from(table).insert([{ nom: newValue }]);
+    const { data: userData } = await supabase.auth.getUser();
+
+    if (!userData.user) {
+      setError('Non authentifié');
+      return;
+    }
+
+    const { error: insertError } = await supabase.from(table).insert([{
+      nom: newValue,
+      user_id: userData.user.id
+    }]);
 
     if (insertError) {
       setError(insertError.message);
