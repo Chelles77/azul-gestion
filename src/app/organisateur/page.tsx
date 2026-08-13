@@ -446,33 +446,47 @@ export default function Organisateur() {
                 ))}
 
                 {activitesHeure.length === 0 && (
-                  <div
-                    className="p-4 rounded-xl border-2 border-dashed border-gray-700 cursor-pointer hover:border-purple-600 transition-all"
-                    onClick={() => setQuickAddMenuOpen(`${dateStr}-${hour}`)}
-                  >
-                    <div className="flex items-center gap-2 text-gray-600">
+                  <div className="relative group">
+                    <button className="w-full p-4 rounded-xl border-2 border-dashed border-gray-700 hover:border-purple-600 transition-all flex items-center gap-2 text-gray-600 hover:text-purple-400">
                       <Plus size={20} />
                       <span>Ajouter une activité</span>
-                    </div>
+                    </button>
 
-                    {quickAddMenuOpen === `${dateStr}-${hour}` && (
-                      <div className="mt-4 space-y-2">
+                    {/* Menu déroulant */}
+                    <div className="absolute left-0 right-0 top-full mt-2 bg-[#1a1a1a] border-2 border-purple-600 rounded-xl shadow-2xl p-4 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <div className="space-y-2">
                         <input
                           type="text"
-                          placeholder="Titre"
+                          placeholder="Titre de l'activité"
                           value={quickAddForm.titre}
                           onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
-                          className="w-full bg-[#0a0a0a] border border-gray-600 rounded px-3 py-2 text-white"
+                          className="w-full bg-[#0a0a0a] border border-gray-600 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500"
                           autoFocus
                         />
-                        <button
-                          onClick={() => handleAddActiviteQuick(dateStr, `${String(hour).padStart(2, '0')}:00`)}
-                          className="w-full bg-blue-600 text-white px-3 py-2 rounded font-bold"
-                        >
-                          ✅ Ajouter
-                        </button>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => handleAddActiviteQuick(dateStr, `${String(hour).padStart(2, '0')}:00`)}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all"
+                          >
+                            ✅ Ajouter
+                          </button>
+                          <button
+                            onClick={() => setQuickAddMenuOpen(null)}
+                            className="bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-gray-600"
+                          >
+                            ✕ Annuler
+                          </button>
+                        </div>
+
+                        <div className="text-xs text-gray-400 pt-2 border-t border-gray-700 mt-2">
+                          <div className="flex gap-2 mb-1">
+                            <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-xs">Travail</span>
+                            <span className="px-2 py-1 bg-pink-600/20 text-pink-400 rounded text-xs">Perso</span>
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
