@@ -85,39 +85,30 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Lire toutes les lignes comme tableau
-      const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
+      // Format standardisé: Entête ligne 1, Données ligne 2+
+      // Colonnes: Numéro | Description | Prix
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
 
-      if (allRows.length === 0) {
+      if (jsonData.length === 0) {
         alert('Le fichier Excel semble vide.');
         setUploading(false);
         return;
       }
 
-      // Sauter les lignes vides au début
-      let startRow = 0;
-      for (let i = 0; i < allRows.length; i++) {
-        const row = allRows[i];
-        if (Array.isArray(row) && row.some(cell => cell !== null && cell !== undefined && cell !== '')) {
-          startRow = i;
-          break;
-        }
-      }
-
-      const dataRows = allRows.slice(startRow);
-      console.log('✅ Lignes lues:', dataRows.length);
+      console.log('✅ Produits lus:', jsonData.length, 'Colonnes:', Object.keys(jsonData[0]));
 
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
-      for (const row of dataRows) {
-        // Colonnes: Index 1 = Numéro, Index 2 = Description, Index 8 = Prix
-        if (!Array.isArray(row) || row.length < 3) continue;
+      // Détecter les colonnes (1ère, 2ème, 3ème)
+      const cols = Object.keys(jsonData[0]);
+      const [numCol, descCol, priceCol] = [cols[0], cols[1], cols[2]];
 
-        const productNumber = row[1]?.toString().trim() || '';
-        const desc = row[2]?.toString().trim() || '';
-        let rawPrice = row[8]?.toString().trim() || '0';
+      for (const row of jsonData) {
+        const productNumber = row[numCol]?.toString().trim() || '';
+        const desc = row[descCol]?.toString().trim() || '';
+        let rawPrice = row[priceCol]?.toString().trim() || '0';
         rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
