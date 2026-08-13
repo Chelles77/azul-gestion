@@ -7,18 +7,26 @@ import { createClient } from '@/lib/supabase';
 import SelectWithAdd from './SelectWithAdd';
 
 interface ModalCreerProduitProps {
-  lotId: string;
+  lotId?: string;
   coefBrut?: number;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
+interface Lot {
+  id: string;
+  numerolot: string;
+  coef_brut: number;
+}
+
 function generateQRCode(): string {
   return `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 }
 
-export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
+export default function ModalCreerProduit({ lotId: initialLotId, coefBrut = 0.087, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
+  const [selectedLotId, setSelectedLotId] = useState<string>(initialLotId || '');
+  const [lots, setLots] = useState<Lot[]>([]);
   const [nom, setNom] = useState('');
   const [productNumber, setProductNumber] = useState<number | null>(null);
   const [lotNumber, setLotNumber] = useState<string>('');
@@ -50,9 +58,18 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
         .catch(err => console.error('QR Error:', err));
 
       loadOptions();
-      loadNextProductNumber();
+      if (initialLotId) {
+        setSelectedLotId(initialLotId);
+        loadLotInfo(initialLotId);
+      }
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (selectedLotId) {
+      loadLotInfo(selectedLotId);
+    }
+  }, [selectedLotId]);
 
   const loadOptions = async () => {
     const supabase = createClient();
@@ -60,21 +77,30 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
     const { data: categData } = await supabase.from('categories').select('nom').order('nom');
     const { data: etatProdData } = await supabase.from('etat_produit').select('nom').order('nom');
     const { data: etatEmbalData } = await supabase.from('etat_emballage').select('nom').order('nom');
+    const { data: lotsData } = await supabase.from('lots').select('id, numerolot, coef_brut').order('numerolot');
 
     if (marqueData) setMarques(marqueData.map(m => m.nom));
     if (categData) setCategories(categData.map(c => c.nom));
     if (etatProdData) setEtatsProduit(etatProdData.map(e => e.nom));
     if (etatEmbalData) setEtatsEmballage(etatEmbalData.map(e => e.nom));
+    if (lotsData) setLots(lotsData as Lot[]);
   };
 
-  const loadNextProductNumber = async () => {
+  const loadLotInfo = async (lotIdToLoad: string) => {
+    if (!lotIdToLoad) {
+      setProductNumber(null);
+      setLotNumber('');
+      setCoefRevient(coefBrut.toString());
+      return;
+    }
+
     const supabase = createClient();
 
     // Charger les infos du lot
     const { data: lotData } = await supabase
       .from('lots')
       .select('numerolot, coef_brut')
-      .eq('id', lotId)
+      .eq('id', lotIdToLoad)
       .single();
 
     if (lotData) {
@@ -88,7 +114,7 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
     const { data: prodData } = await supabase
       .from('produits')
       .select('product_number')
-      .eq('lot_id', lotId)
+      .eq('lot_id', lotIdToLoad)
       .order('product_number', { ascending: false })
       .limit(1);
 
@@ -143,6 +169,10 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
   };
 
   const handleCreate = async () => {
+    if (!selectedLotId) {
+      setError('Veuillez sélectionner un lot');
+      return;
+    }
     if (!nom || !prixNeuf) {
       setError('Nom et prix neuf sont obligatoires');
       return;
@@ -171,7 +201,7 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
 
       const { error: insertError } = await supabase.from('produits').insert([
         {
-          lot_id: lotId,
+          lot_id: selectedLotId,
           user_id: userData.user.id,
           product_number: productNumber,
           nom: nom.substring(0, 100),
@@ -236,6 +266,23 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
         </div>
 
         <form onSubmit={e => { e.preventDefault(); handleCreate(); }} className="p-6 space-y-6">
+          {/* Sélection du Lot */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Sélectionner un lot *</label>
+            <select
+              value={selectedLotId}
+              onChange={e => setSelectedLotId(e.target.value)}
+              className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
+            >
+              <option value="">Choisir un lot...</option>
+              {lots.map(lot => (
+                <option key={lot.id} value={lot.id}>
+                  {lot.numerolot}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* INFO FINANCIÈRE */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {/* Prix Neuf */}
