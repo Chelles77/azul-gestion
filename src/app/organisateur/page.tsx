@@ -477,8 +477,105 @@ export default function Organisateur() {
                   )}
                 </div>
 
-                {/* Menu pour Mois */}
-                {quickAddMenuOpen === `${dayStr}-12` && renderModalQuickAdd(dayStr, 12)}
+                {/* Modal pour Mois avec date picker */}
+                {quickAddMenuOpen === `${dayStr}-12` && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-8 w-96">
+                      <h3 className="text-white font-bold text-2xl mb-6">✨ Nouvelle Activité</h3>
+
+                      <div className="space-y-4">
+                        {/* Titre */}
+                        <div>
+                          <label className="text-xs text-gray-400 font-bold mb-2 block">TITRE</label>
+                          <input
+                            type="text"
+                            placeholder="Titre de l'activité..."
+                            value={quickAddForm.titre}
+                            onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
+                            className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                            autoFocus
+                          />
+                        </div>
+
+                        {/* Catégorie */}
+                        <div>
+                          <label className="text-xs text-gray-400 font-bold mb-2 block">CATÉGORIE</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={() => setQuickAddForm({ ...quickAddForm, categorie: 'Travail' })}
+                              className={`p-3 rounded-lg border-2 font-bold text-sm transition-all ${
+                                quickAddForm.categorie === 'Travail'
+                                  ? 'border-blue-600 bg-blue-600/20 text-blue-400'
+                                  : 'border-gray-700 bg-[#0a0a0a] text-gray-400 hover:border-blue-600'
+                              }`}
+                            >
+                              💼 Travail
+                            </button>
+                            <button
+                              onClick={() => setQuickAddForm({ ...quickAddForm, categorie: 'Perso' })}
+                              className={`p-3 rounded-lg border-2 font-bold text-sm transition-all ${
+                                quickAddForm.categorie === 'Perso'
+                                  ? 'border-pink-600 bg-pink-600/20 text-pink-400'
+                                  : 'border-gray-700 bg-[#0a0a0a] text-gray-400 hover:border-pink-600'
+                              }`}
+                            >
+                              🎮 Perso
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Date */}
+                        <div>
+                          <label className="text-xs text-gray-400 font-bold mb-2 block">DATE</label>
+                          <input
+                            type="date"
+                            value={quickAddForm.date}
+                            onChange={e => setQuickAddForm({ ...quickAddForm, date: e.target.value })}
+                            className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                          />
+                        </div>
+
+                        {/* Heures */}
+                        <div>
+                          <label className="text-xs text-gray-400 font-bold mb-2 block">DURÉE</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="time"
+                              value={quickAddForm.heure_debut}
+                              onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
+                              className="bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                            />
+                            <input
+                              type="time"
+                              value={quickAddForm.heure_fin}
+                              onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
+                              className="bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Boutons */}
+                        <div className="grid grid-cols-2 gap-3 pt-4">
+                          <button
+                            onClick={() => {
+                              handleAddActiviteQuick(quickAddForm.date || dayStr, quickAddForm.heure_debut);
+                              setQuickAddMenuOpen(null);
+                            }}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-bold hover:shadow-lg transition-all"
+                          >
+                            ✅ Ajouter
+                          </button>
+                          <button
+                            onClick={() => setQuickAddMenuOpen(null)}
+                            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-bold transition-all"
+                          >
+                            ✕ Annuler
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
