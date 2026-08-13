@@ -62,8 +62,7 @@ export default function Navbar() {
                 <Link href="/finance/achat" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm first:rounded-t-lg border-b border-gray-800/50">Achat</Link>
                 <Link href="/finance/depense" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm border-b border-gray-800/50">Dépense</Link>
                 <Link href="/finance/encaissement" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm border-b border-gray-800/50">Encaissement</Link>
-                <Link href="/finance/analytheque" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm border-b border-gray-800/50">Analythèque</Link>
-                <Link href="/finance/synthese" className="block px-4 py-3 text-emerald-400 hover:bg-gray-800 hover:text-emerald-300 text-sm border-b border-gray-800/50 font-medium">📊 Synthèse</Link>
+                <Link href="/finance/synthese" className="block px-4 py-3 text-emerald-400 hover:bg-gray-800 hover:text-emerald-300 text-sm border-b border-gray-800/50 font-medium first:rounded-t-lg">📊 Synthèse</Link>
                 <Link href="/finance/rebut" className="block px-4 py-3 text-red-400 hover:bg-gray-800 hover:text-red-300 text-sm border-b border-gray-800/50 font-medium">💔 Rebuts & Pertes</Link>
                 <Link href="/finance/simulateur" className="block px-4 py-3 text-gray-300 hover:bg-gray-800 hover:text-white text-sm last:rounded-b-lg">Simulateur d'achat</Link>
               </div>
@@ -127,7 +126,6 @@ export default function Navbar() {
                 <Link href="/finance/achat" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Achat</Link>
                 <Link href="/finance/depense" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Dépense</Link>
                 <Link href="/finance/encaissement" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Encaissement</Link>
-                <Link href="/finance/analytheque" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Analythèque</Link>
                 <Link href="/finance/synthese" onClick={() => setIsMobileMenuOpen(false)} className="block text-emerald-400 hover:text-emerald-300 py-1 text-sm font-medium">📊 Synthèse</Link>
                 <Link href="/finance/rebut" onClick={() => setIsMobileMenuOpen(false)} className="block text-red-400 hover:text-red-300 py-1 text-sm font-medium">💔 Rebuts & Pertes</Link>
                 <Link href="/finance/simulateur" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-400 hover:text-white py-1 text-sm">Simulateur d'achat</Link>
