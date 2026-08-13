@@ -135,8 +135,8 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
               </div>
               <div className="border-t border-gray-600 pt-2 flex justify-between text-sm">
                 <span className="text-gray-300">Bénéfice brut:</span>
-                <span className={`font-bold ${parseFloat(prixVente) - product.prix_revient >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {(parseFloat(prixVente) - product.prix_revient).toFixed(2)} €
+                <span className={`font-bold ${Math.round((parseFloat(prixVente) - product.prix_revient) * 100) / 100 >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {(Math.round((parseFloat(prixVente) - product.prix_revient) * 100) / 100).toFixed(2)} €
                 </span>
               </div>
             </div>
