@@ -94,6 +94,16 @@ export default function Organisateur() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const [showAddIdentifiant, setShowAddIdentifiant] = useState(false);
+  const [newIdentifiant, setNewIdentifiant] = useState({
+    nom_site: '',
+    email: '',
+    password: '',
+    url: '',
+    notes: '',
+    categorie: 'Autre',
+  });
+
   const [quickAddMenuOpen, setQuickAddMenuOpen] = useState<string | null>(null);
   const [quickAddForm, setQuickAddForm] = useState<{
     titre: string;
@@ -213,6 +223,49 @@ export default function Organisateur() {
       await fetchData();
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleSaveIdentifiant = async () => {
+    try {
+      if (!newIdentifiant.nom_site || !newIdentifiant.email || !newIdentifiant.password) {
+        alert('Remplis tous les champs!');
+        return;
+      }
+
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const encrypted = await encryptPassword(newIdentifiant.password);
+
+      await supabase
+        .from('identifiants')
+        .insert({
+          user_id: user.id,
+          nom_site: newIdentifiant.nom_site,
+          email: newIdentifiant.email,
+          password_encrypted: encrypted,
+          url: newIdentifiant.url,
+          notes: newIdentifiant.notes,
+          categorie: newIdentifiant.categorie,
+        });
+
+      setNewIdentifiant({
+        nom_site: '',
+        email: '',
+        password: '',
+        url: '',
+        notes: '',
+        categorie: 'Autre',
+      });
+      setShowAddIdentifiant(false);
+
+      await fetchData();
+    } catch (error) {
+      console.error(error);
+      alert('Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
     }
   };
 
@@ -941,50 +994,121 @@ export default function Organisateur() {
 
         {/* IDENTIFIANTS */}
         {activeTab === 'identifiants' && (
-          <div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {identifiants.map(id => (
-                <div key={id.id} className="bg-[#1a1a1a] border-2 border-green-700/50 rounded-xl p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-2xl font-bold text-green-400">{id.nom_site}</h3>
-                    <button
-                      onClick={() => {}}
-                      className="p-2 hover:bg-red-600/50 rounded-lg"
-                    >
-                      <Trash2 size={20} className="text-red-400" />
-                    </button>
-                  </div>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-green-400">🔑 Mes Identifiants</h2>
+              <button
+                onClick={() => setShowAddIdentifiant(!showAddIdentifiant)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Ajouter
+              </button>
+            </div>
 
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-400">Email</p>
-                      <p className="text-white font-mono">{id.email}</p>
+            {showAddIdentifiant && (
+              <div className="bg-[#1a1a1a] border-2 border-green-600 rounded-xl p-6 space-y-4">
+                <input
+                  type="text"
+                  placeholder="Nom du site"
+                  value={newIdentifiant.nom_site}
+                  onChange={e => setNewIdentifiant({ ...newIdentifiant, nom_site: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white"
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={newIdentifiant.email}
+                  onChange={e => setNewIdentifiant({ ...newIdentifiant, email: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white"
+                />
+                <input
+                  type="password"
+                  placeholder="Mot de passe"
+                  value={newIdentifiant.password}
+                  onChange={e => setNewIdentifiant({ ...newIdentifiant, password: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white"
+                />
+                <input
+                  type="url"
+                  placeholder="URL (optionnel)"
+                  value={newIdentifiant.url}
+                  onChange={e => setNewIdentifiant({ ...newIdentifiant, url: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white"
+                />
+                <textarea
+                  placeholder="Notes (optionnel)"
+                  value={newIdentifiant.notes}
+                  onChange={e => setNewIdentifiant({ ...newIdentifiant, notes: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white resize-none h-20"
+                />
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSaveIdentifiant}
+                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
+                  >
+                    Sauvegarder
+                  </button>
+                  <button
+                    onClick={() => setShowAddIdentifiant(false)}
+                    className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {identifiants.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">Aucun identifiant sauvegardé</p>
+                <p className="text-gray-500 text-sm mt-2">Clique sur "Ajouter" pour en créer un</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {identifiants.map(id => (
+                  <div key={id.id} className="bg-[#1a1a1a] border-2 border-green-700/50 rounded-xl p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-2xl font-bold text-green-400">{id.nom_site}</h3>
+                      <button
+                        onClick={() => {}}
+                        className="p-2 hover:bg-red-600/50 rounded-lg"
+                      >
+                        <Trash2 size={20} className="text-red-400" />
+                      </button>
                     </div>
 
-                    <div>
-                      <p className="text-gray-400">Mot de passe</p>
-                      <div className="flex gap-2 items-center">
-                        <p className="text-white font-mono flex-1">
-                          {showPasswords[id.id] ? decryptedPasswords[id.id] || '••••••••' : '••••••••'}
-                        </p>
-                        <button
-                          onClick={() => toggleShowPassword(id.id, id.password_encrypted)}
-                          className="p-2 hover:bg-white/10 rounded"
-                        >
-                          {showPasswords[id.id] ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                        <button
-                          onClick={() => copyPassword(id.id, id.password_encrypted)}
-                          className={`p-2 rounded transition-all ${copiedId === id.id ? 'bg-green-600' : 'hover:bg-white/10'}`}
-                        >
-                          <Copy size={18} />
-                        </button>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <p className="text-gray-400">Email</p>
+                        <p className="text-white font-mono">{id.email}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-gray-400">Mot de passe</p>
+                        <div className="flex gap-2 items-center">
+                          <p className="text-white font-mono flex-1">
+                            {showPasswords[id.id] ? decryptedPasswords[id.id] || '••••••••' : '••••••••'}
+                          </p>
+                          <button
+                            onClick={() => toggleShowPassword(id.id, id.password_encrypted)}
+                            className="p-2 hover:bg-white/10 rounded"
+                          >
+                            {showPasswords[id.id] ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                          <button
+                            onClick={() => copyPassword(id.id, id.password_encrypted)}
+                            className={`p-2 rounded transition-all ${copiedId === id.id ? 'bg-green-600' : 'hover:bg-white/10'}`}
+                          >
+                            <Copy size={18} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
