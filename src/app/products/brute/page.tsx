@@ -106,13 +106,13 @@ export default function ProduitsBrutePage() {
 
       const descKey = rawKeys.find(k => {
         const lower = k.toLowerCase();
-        return lower.includes('desc') || lower.includes('item') || lower.includes('produit') || lower.includes('name');
+        return lower.includes('desc') || lower.includes('item') || lower.includes('produit') || lower.includes('name') || lower.includes('retail');
       }) || rawKeys[1];
 
       const priceKey = rawKeys.find(k => {
         const lower = k.toLowerCase();
-        return lower.includes('retail') || lower.includes('total') || lower.includes('price') || lower.includes('prix');
-      }) || rawKeys[2];
+        return lower.includes('total') || lower.includes('retail') || lower.includes('price') || lower.includes('prix');
+      }) || rawKeys[rawKeys.length - 1];
 
       console.log('Colonne Numéro:', numberKey);
       console.log('Colonne Description:', descKey);
