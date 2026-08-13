@@ -13,7 +13,8 @@ interface LotStats {
   coutUnitaire: number;
   nombreVendus: number;
   pourcentageVente: number;
-  beneficeTotalLot: number;
+  totalVentesLot: number;
+  fraisLot: number;
 }
 
 export default function PageSynthese() {
@@ -68,14 +69,13 @@ export default function PageSynthese() {
         const coutUnitaire = nombreProduits > 0 ? lot.couttotal / nombreProduits : 0;
         const pourcentageVente = nombreProduits > 0 ? (nombreVendus / nombreProduits) * 100 : 0;
 
-        // Calculer le bénéfice par produit vendu
-        let beneficeTotalLot = 0;
+        // Calculer CA et frais du lot
+        let totalVentesLot = 0;
+        let fraisLot = 0;
         soldProducts?.forEach(product => {
           const prixVente = product.prix_vente_final || 0;
-          const frais = calculateFrais(prixVente, product.plateforme_vente_finale);
-          const urssaf = prixVente * (tauxURSSAF / 100);
-          const beneficeProduct = prixVente - coutUnitaire - frais - urssaf;
-          beneficeTotalLot += beneficeProduct;
+          totalVentesLot += prixVente;
+          fraisLot += calculateFrais(prixVente, product.plateforme_vente_finale);
         });
 
         lotsWithStats.push({
@@ -86,7 +86,8 @@ export default function PageSynthese() {
           coutUnitaire,
           nombreVendus,
           pourcentageVente,
-          beneficeTotalLot,
+          totalVentesLot,
+          fraisLot,
         });
       }
 
@@ -139,8 +140,17 @@ export default function PageSynthese() {
   const totalVendus = lots.reduce((sum, lot) => sum + lot.nombreVendus, 0);
   const pourcentageGlobal = totalProduits > 0 ? (totalVendus / totalProduits) * 100 : 0;
 
-  // Bénéfice BRUT = Somme des bénéfices par produit vendu
-  const beneficeBrut = lots.reduce((sum, lot) => sum + lot.beneficeTotalLot, 0);
+  // CA Brut (Chiffre d'affaires)
+  const caTotal = lots.reduce((sum, lot) => sum + lot.totalVentesLot, 0);
+
+  // Frais totaux
+  const fraisTotal = lots.reduce((sum, lot) => sum + lot.fraisLot, 0);
+
+  // URSSAF = CA × taux
+  const urssafTotal = caTotal * (tauxURSSAF / 100);
+
+  // Bénéfice BRUT = CA - Coûts achat - Frais - URSSAF
+  const beneficeBrut = caTotal - totalCoutAchat - fraisTotal - urssafTotal;
 
   // Bénéfice NET = Bénéfice brut - Dépenses
   const beneficeNet = beneficeBrut - depensesTotales;
@@ -185,17 +195,17 @@ export default function PageSynthese() {
             <p className="text-xs text-green-300 mt-1">{pourcentageGlobal.toFixed(1)}%</p>
           </div>
 
-          <div className="bg-[#1a1a1a] border border-orange-700 p-6 rounded-xl">
-            <p className="text-xs text-orange-400 font-bold mb-2">🇫🇷 URSSAF %</p>
+          <div className="bg-[#1a1a1a] border border-red-700 p-6 rounded-xl">
+            <p className="text-xs text-red-400 font-bold mb-2">📉 FRAIS & URSSAF</p>
+            <p className="text-2xl font-bold text-red-400">{(fraisTotal + urssafTotal).toFixed(0)} €</p>
+            <p className="text-xs text-red-300 mt-1">Frais: {fraisTotal.toFixed(0)}€ + URSSAF: {urssafTotal.toFixed(0)}€</p>
             <input
               type="number"
               value={tauxURSSAF}
-              onChange={e => {
-                setTauxURSSAF(parseFloat(e.target.value) || 12.3);
-                fetchData();
-              }}
+              onChange={e => setTauxURSSAF(parseFloat(e.target.value) || 12.3)}
               step="0.1"
-              className="w-full bg-[#252525] border border-gray-700 rounded px-2 py-2 text-white text-sm font-bold"
+              className="w-full bg-[#252525] border border-gray-700 rounded px-2 py-1 text-white text-xs mt-2"
+              placeholder="URSSAF %"
             />
           </div>
 
@@ -229,11 +239,12 @@ export default function PageSynthese() {
                 <tr className="border-b border-gray-700">
                   <th className="text-left py-3 px-4 font-bold text-gray-300">Lot</th>
                   <th className="text-right py-3 px-4 font-bold text-gray-300">Coût Total</th>
-                  <th className="text-right py-3 px-4 font-bold text-gray-300">Coût Unitaire</th>
-                  <th className="text-center py-3 px-4 font-bold text-gray-300">Produits</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">Coût Unit.</th>
+                  <th className="text-center py-3 px-4 font-bold text-gray-300">Prod.</th>
                   <th className="text-center py-3 px-4 font-bold text-gray-300">Vendus</th>
                   <th className="text-center py-3 px-4 font-bold text-gray-300">%</th>
-                  <th className="text-right py-3 px-4 font-bold text-gray-300">Bénéfice Lot</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">CA</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">Frais</th>
                 </tr>
               </thead>
               <tbody>
@@ -245,9 +256,8 @@ export default function PageSynthese() {
                     <td className="py-3 px-4 text-center text-gray-300">{lot.nombreProduits}</td>
                     <td className="py-3 px-4 text-center font-bold text-green-400">{lot.nombreVendus}</td>
                     <td className="py-3 px-4 text-center font-bold text-green-400">{lot.pourcentageVente.toFixed(0)}%</td>
-                    <td className={`py-3 px-4 text-right font-bold ${lot.beneficeTotalLot >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {lot.beneficeTotalLot.toFixed(0)} €
-                    </td>
+                    <td className="py-3 px-4 text-right text-emerald-400 font-bold">{lot.totalVentesLot.toFixed(0)} €</td>
+                    <td className="py-3 px-4 text-right text-red-400 font-bold">{lot.fraisLot.toFixed(0)} €</td>
                   </tr>
                 ))}
               </tbody>
@@ -261,9 +271,11 @@ export default function PageSynthese() {
         {/* Formule */}
         <div className="mt-8 bg-[#252525] border border-gray-700 rounded-xl p-4 text-xs text-gray-400">
           <p className="font-bold text-gray-300 mb-2">📐 Formule de calcul:</p>
-          <p>Bénéfice par produit = Prix vente - (Coût achat total / nb produits) - Frais (%) - URSSAF (%)</p>
-          <p className="mt-2">Bénéfice brut = Somme des bénéfices par produit</p>
-          <p>Bénéfice net = Bénéfice brut - Dépenses</p>
+          <p><span className="text-gray-300 font-bold">CA Brut</span> = Total prix vente</p>
+          <p className="mt-1"><span className="text-gray-300 font-bold">Frais</span> = Somme frais par produit (5-15% selon plateforme)</p>
+          <p className="mt-1"><span className="text-gray-300 font-bold">URSSAF</span> = CA Brut × {tauxURSSAF}%</p>
+          <p className="mt-2 border-t border-gray-600 pt-2"><span className="text-emerald-400 font-bold">Bénéfice BRUT</span> = CA - Coût achat - Frais - URSSAF</p>
+          <p className="mt-1"><span className="text-emerald-400 font-bold">Bénéfice NET</span> = Bénéfice BRUT - Dépenses</p>
         </div>
       </div>
     </div>
