@@ -293,7 +293,7 @@ export default function PageDepense() {
     return acc;
   }, {} as Record<string, number>);
 
-  const filteredDepenses = depenses.filter(d => {
+  const filteredDepenses = depenses.filter((d: any) => {
     const date = new Date(d.date_depense);
     if (showFullYear) {
       return date.getFullYear() === selectedYear;

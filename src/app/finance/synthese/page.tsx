@@ -78,7 +78,7 @@ export default function PageSynthese() {
 
   // Filtrer par mois/année
   const filterByDate = (items: any[], dateField: string) => {
-    return items.filter(item => {
+    return items.filter((item: any) => {
       const date = new Date(item[dateField] || new Date());
       if (showFullYear) {
         return date.getFullYear() === selectedYear;
@@ -91,12 +91,12 @@ export default function PageSynthese() {
   const depensesFiltered = filterByDate(depenses, 'date_depense');
 
   // Calculs VENTES
-  const totalVentes = ventesFiltered.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0);
-  const totalCoutsAchat = ventesFiltered.reduce((sum, v) => sum + (v.prix_revient || 0), 0);
+  const totalVentes = ventesFiltered.reduce((sum: number, v: any) => sum + (v.prix_vente_final || 0), 0);
+  const totalCoutsAchat = ventesFiltered.reduce((sum: number, v: any) => sum + (v.prix_revient || 0), 0);
   const nombreProduits = ventesFiltered.length;
 
   // Calculs FRAIS PLATEFORME
-  const totalFraisPlat = ventesFiltered.reduce((sum, v) => {
+  const totalFraisPlat = ventesFiltered.reduce((sum: number, v: any) => {
     const prixVente = v.prix_vente_final || 0;
     let frais = 0;
     if (v.plateforme_vente_finale === 'Vinted') frais = prixVente * 0.08;
@@ -114,8 +114,8 @@ export default function PageSynthese() {
   const beneficeBrut = totalVentes - totalCoutsAchat - totalFraisPlat - urssaf;
 
   // Calculs DÉPENSES
-  const totalDepenses = depensesFiltered.reduce((sum, d) => sum + d.montant, 0);
-  const depensesParCategorie = depensesFiltered.reduce((acc, d) => {
+  const totalDepenses = depensesFiltered.reduce((sum: number, d: any) => sum + d.montant, 0);
+  const depensesParCategorie = depensesFiltered.reduce((acc: Record<string, number>, d: any) => {
     if (!acc[d.categorie]) acc[d.categorie] = 0;
     acc[d.categorie] += d.montant;
     return acc;
