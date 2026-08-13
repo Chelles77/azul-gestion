@@ -529,9 +529,12 @@ export default function Organisateur() {
                           <label className="text-xs text-gray-400 font-bold mb-2 block">DATE</label>
                           <input
                             type="date"
-                            value={quickAddForm.date}
+                            value={quickAddForm.date || ''}
                             onChange={e => setQuickAddForm({ ...quickAddForm, date: e.target.value })}
-                            className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                            className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-600 transition-all cursor-pointer"
+                            style={{
+                              colorScheme: 'dark',
+                            }}
                           />
                         </div>
 
@@ -730,9 +733,12 @@ export default function Organisateur() {
                   <label className="text-xs text-gray-400 font-bold mb-2 block">DATE</label>
                   <input
                     type="date"
-                    value={quickAddForm.date}
+                    value={quickAddForm.date || ''}
                     onChange={e => setQuickAddForm({ ...quickAddForm, date: e.target.value })}
-                    className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                    className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-600 transition-all cursor-pointer"
+                    style={{
+                      colorScheme: 'dark',
+                    }}
                   />
                 </div>
 
