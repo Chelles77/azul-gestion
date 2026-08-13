@@ -85,11 +85,8 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Format standardisé: array mode pour lire les indices correctement
+      // Format standardisé: Line 1 vide, Col A vide, Col B=Numéro, Col C=Description, Col D=Prix
       const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
-
-      console.log('DEBUG: Total rows:', allRows.length);
-      console.log('DEBUG: First 3 rows:', JSON.stringify(allRows.slice(0, 3)));
 
       if (allRows.length === 0) {
         alert('Le fichier Excel semble vide.');
@@ -97,7 +94,7 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Filtre les lignes vides et données réelles
+      // Filtre les lignes vides et saute la première ligne
       const jsonData = allRows.filter((row, idx) => {
         if (idx === 0) return false; // Saute ligne 1 (vide)
         if (!Array.isArray(row) || row.length === 0) return false;
@@ -105,30 +102,22 @@ export default function ProduitsBrutePage() {
         return true;
       });
 
-      console.log('✅ Produits lus après filtrage:', jsonData.length);
-
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       for (const row of jsonData) {
         // Indices: 1=Numéro (col B), 2=Description (col C), 3=Prix (col D)
-        if (!Array.isArray(row) || row.length < 4) {
-          console.log('DEBUG: Skipped row, not array or too short:', row);
-          continue;
-        }
+        if (!Array.isArray(row) || row.length < 4) continue;
 
         const productNumber = row[1]?.toString().trim() || '';
         const desc = row[2]?.toString().trim() || '';
         let rawPrice = row[3]?.toString().trim() || '0';
-        console.log('DEBUG: Processing row:', { productNumber, desc, rawPrice });
         rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
         if (!desc || prixNeuf <= 0) {
           skipped++;
-          const reason = !desc ? 'Description manquante' : 'Prix invalide ou manquant';
-          console.log(`❌ Skipped produit ${productNumber}: ${reason}`, { desc, prixNeuf });
           continue;
         }
 
