@@ -87,22 +87,31 @@ export default function ProduitsBrutePage() {
 
       // Format standardisé: Entête ligne 1, Données ligne 2+
       // Colonnes: Numéro | Description | Prix
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
+      const allData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
 
-      if (jsonData.length === 0) {
+      if (allData.length === 0) {
         alert('Le fichier Excel semble vide.');
         setUploading(false);
         return;
       }
 
-      console.log('✅ Produits lus:', jsonData.length, 'Colonnes:', Object.keys(jsonData[0]));
+      // Sauter l'entête (première ligne) et lire les données à partir de la ligne 2
+      const jsonData = allData.slice(1);
+
+      if (jsonData.length === 0) {
+        alert('Le fichier Excel ne contient que l\'entête.');
+        setUploading(false);
+        return;
+      }
+
+      console.log('✅ Produits lus:', jsonData.length);
 
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       // Détecter les colonnes (1ère, 2ème, 3ème)
-      const cols = Object.keys(jsonData[0]);
+      const cols = Object.keys(allData[0]);
       const [numCol, descCol, priceCol] = [cols[0], cols[1], cols[2]];
 
       for (const row of jsonData) {
