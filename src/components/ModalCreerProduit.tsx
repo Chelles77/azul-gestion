@@ -20,6 +20,7 @@ function generateQRCode(): string {
 
 export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
   const [nom, setNom] = useState('');
+  const [productNumber, setProductNumber] = useState<number | null>(null);
   const [marque, setMarque] = useState('');
   const [marques, setMarques] = useState<string[]>([]);
   const [categorie, setCategorie] = useState('');
@@ -47,8 +48,8 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
         .then(url => setQrDataUrl(url))
         .catch(err => console.error('QR Error:', err));
 
-      // Charger marques et catégories
       loadOptions();
+      loadNextProductNumber();
     }
   }, [isOpen]);
 
@@ -63,6 +64,19 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
     if (categData) setCategories(categData.map(c => c.nom));
     if (etatProdData) setEtatsProduit(etatProdData.map(e => e.nom));
     if (etatEmbalData) setEtatsEmballage(etatEmbalData.map(e => e.nom));
+  };
+
+  const loadNextProductNumber = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('produits')
+      .select('product_number')
+      .eq('lot_id', lotId)
+      .order('product_number', { ascending: false })
+      .limit(1);
+
+    const maxNumber = data && data.length > 0 && data[0].product_number ? data[0].product_number : 0;
+    setProductNumber(maxNumber + 1);
   };
 
   if (!isOpen) return null;
@@ -142,6 +156,7 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
         {
           lot_id: lotId,
           user_id: userData.user.id,
+          product_number: productNumber,
           nom: nom.substring(0, 100),
           marque: marque || null,
           categorie,
@@ -193,7 +208,10 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
 
         {/* Header */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
-          <h2 className="text-xl font-bold text-white">Créer un produit</h2>
+          <div>
+            <h2 className="text-xl font-bold text-white">Créer un produit</h2>
+            {productNumber !== null && <p className="text-sm text-gray-400 mt-1">Produit #<span className="font-bold text-blue-400">{productNumber}</span></p>}
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
             <X size={24} />
           </button>
