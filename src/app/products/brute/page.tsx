@@ -200,14 +200,30 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      const { error } = await supabase.from('produits').insert(produitsAjouter);
-      if (!error) {
+      // Insérer par batch de 1000 pour éviter la limite Supabase
+      const batchSize = 1000;
+      let insertedCount = 0;
+      let hasError = false;
+
+      for (let i = 0; i < produitsAjouter.length; i += batchSize) {
+        const batch = produitsAjouter.slice(i, i + batchSize);
+        const { error } = await supabase.from('produits').insert(batch);
+
+        if (error) {
+          console.error(`Erreur batch ${Math.floor(i / batchSize) + 1}:`, error);
+          hasError = true;
+          break;
+        }
+        insertedCount += batch.length;
+      }
+
+      if (!hasError) {
         fetchProduits();
-        let message = `✅ ${produitsAjouter.length} produits importés (${nouveauxProduits.length - produitsAjouter.length} déjà existants)`;
+        let message = `✅ ${insertedCount} produits importés (${nouveauxProduits.length - insertedCount} déjà existants)`;
         if (skipped > 0) message += ` - ${skipped} lignes invalides ignorées`;
         alert(message);
       } else {
-        alert('Erreur Supabase: ' + error.message);
+        alert('❌ Erreur lors de l\'importation. Vérifiez la console.');
       }
     } catch (err) {
       console.error(err);
