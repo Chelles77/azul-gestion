@@ -266,13 +266,13 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
               <p className="text-xs text-gray-400 uppercase font-bold mb-2">📊 Coeff. Achat</p>
               <input
                 type="number"
-                step="0.001"
+                step="0.0001"
                 value={coefRevient}
                 onChange={e => setCoefRevient(e.target.value)}
                 placeholder="0.087"
                 className="w-full bg-transparent text-4xl font-bold text-blue-400 outline-none focus:ring-0"
               />
-              <p className="text-xs text-gray-400">{parseFloat(coefRevient || '0').toFixed(3)}x</p>
+              <p className="text-xs text-gray-400">{(parseFloat(coefRevient || '0') * 100).toFixed(2)}%</p>
             </div>
           </div>
 
