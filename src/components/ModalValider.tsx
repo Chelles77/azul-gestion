@@ -167,7 +167,11 @@ export default function ModalValider({ product, isOpen, onClose, onSuccess }: Mo
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
+      <style>{`
+        .modal-no-scroll::-webkit-scrollbar { display: none; }
+        .modal-no-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+      <div className="modal-no-scroll bg-[#1a1a1a] border border-gray-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl">
         {/* HEADER */}
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center">
           <div>
