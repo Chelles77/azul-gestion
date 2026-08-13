@@ -83,7 +83,7 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
     // Charger le coefficient du lot et le nombre de produits
     const { data: lotData } = await supabase
       .from('lots')
-      .select('coefficient_achat')
+      .select('coef_brut')
       .eq('id', lotId)
       .single();
 
@@ -92,10 +92,10 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
       .select('id')
       .eq('lot_id', lotId);
 
-    if (lotData && lotData.coefficient_achat) {
+    if (lotData && lotData.coef_brut) {
       const currentCount = allProds ? allProds.length : 0;
       const nextCount = currentCount + 1;
-      const adjustedCoef = lotData.coefficient_achat / nextCount;
+      const adjustedCoef = lotData.coef_brut / nextCount;
       setCoefRevient(adjustedCoef.toFixed(4));
     }
   };
