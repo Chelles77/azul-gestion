@@ -211,7 +211,7 @@ export default function PageDepense() {
         }
 
         // Extraire le fournisseur (première ligne avec du texte)
-        const lines = text.split('\n').filter(l => l.trim().length > 2);
+        const lines = text.split('\n').filter((l: string) => l.trim().length > 2);
         if (lines.length > 0) {
           const fournisseur = lines[0].trim().substring(0, 50);
           setFormData(prev => ({ ...prev, fournisseur }));
