@@ -15,6 +15,7 @@ interface Activite {
   description?: string;
   priorite: number;
   statut: 'planifiee' | 'en_cours' | 'terminee';
+  date_jour: string;
 }
 
 interface Identifiant {
