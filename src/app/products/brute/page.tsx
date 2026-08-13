@@ -85,63 +85,29 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Lire toutes les lignes pour trouver l'entête non-vide
-      const allRows = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 0 });
-
-      // Trouver la première ligne non-vide (entête)
-      let headerRowIndex = 0;
-      for (let i = 0; i < allRows.length; i++) {
-        const row = allRows[i];
-        const nonEmptyValues = Object.values(row).filter((v: any) => v && v.toString().trim());
-        if (nonEmptyValues.length > 0) {
-          headerRowIndex = i;
-          break;
-        }
-      }
-
-      // Lire à partir de la ligne d'entête
-      const jsonData = allRows.slice(headerRowIndex + 1);
+      // Lire directement par position (Format standardisé: No entête)
+      // Col 1: Numéro, Col 2: Item Desc, Col 3: Total Retail
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', header: 1 }).filter((row: any[]) => row.length > 0);
 
       if (jsonData.length === 0) {
-        alert('Le fichier Excel semble vide ou ne contient que des en-têtes.');
+        alert('Le fichier Excel semble vide.');
         setUploading(false);
         return;
       }
 
-      const firstRow = allRows[headerRowIndex];
-      const rawKeys = Object.keys(firstRow);
-      console.log('Colonnes détectées:', rawKeys);
-
-      // Détection flexible des colonnes
-      const numberKey = rawKeys.find(k => {
-        const lower = k.toLowerCase();
-        return lower.includes('numero') || lower.includes('number') || lower.includes('id') || lower === 'n°' || lower === '1';
-      }) || rawKeys[0];
-
-      const descKey = rawKeys.find(k => {
-        const lower = k.toLowerCase();
-        return lower.includes('desc') || lower.includes('item') || lower.includes('produit') || lower.includes('name') || lower.includes('retail');
-      }) || rawKeys[1];
-
-      const priceKey = rawKeys.find(k => {
-        const lower = k.toLowerCase();
-        return lower.includes('total') || lower.includes('retail') || lower.includes('price') || lower.includes('prix');
-      }) || rawKeys[rawKeys.length - 1];
-
-      console.log('Colonne Numéro:', numberKey);
-      console.log('Colonne Description:', descKey);
-      console.log('Colonne Prix:', priceKey);
+      console.log('✅ Format standardisé détecté (No entête)');
 
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       for (const row of jsonData) {
-        const productNumber = row[numberKey]?.toString() || '';
-        let rawPrice = row[priceKey]?.toString() || '0';
+        // Format standardisé: [Numéro, Description, Prix]
+        const productNumber = row[0]?.toString().trim() || '';
+        const desc = row[1]?.toString().trim() || '';
+        let rawPrice = row[2]?.toString().trim() || '0';
         rawPrice = rawPrice.replace(/[^\d.]/g, '');
         const prixNeuf = parseFloat(rawPrice) || 0;
-        const desc = row[descKey]?.toString() || '';
 
         if (!desc || prixNeuf <= 0) {
           skipped++;
