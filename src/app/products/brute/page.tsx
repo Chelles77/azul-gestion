@@ -218,10 +218,10 @@ export default function ProduitsBrutePage() {
       }
 
       if (!hasError) {
-        fetchProduits();
         let message = `✅ ${insertedCount} produits importés (${nouveauxProduits.length - insertedCount} déjà existants)`;
         if (skipped > 0) message += ` - ${skipped} lignes invalides ignorées`;
         alert(message);
+        setTimeout(() => window.location.reload(), 500);
       } else {
         alert('❌ Erreur lors de l\'importation. Vérifiez la console.');
       }
