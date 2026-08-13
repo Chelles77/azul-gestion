@@ -85,9 +85,8 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Lire directement par position (Format standardisé: No entête)
-      // Col 1: Numéro, Col 2: Item Desc, Col 3: Total Retail
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', header: 1 }).filter((row: any[]) => row.length > 0);
+      // Lire en mode JSON - les données commencent à la ligne 1 (pas d'entête)
+      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 0 });
 
       if (jsonData.length === 0) {
         alert('Le fichier Excel semble vide.');
@@ -95,17 +94,22 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      console.log('✅ Format standardisé détecté (No entête)');
+      console.log('✅ Format standardisé détecté');
 
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
+      const keys = Object.keys(jsonData[0]);
+      // Format standardisé: Col 1 = Numéro, Col 2 = Description, Col 3 = Prix
+      const numberKey = keys[0];
+      const descKey = keys[1];
+      const priceKey = keys[2];
+
       for (const row of jsonData) {
-        // Format standardisé: [Numéro, Description, Prix]
-        const productNumber = row[0]?.toString().trim() || '';
-        const desc = row[1]?.toString().trim() || '';
-        let rawPrice = row[2]?.toString().trim() || '0';
+        const productNumber = row[numberKey]?.toString().trim() || '';
+        const desc = row[descKey]?.toString().trim() || '';
+        let rawPrice = row[priceKey]?.toString().trim() || '0';
         rawPrice = rawPrice.replace(/[^\d.]/g, '');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
