@@ -68,15 +68,36 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
 
   const loadNextProductNumber = async () => {
     const supabase = createClient();
-    const { data } = await supabase
+
+    // Charger le prochain numéro de produit
+    const { data: prodData } = await supabase
       .from('produits')
       .select('product_number')
       .eq('lot_id', lotId)
       .order('product_number', { ascending: false })
       .limit(1);
 
-    const maxNumber = data && data.length > 0 && data[0].product_number ? data[0].product_number : 0;
+    const maxNumber = prodData && prodData.length > 0 && prodData[0].product_number ? prodData[0].product_number : 0;
     setProductNumber(maxNumber + 1);
+
+    // Charger le coefficient du lot et le nombre de produits
+    const { data: lotData } = await supabase
+      .from('lots')
+      .select('coefficient_achat')
+      .eq('id', lotId)
+      .single();
+
+    const { data: allProds } = await supabase
+      .from('produits')
+      .select('id')
+      .eq('lot_id', lotId);
+
+    if (lotData && lotData.coefficient_achat) {
+      const currentCount = allProds ? allProds.length : 0;
+      const nextCount = currentCount + 1;
+      const adjustedCoef = lotData.coefficient_achat / nextCount;
+      setCoefRevient(adjustedCoef.toFixed(4));
+    }
   };
 
   if (!isOpen) return null;
