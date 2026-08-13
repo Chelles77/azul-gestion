@@ -376,85 +376,166 @@ export default function Organisateur() {
       {/* Contenu des onglets */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
 
-        {/* ONGLET TIMELINE */}
+        {/* ONGLET TIMELINE - NOUVELLE VUE GRID ÉPOUSTOUFLANTE */}
         {activeTab === 'timeline' && (
           <div>
             <button
               onClick={() => setShowForm(!showForm)}
-              className="mb-8 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-lg transition-all"
+              className="mb-8 px-8 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white rounded-xl font-bold flex items-center gap-2 hover:shadow-2xl hover:scale-105 transition-all text-lg"
             >
-              <Plus size={24} /> Ajouter activité
+              <Plus size={28} /> Ajouter une activité
             </button>
 
             {showForm && (
-              <div className="bg-[#1a1a1a] border-2 border-purple-600 rounded-xl p-8 mb-8">
+              <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600/50 rounded-2xl p-8 mb-12 backdrop-blur-xl shadow-2xl">
+                <h3 className="text-2xl font-bold text-white mb-6">✨ Nouvelle Activité</h3>
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                   <input
                     type="text"
-                    placeholder="Titre"
+                    placeholder="Titre activité"
                     value={formActivite.titre}
                     onChange={e => setFormActivite({ ...formActivite, titre: e.target.value })}
-                    className="md:col-span-2 bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white"
+                    className="md:col-span-2 bg-[#0a0a0a] border-2 border-gray-600 hover:border-purple-500 rounded-xl px-4 py-3 text-white placeholder-gray-500 transition-all focus:outline-none focus:border-purple-600"
                   />
                   <select
                     value={formActivite.categorie}
                     onChange={e => setFormActivite({ ...formActivite, categorie: e.target.value as any })}
-                    className="bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white"
+                    className="bg-[#0a0a0a] border-2 border-gray-600 hover:border-purple-500 rounded-xl px-4 py-3 text-white transition-all focus:outline-none focus:border-purple-600"
                   >
                     <option>Travail</option>
                     <option>Perso</option>
                   </select>
-                  <input type="time" value={formActivite.heure_debut} onChange={e => setFormActivite({ ...formActivite, heure_debut: e.target.value })} className="bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white" />
-                  <input type="time" value={formActivite.heure_fin} onChange={e => setFormActivite({ ...formActivite, heure_fin: e.target.value })} className="bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white" />
+                  <input
+                    type="time"
+                    value={formActivite.heure_debut}
+                    onChange={e => setFormActivite({ ...formActivite, heure_debut: e.target.value })}
+                    className="bg-[#0a0a0a] border-2 border-gray-600 hover:border-purple-500 rounded-xl px-4 py-3 text-white transition-all focus:outline-none focus:border-purple-600"
+                  />
+                  <input
+                    type="time"
+                    value={formActivite.heure_fin}
+                    onChange={e => setFormActivite({ ...formActivite, heure_fin: e.target.value })}
+                    className="bg-[#0a0a0a] border-2 border-gray-600 hover:border-purple-500 rounded-xl px-4 py-3 text-white transition-all focus:outline-none focus:border-purple-600"
+                  />
                   <div className="flex gap-2">
-                    <button onClick={handleAddActivite} className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-lg hover:shadow-lg">✅ Ajouter</button>
-                    <button onClick={() => setShowForm(false)} className="px-4 bg-gray-700 text-white rounded-lg">✕</button>
+                    <button
+                      onClick={handleAddActivite}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:shadow-lg hover:scale-105 transition-all active:scale-95"
+                    >
+                      ✅ Ajouter
+                    </button>
+                    <button
+                      onClick={() => setShowForm(false)}
+                      className="px-6 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-all"
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Timeline */}
-            <div className="relative">
-              <div className="absolute left-16 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-500 via-purple-500 to-pink-500"></div>
-              {currentPercent < 100 && (
-                <div style={{ top: `${currentPercent * 8}px` }} className="absolute left-0 right-0 h-1 bg-green-400 z-50 shadow-lg">
-                  <div className="absolute left-0 w-20 h-4 bg-green-400 rounded-full -top-1.5 shadow-lg"></div>
-                </div>
-              )}
-
-              {Array.from({ length: 24 }).map((_, i) => (
-                <div key={i} className="ml-40 mb-20 relative">
-                  <div className="absolute -left-24 top-0 w-20 text-right">
-                    <div className="text-3xl font-bold text-blue-400">{String(i).padStart(2, '0')}h</div>
-                  </div>
-                  <div className="absolute -left-2 top-2 w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <div className="h-px bg-gradient-to-r from-gray-700 to-transparent"></div>
-
-                  <div className="space-y-3 mt-4">
-                    {activites.filter(a => {
+            {/* GRILLE CALENDAR ÉPOUSTOUFLANTE */}
+            <div className="space-y-4">
+              {/* En-tête avec heures */}
+              <div className="grid gap-4">
+                {/* Blocs colorés par heure */}
+                <div className="space-y-3">
+                  {Array.from({ length: 24 }).map((_, hourIndex) => {
+                    const activitesHeure = activites.filter(a => {
                       const [hd] = a.heure_debut.split(':').map(Number);
-                      return hd === i;
-                    }).map(activite => (
-                      <div key={activite.id} className="relative p-4 rounded-xl border-2 transition-all hover:shadow-2xl group backdrop-blur-sm" style={{ backgroundColor: `${activite.couleur}20`, borderColor: activite.couleur }}>
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="font-bold text-white text-lg">{activite.titre}</h3>
-                              <span className="text-xs px-2 py-1 bg-white/10 rounded-full" style={{ color: activite.couleur }}>{activite.categorie}</span>
-                            </div>
-                            <div className="flex gap-3 text-sm text-gray-300">
-                              <span>⏱️ {activite.heure_debut} - {activite.heure_fin}</span>
-                              <span>({calculateDuration(activite.heure_debut, activite.heure_fin)})</span>
-                            </div>
+                      return hd === hourIndex;
+                    });
+
+                    return (
+                      <div key={hourIndex} className="group">
+                        {/* Heure header */}
+                        <div className="flex items-center gap-4 mb-3">
+                          <div className="w-16 text-right">
+                            <span className="text-2xl font-black text-blue-400">{String(hourIndex).padStart(2, '0')}</span>
+                            <span className="text-xs text-gray-500 ml-1">h</span>
                           </div>
-                          <button onClick={() => handleDeleteActivite(activite.id)} className="opacity-0 group-hover:opacity-100 ml-4 p-2 hover:bg-red-600/50 rounded-lg"><X size={18} className="text-red-400" /></button>
+                          <div className="flex-1 h-px bg-gradient-to-r from-gray-700 via-gray-600 to-transparent"></div>
                         </div>
+
+                        {/* Activités de cette heure */}
+                        {activitesHeure.length > 0 ? (
+                          <div className="flex flex-wrap gap-3 ml-20">
+                            {activitesHeure.map(activite => {
+                              const duration = calculateDuration(activite.heure_debut, activite.heure_fin);
+                              return (
+                                <div
+                                  key={activite.id}
+                                  className="flex-1 min-w-xs relative group/card p-6 rounded-2xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer backdrop-blur-md"
+                                  style={{
+                                    backgroundColor: `${activite.couleur}15`,
+                                    borderColor: activite.couleur,
+                                    background: `linear-gradient(135deg, ${activite.couleur}10 0%, ${activite.couleur}05 100%)`,
+                                  }}
+                                >
+                                  {/* Indicateur couleur gauche */}
+                                  <div
+                                    className="absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl"
+                                    style={{ backgroundColor: activite.couleur }}
+                                  ></div>
+
+                                  <div className="flex justify-between items-start mb-3">
+                                    <h4 className="text-lg font-bold text-white flex-1 pr-4">{activite.titre}</h4>
+                                    <button
+                                      onClick={() => handleDeleteActivite(activite.id)}
+                                      className="opacity-0 group-hover/card:opacity-100 transition-opacity p-2 hover:bg-red-600/50 rounded-lg"
+                                    >
+                                      <X size={18} className="text-red-400" />
+                                    </button>
+                                  </div>
+
+                                  <div className="space-y-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className="px-3 py-1 rounded-full text-xs font-bold"
+                                        style={{
+                                          backgroundColor: `${activite.couleur}30`,
+                                          color: activite.couleur,
+                                        }}
+                                      >
+                                        {activite.categorie}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 text-gray-300">
+                                      <Clock size={14} />
+                                      <span className="font-mono">
+                                        {activite.heure_debut} → {activite.heure_fin}
+                                      </span>
+                                      <span className="ml-auto font-bold" style={{ color: activite.couleur }}>
+                                        {duration}
+                                      </span>
+                                    </div>
+
+                                    {activite.priorite >= 4 && (
+                                      <div className="flex items-center gap-2 text-red-400">
+                                        <AlertCircle size={14} />
+                                        <span className="text-xs font-bold">Priorité</span>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Shine effect on hover */}
+                                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover/card:opacity-20 transition-opacity bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none"></div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="ml-20 h-12 rounded-2xl border-2 border-dashed border-gray-700 flex items-center justify-center text-gray-600 text-sm group-hover:border-gray-600 transition-all">
+                            Aucune activité
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         )}
