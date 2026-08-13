@@ -85,7 +85,7 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Format standardisé: Line 1 vide, Col A vide, Col B=Numéro, Col C=Description, Col D=Prix
+      // Format simple: Col A=Numéro, Col B=Description, Col C=Prix (no empty rows)
       const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
 
       if (allRows.length === 0) {
@@ -94,9 +94,8 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Filtre les lignes vides et saute la première ligne
-      const jsonData = allRows.filter((row, idx) => {
-        if (idx === 0) return false; // Saute ligne 1 (vide)
+      // Filtre les lignes vides
+      const jsonData = allRows.filter((row) => {
         if (!Array.isArray(row) || row.length === 0) return false;
         if (row.every(cell => !cell)) return false; // Saute les lignes complètement vides
         return true;
@@ -107,12 +106,12 @@ export default function ProduitsBrutePage() {
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
       for (const row of jsonData) {
-        // Indices: 1=Numéro (col B), 2=Description (col C), 3=Prix (col D)
-        if (!Array.isArray(row) || row.length < 4) continue;
+        // Indices: 0=Numéro, 1=Description, 2=Prix
+        if (!Array.isArray(row) || row.length < 3) continue;
 
-        const productNumber = row[1]?.toString().trim() || '';
-        const desc = row[2]?.toString().trim() || '';
-        let rawPrice = row[3]?.toString().trim() || '0';
+        const productNumber = row[0]?.toString().trim() || '';
+        const desc = row[1]?.toString().trim() || '';
+        let rawPrice = row[2]?.toString().trim() || '0';
         rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
