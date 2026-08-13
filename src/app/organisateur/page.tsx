@@ -148,14 +148,14 @@ export default function Organisateur() {
       await supabase.from('activites').insert({
         user_id: user.id,
         titre: quickAddForm.titre,
-        categorie: 'Travail',
+        categorie: quickAddForm.categorie,
         heure_debut: quickAddForm.heure_debut,
         heure_fin: quickAddForm.heure_fin,
-        couleur: '#3b82f6',
+        couleur: COULEURS_CATEGORIE[quickAddForm.categorie],
         date_jour: date,
       });
 
-      setQuickAddForm({ titre: '', heure_debut: '09:00', heure_fin: '10:00' });
+      setQuickAddForm({ titre: '', categorie: 'Travail', heure_debut: '09:00', heure_fin: '10:00' });
       setQuickAddMenuOpen(null);
       await fetchData();
     } catch (error) {
