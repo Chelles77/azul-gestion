@@ -1,5 +1,6 @@
 'use client';
 
+// Force rebuild - Web Crypto API (no crypto-js dependency)
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
