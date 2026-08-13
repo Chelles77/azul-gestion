@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { Plus, Camera, Upload, RefreshCw, AlertCircle, Trash2, X } from 'lucide-react';
+import { Plus, Camera, Upload, RefreshCw, AlertCircle, Trash2, X, Loader } from 'lucide-react';
+import Tesseract from 'tesseract.js';
 
 interface Depense {
   id: string;
@@ -32,6 +33,7 @@ export default function PageDepense() {
   const [showModal, setShowModal] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [extracting, setExtracting] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -137,7 +139,7 @@ export default function PageDepense() {
     }
   };
 
-  const capturePhoto = () => {
+  const capturePhoto = async () => {
     if (canvasRef.current && videoRef.current) {
       const context = canvasRef.current.getContext('2d');
       if (context) {
@@ -145,10 +147,62 @@ export default function PageDepense() {
         canvasRef.current.height = videoRef.current.videoHeight;
         context.drawImage(videoRef.current, 0, 0);
         const photo = canvasRef.current.toDataURL('image/jpeg');
+
         setFormData({ ...formData, photo });
         setShowCamera(false);
         stopCamera();
+
+        // Extraire les données de la facture avec OCR
+        await extractInvoiceData(photo);
       }
+    }
+  };
+
+  const extractInvoiceData = async (imageData: string) => {
+    setExtracting(true);
+    try {
+      // Utiliser Tesseract.js pour OCR
+      const result = await Tesseract.recognize(imageData, 'fra', {
+        logger: (m: any) => console.log('OCR Progress:', m.progress)
+      });
+
+      const text = result.data.text || '';
+      console.log('OCR Text:', text);
+
+      // Extraire le montant (chercher les patterns €, EUR, montant, TOTAL)
+      const montantPatterns = [
+        /TOTAL\s*[:\s]*(\d+[.,]\d{2})/i,
+        /(\d+[.,]\d{2})\s*€/,
+        /€\s*(\d+[.,]\d{2})/i,
+        /MONTANT\s*[:\s]*(\d+[.,]\d{2})/i,
+      ];
+
+      for (const pattern of montantPatterns) {
+        const match = text.match(pattern);
+        if (match) {
+          const montant = (match[1]).replace(',', '.');
+          setFormData(prev => ({ ...prev, montant }));
+          break;
+        }
+      }
+
+      // Extraire le fournisseur (première ligne non-vide)
+      const lines = text.split('\n').filter(l => l.trim().length > 3);
+      if (lines.length > 0) {
+        const fournisseur = lines[0].trim().substring(0, 50);
+        setFormData(prev => ({ ...prev, fournisseur }));
+      }
+
+      // Extraire la date (JJ/MM/YYYY ou DD/MM/YYYY)
+      const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+      if (dateMatch) {
+        // Optionnel: ajouter la date au formulaire si nécessaire
+      }
+    } catch (error) {
+      console.error('OCR Error:', error);
+      alert('OCR indisponible - veuillez remplir manuellement');
+    } finally {
+      setExtracting(false);
     }
   };
 
@@ -396,6 +450,17 @@ export default function PageDepense() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Extraction en cours */}
+              {extracting && (
+                <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-4 flex items-center gap-3">
+                  <Loader size={20} className="animate-spin text-blue-400" />
+                  <div>
+                    <p className="text-blue-400 font-medium">Extraction des données...</p>
+                    <p className="text-xs text-blue-300">Lecture de la facture en cours</p>
+                  </div>
+                </div>
+              )}
+
               {/* Scan/Upload Photo */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">📷 Facture (optionnel)</label>
