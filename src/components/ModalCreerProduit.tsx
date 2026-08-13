@@ -80,23 +80,15 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
     const maxNumber = prodData && prodData.length > 0 && prodData[0].product_number ? prodData[0].product_number : 0;
     setProductNumber(maxNumber + 1);
 
-    // Charger le coefficient du lot et le nombre de produits
+    // Charger le coefficient du lot
     const { data: lotData } = await supabase
       .from('lots')
       .select('coef_brut')
       .eq('id', lotId)
       .single();
 
-    const { data: allProds } = await supabase
-      .from('produits')
-      .select('id')
-      .eq('lot_id', lotId);
-
     if (lotData && lotData.coef_brut) {
-      const currentCount = allProds ? allProds.length : 0;
-      const nextCount = currentCount + 1;
-      const adjustedCoef = lotData.coef_brut / nextCount;
-      setCoefRevient(adjustedCoef.toFixed(4));
+      setCoefRevient(lotData.coef_brut.toFixed(4));
     }
   };
 
