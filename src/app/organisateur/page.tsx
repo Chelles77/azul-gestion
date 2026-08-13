@@ -96,6 +96,7 @@ export default function Organisateur() {
   const [quickAddMenuOpen, setQuickAddMenuOpen] = useState<string | null>(null);
   const [quickAddForm, setQuickAddForm] = useState({
     titre: '',
+    categorie: 'Travail' as 'Travail' | 'Perso',
     heure_debut: '09:00',
     heure_fin: '10:00',
   });
@@ -240,6 +241,100 @@ export default function Organisateur() {
     });
   };
 
+  // Modal réutilisable
+  const renderModalQuickAdd = (dateStr: string, hour: number) => (
+    <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-6 z-50 w-96 animate-in fade-in slide-in-from-top-2 duration-300">
+      {/* Titre */}
+      <h3 className="text-white font-bold text-lg mb-4">✨ Nouvelle Activité</h3>
+
+      <div className="space-y-4">
+        {/* Champ Titre */}
+        <div>
+          <label className="text-xs text-gray-400 font-bold mb-2 block">TITRE</label>
+          <input
+            type="text"
+            placeholder="Ex: Réunion, Pause café..."
+            value={quickAddForm.titre}
+            onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
+            className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-purple-600 transition-all"
+            autoFocus
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+
+        {/* Catégorie */}
+        <div>
+          <label className="text-xs text-gray-400 font-bold mb-2 block">CATÉGORIE</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setQuickAddForm({ ...quickAddForm, categorie: 'Travail' })}
+              className={`p-3 rounded-lg border-2 font-bold text-sm transition-all ${
+                quickAddForm.categorie === 'Travail'
+                  ? 'border-blue-600 bg-blue-600/20 text-blue-400'
+                  : 'border-gray-700 bg-[#0a0a0a] text-gray-400 hover:border-blue-600'
+              }`}
+            >
+              💼 Travail
+            </button>
+            <button
+              onClick={() => setQuickAddForm({ ...quickAddForm, categorie: 'Perso' })}
+              className={`p-3 rounded-lg border-2 font-bold text-sm transition-all ${
+                quickAddForm.categorie === 'Perso'
+                  ? 'border-pink-600 bg-pink-600/20 text-pink-400'
+                  : 'border-gray-700 bg-[#0a0a0a] text-gray-400 hover:border-pink-600'
+              }`}
+            >
+              🎮 Perso
+            </button>
+          </div>
+        </div>
+
+        {/* Heure */}
+        <div>
+          <label className="text-xs text-gray-400 font-bold mb-2 block">DURÉE</label>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="time"
+              value={quickAddForm.heure_debut}
+              onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
+              className="bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+              onClick={e => e.stopPropagation()}
+            />
+            <input
+              type="time"
+              value={quickAddForm.heure_fin}
+              onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
+              className="bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+        </div>
+
+        {/* Boutons */}
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <button
+            onClick={() => {
+              handleAddActiviteQuick(dateStr, `${String(hour).padStart(2, '0')}:00`);
+              setQuickAddForm({ titre: '', categorie: 'Travail', heure_debut: '09:00', heure_fin: '10:00' });
+            }}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-bold hover:shadow-lg hover:scale-105 transition-all active:scale-95"
+          >
+            ✅ Ajouter
+          </button>
+          <button
+            onClick={() => setQuickAddMenuOpen(null)}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-bold transition-all"
+          >
+            ✕ Annuler
+          </button>
+        </div>
+      </div>
+
+      {/* Arrow pointer */}
+      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-purple-600 border-2 border-purple-600 rotate-45 rounded-sm"></div>
+    </div>
+  );
+
   // VUE SEMAINE
   const renderViewSemaine = () => {
     const startOfWeek = new Date(currentDate);
@@ -301,67 +396,7 @@ export default function Organisateur() {
                         </button>
                       )}
 
-                      {quickAddMenuOpen === `${dayStr}-${hour}` && (
-                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-6 z-50 w-80">
-                          <h3 className="text-white font-bold text-lg mb-4">✨ Nouvelle Activité</h3>
-
-                          <div className="space-y-3">
-                            <div>
-                              <label className="text-xs text-gray-400 font-bold mb-1 block">TITRE</label>
-                              <input
-                                type="text"
-                                placeholder="Titre..."
-                                value={quickAddForm.titre}
-                                onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
-                                className="w-full bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
-                                autoFocus
-                                onClick={e => e.stopPropagation()}
-                              />
-                            </div>
-
-                            <div>
-                              <label className="text-xs text-gray-400 font-bold mb-1 block">DURÉE</label>
-                              <div className="grid grid-cols-2 gap-2">
-                                <input
-                                  type="time"
-                                  value={quickAddForm.heure_debut}
-                                  onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
-                                  className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
-                                  onClick={e => e.stopPropagation()}
-                                />
-                                <input
-                                  type="time"
-                                  value={quickAddForm.heure_fin}
-                                  onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
-                                  className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
-                                  onClick={e => e.stopPropagation()}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 pt-2">
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  handleAddActiviteQuick(dayStr, `${String(hour).padStart(2, '0')}:00`);
-                                }}
-                                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all"
-                              >
-                                ✅ Ajouter
-                              </button>
-                              <button
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  setQuickAddMenuOpen(null);
-                                }}
-                                className="bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-gray-600"
-                              >
-                                ✕ Annuler
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      {quickAddMenuOpen === `${dayStr}-${hour}` && renderModalQuickAdd(dayStr, hour)}
                     </div>
                   );
                 })}
@@ -436,67 +471,7 @@ export default function Organisateur() {
                 </div>
 
                 {/* Menu pour Mois */}
-                {quickAddMenuOpen === `${dayStr}-12` && (
-                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-6 z-50 w-80">
-                    <h3 className="text-white font-bold text-lg mb-4">✨ Nouvelle Activité</h3>
-
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs text-gray-400 font-bold mb-1 block">TITRE</label>
-                        <input
-                          type="text"
-                          placeholder="Titre..."
-                          value={quickAddForm.titre}
-                          onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
-                          className="w-full bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
-                          autoFocus
-                          onClick={e => e.stopPropagation()}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="text-xs text-gray-400 font-bold mb-1 block">DURÉE</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input
-                            type="time"
-                            value={quickAddForm.heure_debut}
-                            onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
-                            className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
-                            onClick={e => e.stopPropagation()}
-                          />
-                          <input
-                            type="time"
-                            value={quickAddForm.heure_fin}
-                            onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
-                            className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
-                            onClick={e => e.stopPropagation()}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2">
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleAddActiviteQuick(dayStr, `${quickAddForm.heure_debut || '12'}:00`);
-                          }}
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all"
-                        >
-                          ✅ Ajouter
-                        </button>
-                        <button
-                          onClick={e => {
-                            e.stopPropagation();
-                            setQuickAddMenuOpen(null);
-                          }}
-                          className="bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-gray-600"
-                        >
-                          ✕ Annuler
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {quickAddMenuOpen === `${dayStr}-12` && renderModalQuickAdd(dayStr, 12)}
               </div>
             );
           })}
@@ -562,78 +537,7 @@ export default function Organisateur() {
                     </button>
 
                     {/* MENU DÉROULANT - RESTE OUVERT */}
-                    {quickAddMenuOpen === `${dateStr}-${hour}` && (
-                      <div className="absolute left-1/2 -translate-x-1/2 top-full mt-3 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-6 z-50 w-96 animate-in fade-in slide-in-from-top-2 duration-300">
-                        {/* Titre */}
-                        <h3 className="text-white font-bold text-lg mb-4">✨ Nouvelle Activité</h3>
-
-                        <div className="space-y-4">
-                          {/* Champ Titre */}
-                          <div>
-                            <label className="text-xs text-gray-400 font-bold mb-2 block">TITRE</label>
-                            <input
-                              type="text"
-                              placeholder="Ex: Réunion, Pause café..."
-                              value={quickAddForm.titre}
-                              onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
-                              className="w-full bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-purple-600 transition-all"
-                              autoFocus
-                            />
-                          </div>
-
-                          {/* Catégorie */}
-                          <div>
-                            <label className="text-xs text-gray-400 font-bold mb-2 block">CATÉGORIE</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <button className="p-3 rounded-lg border-2 border-blue-600 bg-blue-600/20 text-blue-400 font-bold text-sm hover:bg-blue-600/30 transition-all">
-                                💼 Travail
-                              </button>
-                              <button className="p-3 rounded-lg border-2 border-gray-700 bg-[#0a0a0a] text-gray-400 font-bold text-sm hover:border-pink-600 hover:text-pink-400 transition-all">
-                                🎮 Perso
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Heure */}
-                          <div>
-                            <label className="text-xs text-gray-400 font-bold mb-2 block">DURÉE</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <input
-                                type="time"
-                                value={quickAddForm.heure_debut}
-                                onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
-                                className="bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
-                              />
-                              <input
-                                type="time"
-                                value={quickAddForm.heure_fin}
-                                onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
-                                className="bg-[#0a0a0a] border-2 border-gray-700 hover:border-purple-500 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
-                              />
-                            </div>
-                          </div>
-
-                          {/* Boutons */}
-                          <div className="grid grid-cols-2 gap-3 pt-2">
-                            <button
-                              onClick={() => handleAddActiviteQuick(dateStr, `${String(hour).padStart(2, '0')}:00`)}
-                              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-lg font-bold hover:shadow-lg hover:scale-105 transition-all active:scale-95"
-                            >
-                              ✅ Ajouter
-                            </button>
-                            <button
-                              onClick={() => setQuickAddMenuOpen(null)}
-                              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-3 rounded-lg font-bold transition-all"
-                            >
-                              ✕ Annuler
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Arrow pointer */}
-                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-purple-600 border-2 border-purple-600 rotate-45 rounded-sm"></div>
-                      </div>
-                    )}
+                    {quickAddMenuOpen === `${dateStr}-${hour}` && renderModalQuickAdd(dateStr, hour)}
                   </div>
                 )}
               </div>
