@@ -8,7 +8,7 @@ import { RefreshCw } from 'lucide-react';
 interface LotStats {
   lot_id: string;
   numerolot: string;
-  prixneuftotal: number;
+  couttotal: number;
   nombreProduits: number;
   coutUnitaire: number;
   nombreVendus: number;
@@ -81,7 +81,7 @@ export default function PageSynthese() {
         lotsWithStats.push({
           lot_id: lot.id,
           numerolot: lot.numerolot,
-          prixneuftotal: lot.couttotal,
+          couttotal: lot.couttotal,
           nombreProduits,
           coutUnitaire,
           nombreVendus,
@@ -135,7 +135,7 @@ export default function PageSynthese() {
   }, [router]);
 
   // Calculs totaux
-  const totalCoutAchat = lots.reduce((sum, lot) => sum + lot.prixneuftotal, 0);
+  const totalCoutAchat = lots.reduce((sum, lot) => sum + lot.couttotal, 0);
   const totalProduits = lots.reduce((sum, lot) => sum + lot.nombreProduits, 0);
   const totalVendus = lots.reduce((sum, lot) => sum + lot.nombreVendus, 0);
   const pourcentageGlobal = totalProduits > 0 ? (totalVendus / totalProduits) * 100 : 0;
@@ -251,7 +251,7 @@ export default function PageSynthese() {
                 {lots.map(lot => (
                   <tr key={lot.lot_id} className="border-b border-gray-700 hover:bg-[#252525]">
                     <td className="py-3 px-4 font-medium text-white">{lot.numerolot}</td>
-                    <td className="py-3 px-4 text-right text-blue-400">{lot.prixneuftotal.toFixed(0)} €</td>
+                    <td className="py-3 px-4 text-right text-blue-400">{lot.couttotal.toFixed(0)} €</td>
                     <td className="py-3 px-4 text-right text-blue-300 font-bold">{lot.coutUnitaire.toFixed(2)} €</td>
                     <td className="py-3 px-4 text-center text-gray-300">{lot.nombreProduits}</td>
                     <td className="py-3 px-4 text-center font-bold text-green-400">{lot.nombreVendus}</td>
