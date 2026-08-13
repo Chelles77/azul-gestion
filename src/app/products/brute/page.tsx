@@ -85,21 +85,21 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Format standardisé: Entête ligne 1, Données ligne 2+
-      // Colonnes: Numéro | Description | Prix
-      const allData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
+      // Format standardisé: Ligne 1 vide, Ligne 2+ données
+      // Colonnes: A=vide, B=Numéro, C=Description, D=Prix
+      const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
 
-      if (allData.length === 0) {
+      if (allRows.length === 0) {
         alert('Le fichier Excel semble vide.');
         setUploading(false);
         return;
       }
 
-      // Sauter l'entête (première ligne) et lire les données à partir de la ligne 2
-      const jsonData = allData.slice(1);
+      // Sauter la ligne 1 (vide) et lire à partir de la ligne 2
+      const jsonData = allRows.slice(1);
 
       if (jsonData.length === 0) {
-        alert('Le fichier Excel ne contient que l\'entête.');
+        alert('Le fichier Excel ne contient aucune donnée.');
         setUploading(false);
         return;
       }
@@ -110,14 +110,13 @@ export default function ProduitsBrutePage() {
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
-      // Détecter les colonnes (1ère, 2ème, 3ème)
-      const cols = Object.keys(allData[0]);
-      const [numCol, descCol, priceCol] = [cols[0], cols[1], cols[2]];
-
       for (const row of jsonData) {
-        const productNumber = row[numCol]?.toString().trim() || '';
-        const desc = row[descCol]?.toString().trim() || '';
-        let rawPrice = row[priceCol]?.toString().trim() || '0';
+        // Indices: 1=Numéro (col B), 2=Description (col C), 3=Prix (col D)
+        if (!Array.isArray(row) || row.length < 4) continue;
+
+        const productNumber = row[1]?.toString().trim() || '';
+        const desc = row[2]?.toString().trim() || '';
+        let rawPrice = row[3]?.toString().trim() || '0';
         rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
