@@ -131,7 +131,8 @@ export default function ProduitsBrutePage() {
 
         if (!desc || prixNeuf <= 0) {
           skipped++;
-          console.log('Skipped:', { productNumber, desc, prixNeuf, reason: !desc ? 'no desc' : 'no price' });
+          const reason = !desc ? 'Description manquante' : 'Prix invalide ou manquant';
+          console.log(`❌ Skipped produit ${productNumber}: ${reason}`, { desc, prixNeuf });
           continue;
         }
 
