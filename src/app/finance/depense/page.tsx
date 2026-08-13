@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Plus, Camera, Upload, RefreshCw, AlertCircle, Trash2, X, Loader } from 'lucide-react';
-import Tesseract from 'tesseract.js';
 
 interface Depense {
   id: string;
@@ -161,46 +160,67 @@ export default function PageDepense() {
   const extractInvoiceData = async (imageData: string) => {
     setExtracting(true);
     try {
-      // Utiliser Tesseract.js pour OCR
-      const result = await Tesseract.recognize(imageData, 'fra', {
-        logger: (m: any) => console.log('OCR Progress:', m.progress)
+      // Convertir base64 en blob pour l'API
+      const base64Data = imageData.split(',')[1];
+
+      // Utiliser Free OCR API (api.ocr.space)
+      const formData = new FormData();
+
+      // Convertir base64 en blob
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'image/jpeg' });
+
+      formData.append('filename', 'facture.jpg');
+      formData.append('filetype', 'jpg');
+      formData.append('apikey', 'K87899142C8');
+      formData.append('language', 'fre');
+      formData.append('base64Image', imageData);
+
+      const response = await fetch('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        body: formData,
       });
 
-      const text = result.data.text || '';
-      console.log('OCR Text:', text);
+      const result = await response.json();
+      const text = result.ParsedText || '';
 
-      // Extraire le montant (chercher les patterns €, EUR, montant, TOTAL)
-      const montantPatterns = [
-        /TOTAL\s*[:\s]*(\d+[.,]\d{2})/i,
-        /(\d+[.,]\d{2})\s*€/,
-        /€\s*(\d+[.,]\d{2})/i,
-        /MONTANT\s*[:\s]*(\d+[.,]\d{2})/i,
-      ];
+      console.log('OCR Result:', text);
 
-      for (const pattern of montantPatterns) {
-        const match = text.match(pattern);
-        if (match) {
-          const montant = (match[1]).replace(',', '.');
-          setFormData(prev => ({ ...prev, montant }));
-          break;
+      if (text) {
+        // Extraire le montant - cherche les patterns les plus courants
+        const montantPatterns = [
+          /TOTAL\s*[:\s€]*\s*([0-9]+[.,][0-9]{2})/i,
+          /TTC\s*[:\s€]*\s*([0-9]+[.,][0-9]{2})/i,
+          /MONTANT\s*[:\s€]*\s*([0-9]+[.,][0-9]{2})/i,
+          /([0-9]+[.,][0-9]{2})\s*€/,
+          /€\s*([0-9]+[.,][0-9]{2})/i,
+        ];
+
+        for (const pattern of montantPatterns) {
+          const match = text.match(pattern);
+          if (match && match[1]) {
+            const montant = match[1].replace(',', '.');
+            setFormData(prev => ({ ...prev, montant }));
+            console.log('Montant trouvé:', montant);
+            break;
+          }
         }
-      }
 
-      // Extraire le fournisseur (première ligne non-vide)
-      const lines = text.split('\n').filter(l => l.trim().length > 3);
-      if (lines.length > 0) {
-        const fournisseur = lines[0].trim().substring(0, 50);
-        setFormData(prev => ({ ...prev, fournisseur }));
-      }
-
-      // Extraire la date (JJ/MM/YYYY ou DD/MM/YYYY)
-      const dateMatch = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      if (dateMatch) {
-        // Optionnel: ajouter la date au formulaire si nécessaire
+        // Extraire le fournisseur (première ligne avec du texte)
+        const lines = text.split('\n').filter(l => l.trim().length > 2);
+        if (lines.length > 0) {
+          const fournisseur = lines[0].trim().substring(0, 50);
+          setFormData(prev => ({ ...prev, fournisseur }));
+          console.log('Fournisseur trouvé:', fournisseur);
+        }
       }
     } catch (error) {
       console.error('OCR Error:', error);
-      alert('OCR indisponible - veuillez remplir manuellement');
+      // Silencieux - l'utilisateur peut remplir manuellement
     } finally {
       setExtracting(false);
     }
