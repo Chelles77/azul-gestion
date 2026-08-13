@@ -157,13 +157,11 @@ export default function PageGestionAchats() {
         .select('statut')
         .eq('lot_id', lot.id);
 
-      if (data) {
-        const total = data.length;
-        const brute = data.filter(p => p.statut === 'brute').length;
-        const vente = data.filter(p => p.statut === 'en_vente').length;
-        const vendu = data.filter(p => p.statut === 'vendu' || p.statut === 'archive').length;
-        counts[lot.id] = { total, brute, vente, vendu };
-      }
+      const total = data ? data.length : 0;
+      const brute = data ? data.filter(p => p.statut === 'brute').length : 0;
+      const vente = data ? data.filter(p => p.statut === 'en_vente').length : 0;
+      const vendu = data ? data.filter(p => p.statut === 'vendu' || p.statut === 'archive').length : 0;
+      counts[lot.id] = { total, brute, vente, vendu };
     }
 
     setProductCounts(counts);
