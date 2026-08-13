@@ -5,6 +5,19 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { RefreshCw } from 'lucide-react';
 
+interface ProduitVendu {
+  id: string;
+  nom: string;
+  lot_id: string;
+  numerolot: string;
+  prix_revient: number;
+  prix_vente_final: number;
+  plateforme_vente_finale: string;
+  frais: number;
+  urssaf: number;
+  benefice_brut: number;
+}
+
 interface LotStats {
   lot_id: string;
   numerolot: string;
@@ -22,6 +35,7 @@ export default function PageSynthese() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lots, setLots] = useState<LotStats[]>([]);
+  const [produitVendus, setProduitVendus] = useState<ProduitVendu[]>([]);
   const [tauxURSSAF, setTauxURSSAF] = useState(12.3);
   const [depensesTotales, setDepensesTotales] = useState(0);
 
@@ -42,56 +56,95 @@ export default function PageSynthese() {
 
       if (!user) return;
 
-      // Récupérer les lots
+      // Récupérer tous les produits vendus
+      const { data: soldProductsData } = await supabase
+        .from('produits')
+        .select('id, nom, lot_id, prix_revient, prix_vente_final, plateforme_vente_finale')
+        .eq('user_id', user.id)
+        .eq('statut', 'vendu');
+
+      // Récupérer les lots pour avoir les numéros
       const { data: lotsData } = await supabase
         .from('lots')
         .select('*')
         .eq('user_id', user.id);
 
+      const lotsMap = new Map(lotsData?.map(lot => [lot.id, lot]) || []);
+
+      // Calculer pour chaque produit vendu
+      const produitsVendus: ProduitVendu[] = [];
       const lotsWithStats: LotStats[] = [];
 
-      for (const lot of lotsData || []) {
-        // Tous les produits du lot
-        const { data: allProducts } = await supabase
-          .from('produits')
-          .select('id')
-          .eq('lot_id', lot.id);
+      // Créer un map pour les stats par lot
+      const lotStatsMap = new Map<string, { couttotal: number; nombreProduits: number; nombreVendus: number; totalVentesLot: number; fraisLot: number }>();
 
-        // Produits vendus avec détails
-        const { data: soldProducts } = await supabase
-          .from('produits')
-          .select('id, prix_vente_final, plateforme_vente_finale')
-          .eq('lot_id', lot.id)
-          .eq('statut', 'vendu');
+      for (const product of soldProductsData || []) {
+        const lot = lotsMap.get(product.lot_id);
+        if (!lot) continue;
 
-        const nombreProduits = allProducts?.length || 0;
-        const nombreVendus = soldProducts?.length || 0;
-        const coutUnitaire = nombreProduits > 0 ? lot.couttotal / nombreProduits : 0;
-        const pourcentageVente = nombreProduits > 0 ? (nombreVendus / nombreProduits) * 100 : 0;
+        const prixVente = product.prix_vente_final || 0;
+        const prixAchat = product.prix_revient || 0;
+        const frais = calculateFrais(prixVente, product.plateforme_vente_finale);
+        const urssaf = prixVente * (tauxURSSAF / 100);
+        const beneficeBrut = prixVente - prixAchat - frais - urssaf;
 
-        // Calculer CA et frais du lot
-        let totalVentesLot = 0;
-        let fraisLot = 0;
-        soldProducts?.forEach(product => {
-          const prixVente = product.prix_vente_final || 0;
-          totalVentesLot += prixVente;
-          fraisLot += calculateFrais(prixVente, product.plateforme_vente_finale);
-        });
-
-        lotsWithStats.push({
-          lot_id: lot.id,
+        produitsVendus.push({
+          id: product.id,
+          nom: product.nom,
+          lot_id: product.lot_id,
           numerolot: lot.numerolot,
-          couttotal: lot.couttotal,
-          nombreProduits,
-          coutUnitaire,
-          nombreVendus,
-          pourcentageVente,
-          totalVentesLot,
-          fraisLot,
+          prix_revient: prixAchat,
+          prix_vente_final: prixVente,
+          plateforme_vente_finale: product.plateforme_vente_finale,
+          frais,
+          urssaf,
+          benefice_brut: beneficeBrut,
         });
+
+        // Accumuler les stats par lot
+        const currentStats = lotStatsMap.get(lot.id) || {
+          couttotal: lot.couttotal,
+          nombreProduits: 0,
+          nombreVendus: 0,
+          totalVentesLot: 0,
+          fraisLot: 0,
+        };
+        currentStats.nombreVendus += 1;
+        currentStats.totalVentesLot += prixVente;
+        currentStats.fraisLot += frais;
+        lotStatsMap.set(lot.id, currentStats);
+      }
+
+      // Compter tous les produits pour pourcentages
+      if (lotsData) {
+        for (const lot of lotsData) {
+          const { data: allProducts } = await supabase
+            .from('produits')
+            .select('id')
+            .eq('lot_id', lot.id);
+
+          const nombreProduits = allProducts?.length || 0;
+          const stats = lotStatsMap.get(lot.id);
+          const nombreVendus = stats?.nombreVendus || 0;
+          const pourcentageVente = nombreProduits > 0 ? (nombreVendus / nombreProduits) * 100 : 0;
+          const coutUnitaire = nombreProduits > 0 ? lot.couttotal / nombreProduits : 0;
+
+          lotsWithStats.push({
+            lot_id: lot.id,
+            numerolot: lot.numerolot,
+            couttotal: lot.couttotal,
+            nombreProduits,
+            coutUnitaire,
+            nombreVendus,
+            pourcentageVente,
+            totalVentesLot: stats?.totalVentesLot || 0,
+            fraisLot: stats?.fraisLot || 0,
+          });
+        }
       }
 
       setLots(lotsWithStats);
+      setProduitVendus(produitsVendus);
 
       // Dépenses totales
       const { data: depensesData } = await supabase
@@ -134,26 +187,22 @@ export default function PageSynthese() {
     init();
   }, [router]);
 
-  // Calculs totaux
-  const totalCoutAchat = lots.reduce((sum, lot) => sum + lot.couttotal, 0);
-  const totalProduits = lots.reduce((sum, lot) => sum + lot.nombreProduits, 0);
-  const totalVendus = lots.reduce((sum, lot) => sum + lot.nombreVendus, 0);
-  const pourcentageGlobal = totalProduits > 0 ? (totalVendus / totalProduits) * 100 : 0;
-
-  // CA Brut (Chiffre d'affaires)
-  const caTotal = lots.reduce((sum, lot) => sum + lot.totalVentesLot, 0);
-
-  // Frais totaux
-  const fraisTotal = lots.reduce((sum, lot) => sum + lot.fraisLot, 0);
-
-  // URSSAF = CA × taux
-  const urssafTotal = caTotal * (tauxURSSAF / 100);
+  // Calculs totaux par produit
+  const totalCoutAchat = produitVendus.reduce((sum, p) => sum + p.prix_revient, 0);
+  const caTotal = produitVendus.reduce((sum, p) => sum + p.prix_vente_final, 0);
+  const fraisTotal = produitVendus.reduce((sum, p) => sum + p.frais, 0);
+  const urssafTotal = produitVendus.reduce((sum, p) => sum + p.urssaf, 0);
 
   // Bénéfice BRUT = CA - Coûts achat - Frais - URSSAF
   const beneficeBrut = caTotal - totalCoutAchat - fraisTotal - urssafTotal;
 
   // Bénéfice NET = Bénéfice brut - Dépenses
   const beneficeNet = beneficeBrut - depensesTotales;
+
+  // Stats globales
+  const totalProduits = lots.reduce((sum, lot) => sum + lot.nombreProduits, 0);
+  const totalVendus = produitVendus.length;
+  const pourcentageGlobal = totalProduits > 0 ? (totalVendus / totalProduits) * 100 : 0;
 
   if (loading) {
     return (
@@ -268,14 +317,52 @@ export default function PageSynthese() {
           )}
         </div>
 
+        {/* DÉTAIL PAR PRODUIT VENDU */}
+        <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6 mt-8">
+          <h2 className="text-2xl font-bold text-white mb-4">📦 Détail par Produit Vendu</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-700">
+                  <th className="text-left py-3 px-4 font-bold text-gray-300">Produit</th>
+                  <th className="text-left py-3 px-4 font-bold text-gray-300">Lot</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">Achat</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">Encaissement</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">Frais</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">URSSAF</th>
+                  <th className="text-right py-3 px-4 font-bold text-gray-300">Bénéfice</th>
+                </tr>
+              </thead>
+              <tbody>
+                {produitVendus.map(produit => (
+                  <tr key={produit.id} className="border-b border-gray-700 hover:bg-[#252525]">
+                    <td className="py-3 px-4 font-medium text-white truncate max-w-xs">{produit.nom}</td>
+                    <td className="py-3 px-4 text-gray-300">{produit.numerolot}</td>
+                    <td className="py-3 px-4 text-right text-blue-400">{produit.prix_revient.toFixed(2)} €</td>
+                    <td className="py-3 px-4 text-right text-emerald-400 font-bold">{produit.prix_vente_final.toFixed(2)} €</td>
+                    <td className="py-3 px-4 text-right text-orange-400">{produit.frais.toFixed(2)} €</td>
+                    <td className="py-3 px-4 text-right text-red-400">{produit.urssaf.toFixed(2)} €</td>
+                    <td className={`py-3 px-4 text-right font-bold ${produit.benefice_brut >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {produit.benefice_brut.toFixed(2)} €
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {produitVendus.length === 0 && (
+            <p className="text-center py-8 text-gray-400">Aucun produit vendu pour le moment</p>
+          )}
+        </div>
+
         {/* Formule */}
         <div className="mt-8 bg-[#252525] border border-gray-700 rounded-xl p-4 text-xs text-gray-400">
-          <p className="font-bold text-gray-300 mb-2">📐 Formule de calcul:</p>
-          <p><span className="text-gray-300 font-bold">CA Brut</span> = Total prix vente</p>
-          <p className="mt-1"><span className="text-gray-300 font-bold">Frais</span> = Somme frais par produit (5-15% selon plateforme)</p>
-          <p className="mt-1"><span className="text-gray-300 font-bold">URSSAF</span> = CA Brut × {tauxURSSAF}%</p>
-          <p className="mt-2 border-t border-gray-600 pt-2"><span className="text-emerald-400 font-bold">Bénéfice BRUT</span> = CA - Coût achat - Frais - URSSAF</p>
-          <p className="mt-1"><span className="text-emerald-400 font-bold">Bénéfice NET</span> = Bénéfice BRUT - Dépenses</p>
+          <p className="font-bold text-gray-300 mb-2">📐 Formule de calcul (par produit):</p>
+          <p><span className="text-gray-300 font-bold">Achat</span> = prix_revient (prix_neuf × coefficient_lot)</p>
+          <p className="mt-1"><span className="text-gray-300 font-bold">Encaissement</span> = prix de vente réel</p>
+          <p className="mt-1"><span className="text-gray-300 font-bold">Frais</span> = Encaissement × frais_plateforme (5-15%)</p>
+          <p className="mt-1"><span className="text-gray-300 font-bold">URSSAF</span> = Encaissement × {tauxURSSAF}%</p>
+          <p className="mt-2 border-t border-gray-600 pt-2"><span className="text-emerald-400 font-bold">Bénéfice BRUT</span> = Encaissement - Achat - Frais - URSSAF</p>
         </div>
       </div>
     </div>
