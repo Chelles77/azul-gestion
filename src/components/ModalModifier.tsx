@@ -5,6 +5,7 @@ import { X, Save, AlertCircle, Upload, Download, Printer } from 'lucide-react';
 import QRCode from 'qrcode';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
+import SelectWithAdd from './SelectWithAdd';
 
 interface ModalModifierProps {
   product: Produit | null;
@@ -25,6 +26,7 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
   const [etatProduit, setEtatProduit] = useState('');
   const [etatEmballage, setEtatEmballage] = useState('');
   const [categorie, setCategorie] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (product && isOpen) {
@@ -36,16 +38,23 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
       setCategorie(product.categorie || '');
       setError('');
 
-      // Charger les infos du lot
+      // Charger les infos du lot et les catégories
       (async () => {
         const supabase = createClient();
-        const { data, error } = await supabase
+        const { data: lotData, error: lotError } = await supabase
           .from('lots')
           .select('*')
           .eq('id', product.lot_id)
           .single();
-        if (data) setLotInfo(data);
-        if (error) console.error('Lot Error:', error);
+        if (lotData) setLotInfo(lotData);
+        if (lotError) console.error('Lot Error:', lotError);
+
+        // Charger les catégories
+        const { data: catData } = await supabase
+          .from('categories')
+          .select('nom')
+          .order('nom', { ascending: true });
+        if (catData) setCategories(catData.map(c => c.nom));
       })();
 
       // Générer QR code avec URL complète
@@ -166,26 +175,14 @@ export default function ModalModifier({ product, isOpen, onClose, onSuccess }: M
             </div>
 
             {/* Catégorie */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">📂 Catégorie</label>
-              <select
-                value={categorie}
-                onChange={e => setCategorie(e.target.value)}
-                className="w-full bg-[#252525] border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:border-blue-500"
-              >
-                <option value="">— Sélectionner —</option>
-                <option value="Électronique">Électronique</option>
-                <option value="Électroménager">Électroménager</option>
-                <option value="Informatique">Informatique</option>
-                <option value="Mobilier">Mobilier</option>
-                <option value="Décoration">Décoration</option>
-                <option value="Vêtements">Vêtements</option>
-                <option value="Sports">Sports</option>
-                <option value="Jouets">Jouets</option>
-                <option value="Livres">Livres</option>
-                <option value="Autre">Autre</option>
-              </select>
-            </div>
+            <SelectWithAdd
+              label="📂 Catégorie"
+              value={categorie}
+              onChange={setCategorie}
+              options={categories}
+              onAddOption={(newCat) => setCategories([...categories, newCat])}
+              table="categories"
+            />
           </div>
 
           {/* ÉTATS */}
