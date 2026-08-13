@@ -170,6 +170,31 @@ export default function PageSynthese() {
           </div>
         </div>
 
+        {/* Détails intermédiaires de cohérence */}
+        {totalVendus > 0 && (
+          <div className="bg-[#1a1a1a] border border-gray-700 rounded-xl p-8 mb-8">
+            <h3 className="text-lg font-bold text-gray-300 mb-6">📋 Vérification de cohérence</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400">Produits vendus</p>
+                <p className="text-2xl font-bold text-white mt-2">{totalVendus}</p>
+              </div>
+              <div className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400">Coût moyen/produit</p>
+                <p className="text-2xl font-bold text-blue-400 mt-2">{(totalCoutAchat / totalVendus).toFixed(2)} €</p>
+              </div>
+              <div className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400">Prix vente moy/produit</p>
+                <p className="text-2xl font-bold text-emerald-400 mt-2">{(totalCA / totalVendus).toFixed(2)} €</p>
+              </div>
+              <div className="bg-[#0a0a0a] p-4 rounded-lg border border-gray-700">
+                <p className="text-xs text-gray-400">Marge brute/produit</p>
+                <p className="text-2xl font-bold text-yellow-400 mt-2">{((totalCA - totalCoutAchat) / totalVendus).toFixed(2)} €</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Calcul détaillé du bénéfice */}
         <div className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-2 border-yellow-700 rounded-2xl p-10">
           <h2 className="text-3xl font-bold text-yellow-400 mb-10 text-center">🧮 CALCUL DU BÉNÉFICE NET</h2>
