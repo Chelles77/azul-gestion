@@ -85,31 +85,43 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Format standardisé: JSON mode avec colonnes par clés
-      const allData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '' });
+      // Format standardisé: array mode pour lire les indices correctement
+      const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
 
-      if (allData.length === 0) {
+      console.log('DEBUG: Total rows:', allRows.length);
+      console.log('DEBUG: First 3 rows:', JSON.stringify(allRows.slice(0, 3)));
+
+      if (allRows.length === 0) {
         alert('Le fichier Excel semble vide.');
         setUploading(false);
         return;
       }
 
-      const jsonData = allData;
+      // Filtre les lignes vides et données réelles
+      const jsonData = allRows.filter((row, idx) => {
+        if (idx === 0) return false; // Saute ligne 1 (vide)
+        if (!Array.isArray(row) || row.length === 0) return false;
+        if (row.every(cell => !cell)) return false; // Saute les lignes complètement vides
+        return true;
+      });
 
-      console.log('✅ Produits lus:', jsonData.length);
+      console.log('✅ Produits lus après filtrage:', jsonData.length);
 
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
-      // Détecter les colonnes (1ère, 2ème, 3ème)
-      const cols = Object.keys(allData[0]);
-      const [numCol, descCol, priceCol] = [cols[0], cols[1], cols[2]];
-
       for (const row of jsonData) {
-        const productNumber = row[numCol]?.toString().trim() || '';
-        const desc = row[descCol]?.toString().trim() || '';
-        let rawPrice = row[priceCol]?.toString().trim() || '0';
+        // Indices: 1=Numéro (col B), 2=Description (col C), 3=Prix (col D)
+        if (!Array.isArray(row) || row.length < 4) {
+          console.log('DEBUG: Skipped row, not array or too short:', row);
+          continue;
+        }
+
+        const productNumber = row[1]?.toString().trim() || '';
+        const desc = row[2]?.toString().trim() || '';
+        let rawPrice = row[3]?.toString().trim() || '0';
+        console.log('DEBUG: Processing row:', { productNumber, desc, rawPrice });
         rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
