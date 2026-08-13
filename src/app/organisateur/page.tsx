@@ -81,6 +81,7 @@ const decryptPassword = async (encrypted: string): Promise<string> => {
 };
 
 export default function Organisateur() {
+  // Organisateur v1.0
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'timeline' | 'identifiants' | 'notes'>('timeline');
