@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Plus, X, Clock, AlertCircle, Eye, EyeOff, Copy, Trash2 } from 'lucide-react';
-import CryptoJS from 'crypto-js';
 
 interface Activite {
   id: string;
@@ -41,12 +40,44 @@ const COULEURS_CATEGORIE: Record<string, string> = {
 
 const SECRET_KEY = 'azul-gestion-2026';
 
-const encryptPassword = (password: string) => {
-  return CryptoJS.AES.encrypt(password, SECRET_KEY).toString();
+// Utilise Web Crypto API native (pas de dépendances)
+const encryptPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(SECRET_KEY.padEnd(32, '0').slice(0, 32)),
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
+  );
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  return btoa(String.fromCharCode(...combined));
 };
 
-const decryptPassword = (encrypted: string) => {
-  return CryptoJS.AES.decrypt(encrypted, SECRET_KEY).toString(CryptoJS.enc.Utf8);
+const decryptPassword = async (encrypted: string): Promise<string> => {
+  try {
+    const encoder = new TextEncoder();
+    const combined = Uint8Array.from(atob(encrypted), c => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const data = combined.slice(12);
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(SECRET_KEY.padEnd(32, '0').slice(0, 32)),
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+    const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return new TextDecoder().decode(decrypted);
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return '';
+  }
 };
 
 export default function Organisateur() {
@@ -59,6 +90,7 @@ export default function Organisateur() {
   const [showForm, setShowForm] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [formActivite, setFormActivite] = useState({
@@ -158,11 +190,12 @@ export default function Organisateur() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const encrypted = await encryptPassword(formIdentifiant.password);
       await supabase.from('identifiants').insert({
         user_id: user.id,
         nom_site: formIdentifiant.nom_site,
         email: formIdentifiant.email,
-        password_encrypted: encryptPassword(formIdentifiant.password),
+        password_encrypted: encrypted,
         url: formIdentifiant.url,
         notes: formIdentifiant.notes,
         categorie: formIdentifiant.categorie,
@@ -213,7 +246,18 @@ export default function Organisateur() {
     }
   };
 
-  const copyPassword = (id: string, password: string) => {
+  const toggleShowPassword = async (id: string, encrypted: string) => {
+    if (showPasswords[id]) {
+      setShowPasswords({ ...showPasswords, [id]: false });
+    } else {
+      const decrypted = await decryptPassword(encrypted);
+      setDecryptedPasswords({ ...decryptedPasswords, [id]: decrypted });
+      setShowPasswords({ ...showPasswords, [id]: true });
+    }
+  };
+
+  const copyPassword = async (id: string, encrypted: string) => {
+    const password = await decryptPassword(encrypted);
     navigator.clipboard.writeText(password);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
@@ -455,13 +499,13 @@ export default function Organisateur() {
                       <p className="text-gray-400">Mot de passe</p>
                       <div className="flex gap-2 items-center">
                         <p className="text-white font-mono flex-1">
-                          {showPasswords[id.id] ? decryptPassword(id.password_encrypted) : '••••••••'}
+                          {showPasswords[id.id] ? decryptedPasswords[id.id] || '••••••••' : '••••••••'}
                         </p>
-                        <button onClick={() => setShowPasswords({ ...showPasswords, [id.id]: !showPasswords[id.id] })} className="p-2 hover:bg-white/10 rounded">
+                        <button onClick={() => toggleShowPassword(id.id, id.password_encrypted)} className="p-2 hover:bg-white/10 rounded">
                           {showPasswords[id.id] ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                         <button
-                          onClick={() => copyPassword(id.id, decryptPassword(id.password_encrypted))}
+                          onClick={() => copyPassword(id.id, id.password_encrypted)}
                           className={`p-2 rounded transition-all ${copiedId === id.id ? 'bg-green-600' : 'hover:bg-white/10'}`}
                         >
                           <Copy size={18} />
