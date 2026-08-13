@@ -272,12 +272,12 @@ export default function Organisateur() {
 
               <div className="grid grid-cols-7 gap-2 ml-20">
                 {days.map((day, dayIdx) => {
+                  const dayStr = day.toISOString().split('T')[0];
                   const activitesHeure = getActivitesForDateHour(day, hour);
                   return (
                     <div
                       key={dayIdx}
                       className="relative min-h-24 bg-[#0a0a0a] border-2 border-gray-700 rounded-xl p-3 hover:border-purple-600 transition-all group cursor-pointer"
-                      onClick={() => setQuickAddMenuOpen(`${day.toISOString().split('T')[0]}-${hour}`)}
                     >
                       {activitesHeure.length > 0 ? (
                         <div className="space-y-2">
@@ -293,39 +293,73 @@ export default function Organisateur() {
                           ))}
                         </div>
                       ) : (
-                        <div className="flex items-center justify-center h-full text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => setQuickAddMenuOpen(`${dayStr}-${hour}`)}
+                          className="flex items-center justify-center h-full w-full text-gray-600 hover:text-purple-400 transition-all"
+                        >
                           <Plus size={20} />
-                        </div>
+                        </button>
                       )}
 
-                      {quickAddMenuOpen === `${day.toISOString().split('T')[0]}-${hour}` && (
-                        <div className="absolute inset-0 bg-[#1a1a1a] border-2 border-purple-600 rounded-xl p-4 z-50 flex flex-col gap-2">
-                          <input
-                            type="text"
-                            placeholder="Titre"
-                            value={quickAddForm.titre}
-                            onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
-                            className="w-full bg-[#0a0a0a] border border-gray-600 rounded px-2 py-1 text-white text-sm"
-                            onClick={e => e.stopPropagation()}
-                          />
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              handleAddActiviteQuick(day.toISOString().split('T')[0], `${String(hour).padStart(2, '0')}:00`);
-                            }}
-                            className="bg-blue-600 text-white text-sm px-2 py-1 rounded font-bold"
-                          >
-                            ✅ Ajouter
-                          </button>
-                          <button
-                            onClick={e => {
-                              e.stopPropagation();
-                              setQuickAddMenuOpen(null);
-                            }}
-                            className="text-red-400 text-sm"
-                          >
-                            ✕
-                          </button>
+                      {quickAddMenuOpen === `${dayStr}-${hour}` && (
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-6 z-50 w-80">
+                          <h3 className="text-white font-bold text-lg mb-4">✨ Nouvelle Activité</h3>
+
+                          <div className="space-y-3">
+                            <div>
+                              <label className="text-xs text-gray-400 font-bold mb-1 block">TITRE</label>
+                              <input
+                                type="text"
+                                placeholder="Titre..."
+                                value={quickAddForm.titre}
+                                onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
+                                className="w-full bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                                autoFocus
+                                onClick={e => e.stopPropagation()}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-xs text-gray-400 font-bold mb-1 block">DURÉE</label>
+                              <div className="grid grid-cols-2 gap-2">
+                                <input
+                                  type="time"
+                                  value={quickAddForm.heure_debut}
+                                  onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
+                                  className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
+                                  onClick={e => e.stopPropagation()}
+                                />
+                                <input
+                                  type="time"
+                                  value={quickAddForm.heure_fin}
+                                  onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
+                                  className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
+                                  onClick={e => e.stopPropagation()}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 pt-2">
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  handleAddActiviteQuick(dayStr, `${String(hour).padStart(2, '0')}:00`);
+                                }}
+                                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all"
+                              >
+                                ✅ Ajouter
+                              </button>
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setQuickAddMenuOpen(null);
+                                }}
+                                className="bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-gray-600"
+                              >
+                                ✕ Annuler
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -370,13 +404,22 @@ export default function Organisateur() {
             <div key={`empty-${i}`} className="min-h-24 bg-[#0a0a0a]/50"></div>
           ))}
           {days.map((day, i) => {
+            const dayStr = day.toISOString().split('T')[0];
             const dayActivites = getActivitesForDate(day);
             return (
               <div
                 key={i}
-                className="min-h-24 bg-[#1a1a1a] border-2 border-gray-700 rounded-xl p-2 hover:border-purple-600 transition-all"
+                className="relative min-h-24 bg-[#1a1a1a] border-2 border-gray-700 rounded-xl p-2 hover:border-purple-600 transition-all cursor-pointer group"
               >
-                <div className="font-bold text-white mb-1">{day.getDate()}</div>
+                <div className="font-bold text-white mb-1 flex justify-between items-center">
+                  <span>{day.getDate()}</span>
+                  <button
+                    onClick={() => setQuickAddMenuOpen(`${dayStr}-12`)}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-purple-600/30 rounded text-purple-400 transition-all"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
                 <div className="space-y-1 text-xs">
                   {dayActivites.slice(0, 2).map(act => (
                     <div
@@ -391,6 +434,69 @@ export default function Organisateur() {
                     <div className="text-gray-500 text-xs">+{dayActivites.length - 2} plus</div>
                   )}
                 </div>
+
+                {/* Menu pour Mois */}
+                {quickAddMenuOpen === `${dayStr}-12` && (
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-2 border-purple-600 rounded-2xl shadow-2xl p-6 z-50 w-80">
+                    <h3 className="text-white font-bold text-lg mb-4">✨ Nouvelle Activité</h3>
+
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-gray-400 font-bold mb-1 block">TITRE</label>
+                        <input
+                          type="text"
+                          placeholder="Titre..."
+                          value={quickAddForm.titre}
+                          onChange={e => setQuickAddForm({ ...quickAddForm, titre: e.target.value })}
+                          className="w-full bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600 transition-all"
+                          autoFocus
+                          onClick={e => e.stopPropagation()}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs text-gray-400 font-bold mb-1 block">DURÉE</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            type="time"
+                            value={quickAddForm.heure_debut}
+                            onChange={e => setQuickAddForm({ ...quickAddForm, heure_debut: e.target.value })}
+                            className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
+                            onClick={e => e.stopPropagation()}
+                          />
+                          <input
+                            type="time"
+                            value={quickAddForm.heure_fin}
+                            onChange={e => setQuickAddForm({ ...quickAddForm, heure_fin: e.target.value })}
+                            className="bg-[#0a0a0a] border-2 border-gray-700 rounded-lg px-2 py-1 text-white text-xs focus:outline-none focus:border-purple-600 transition-all"
+                            onClick={e => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleAddActiviteQuick(dayStr, `${quickAddForm.heure_debut || '12'}:00`);
+                          }}
+                          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-2 rounded-lg font-bold text-sm hover:shadow-lg transition-all"
+                        >
+                          ✅ Ajouter
+                        </button>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            setQuickAddMenuOpen(null);
+                          }}
+                          className="bg-gray-700 text-white px-3 py-2 rounded-lg font-bold text-sm hover:bg-gray-600"
+                        >
+                          ✕ Annuler
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
