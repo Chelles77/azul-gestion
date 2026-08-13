@@ -94,9 +94,14 @@ export default function Organisateur() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [quickAddMenuOpen, setQuickAddMenuOpen] = useState<string | null>(null);
-  const [quickAddForm, setQuickAddForm] = useState({
+  const [quickAddForm, setQuickAddForm] = useState<{
+    titre: string;
+    categorie: 'Travail' | 'Perso';
+    heure_debut: string;
+    heure_fin: string;
+  }>({
     titre: '',
-    categorie: 'Travail' as 'Travail' | 'Perso',
+    categorie: 'Travail',
     heure_debut: '09:00',
     heure_fin: '10:00',
   });
