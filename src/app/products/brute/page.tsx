@@ -85,7 +85,7 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Lire toutes les lignes comme tableau (pas d'entête)
+      // Lire toutes les lignes comme tableau
       const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
 
       if (allRows.length === 0) {
@@ -94,20 +94,31 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      console.log('✅ Format standardisé - Lignes lues:', allRows.length);
+      // Sauter les lignes vides au début
+      let startRow = 0;
+      for (let i = 0; i < allRows.length; i++) {
+        const row = allRows[i];
+        if (Array.isArray(row) && row.some(cell => cell !== null && cell !== undefined && cell !== '')) {
+          startRow = i;
+          break;
+        }
+      }
+
+      const dataRows = allRows.slice(startRow);
+      console.log('✅ Lignes lues:', dataRows.length);
 
       const nouveauxProduits: any[] = [];
       let skipped = 0;
       const marques = ['Dreame', 'Ecovacs', 'Mova', 'Roborock', 'Ninja', 'Philips', 'Panasonic', 'KitchenAid', 'Toshiba', 'Levoit', 'Cecotec', 'AAOBOSI', 'Bauknecht', 'Comfee', 'Rintea', 'Amazon Basics', 'IBILI', 'Siemens'];
 
-      for (const row of allRows) {
-        // Format standardisé: [Numéro, Description, Prix]
+      for (const row of dataRows) {
+        // Colonnes: Index 1 = Numéro, Index 2 = Description, Index 8 = Prix
         if (!Array.isArray(row) || row.length < 3) continue;
 
-        const productNumber = row[0]?.toString().trim() || '';
-        const desc = row[1]?.toString().trim() || '';
-        let rawPrice = row[2]?.toString().trim() || '0';
-        rawPrice = rawPrice.replace(/[^\d.]/g, '');
+        const productNumber = row[1]?.toString().trim() || '';
+        const desc = row[2]?.toString().trim() || '';
+        let rawPrice = row[8]?.toString().trim() || '0';
+        rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
         if (!desc || prixNeuf <= 0) {
