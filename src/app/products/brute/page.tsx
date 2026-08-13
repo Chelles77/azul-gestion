@@ -85,16 +85,30 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Lire à partir de la ligne 1
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 0 });
+      // Lire toutes les lignes pour trouver l'entête non-vide
+      const allRows = XLSX.utils.sheet_to_json<any>(worksheet, { defval: '', range: 0 });
+
+      // Trouver la première ligne non-vide (entête)
+      let headerRowIndex = 0;
+      for (let i = 0; i < allRows.length; i++) {
+        const row = allRows[i];
+        const nonEmptyValues = Object.values(row).filter((v: any) => v && v.toString().trim());
+        if (nonEmptyValues.length > 0) {
+          headerRowIndex = i;
+          break;
+        }
+      }
+
+      // Lire à partir de la ligne d'entête
+      const jsonData = allRows.slice(headerRowIndex + 1);
 
       if (jsonData.length === 0) {
-        alert('Le fichier Excel semble vide.');
+        alert('Le fichier Excel semble vide ou ne contient que des en-têtes.');
         setUploading(false);
         return;
       }
 
-      const firstRow = jsonData[0];
+      const firstRow = allRows[headerRowIndex];
       const rawKeys = Object.keys(firstRow);
       console.log('Colonnes détectées:', rawKeys);
 
