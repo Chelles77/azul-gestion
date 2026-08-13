@@ -21,6 +21,7 @@ function generateQRCode(): string {
 export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onClose, onSuccess }: ModalCreerProduitProps) {
   const [nom, setNom] = useState('');
   const [productNumber, setProductNumber] = useState<number | null>(null);
+  const [lotNumber, setLotNumber] = useState<string>('');
   const [marque, setMarque] = useState('');
   const [marques, setMarques] = useState<string[]>([]);
   const [categorie, setCategorie] = useState('');
@@ -69,6 +70,20 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
   const loadNextProductNumber = async () => {
     const supabase = createClient();
 
+    // Charger les infos du lot
+    const { data: lotData } = await supabase
+      .from('lots')
+      .select('numerolot, coef_brut')
+      .eq('id', lotId)
+      .single();
+
+    if (lotData) {
+      setLotNumber(lotData.numerolot);
+      if (lotData.coef_brut) {
+        setCoefRevient(lotData.coef_brut.toFixed(4));
+      }
+    }
+
     // Charger le prochain numéro de produit
     const { data: prodData } = await supabase
       .from('produits')
@@ -79,17 +94,6 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
 
     const maxNumber = prodData && prodData.length > 0 && prodData[0].product_number ? prodData[0].product_number : 0;
     setProductNumber(maxNumber + 1);
-
-    // Charger le coefficient du lot
-    const { data: lotData } = await supabase
-      .from('lots')
-      .select('coef_brut')
-      .eq('id', lotId)
-      .single();
-
-    if (lotData && lotData.coef_brut) {
-      setCoefRevient(lotData.coef_brut.toFixed(4));
-    }
   };
 
   if (!isOpen) return null;
@@ -223,7 +227,8 @@ export default function ModalCreerProduit({ lotId, coefBrut = 0.087, isOpen, onC
         <div className="sticky top-0 bg-[#1a1a1a] border-b border-gray-800 p-6 flex justify-between items-center z-10">
           <div>
             <h2 className="text-xl font-bold text-white">Créer un produit</h2>
-            {productNumber !== null && <p className="text-sm text-gray-400 mt-1">Produit #<span className="font-bold text-blue-400">{productNumber}</span></p>}
+            {lotNumber && <p className="text-sm text-gray-500 mt-1">Lot: <span className="font-bold text-orange-400">{lotNumber}</span></p>}
+            {productNumber !== null && <p className="text-sm text-gray-400">Produit #<span className="font-bold text-blue-400">{productNumber}</span></p>}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white">
             <X size={24} />
