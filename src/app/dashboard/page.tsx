@@ -295,32 +295,64 @@ export default function DashboardPage() {
               <span className="text-xs uppercase tracking-wider text-purple-400 font-semibold">Analyse - Métriques Principales</span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                <p className="text-xs text-gray-400 mb-3">Capital Investi</p>
-                <p className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(0)} €</p>
-                <p className="text-xs text-gray-500 mt-2">{stats.nbLots} lots</p>
-              </div>
-              <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                <p className="text-xs text-gray-400 mb-3">Chiffre d'Affaires</p>
-                <p className="text-2xl font-bold text-green-400">{stats.totalVentes.toFixed(0)} €</p>
-                <p className="text-xs text-gray-500 mt-2">{stats.nbVentes} ventes</p>
-              </div>
-              <div className={`p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg`}>
-                <p className="text-xs text-gray-400 mb-3">Bénéfice Net</p>
-                <p className={`text-2xl font-bold ${stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {stats.benefice.toFixed(0)} €
-                </p>
-                <p className={`text-xs mt-2 ${stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {stats.benefice >= 0 ? 'Positif ✓' : 'Négatif ✗'}
-                </p>
-              </div>
-              <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                <p className="text-xs text-gray-400 mb-3">Taux de Rotation</p>
-                <p className="text-2xl font-bold text-purple-400">{stats.tauxRotation.toFixed(1)}%</p>
-                <p className="text-xs text-gray-500 mt-2">{stats.nbProduits} en stock</p>
-              </div>
-            </div>
+            {(() => {
+              const vente = stats.totalVentes;
+              const frais = stats.totalCouts;
+              const brut = vente - frais;
+              const urssaf = brut * 0.42;
+              const net = brut - urssaf;
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-5 gap-3">
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Vente</p>
+                      <p className="text-2xl font-bold text-green-400">{vente.toFixed(0)} €</p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Frais</p>
+                      <p className="text-2xl font-bold text-orange-400">{frais.toFixed(0)} €</p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">URSSAF (42%)</p>
+                      <p className="text-2xl font-bold text-red-400">{urssaf.toFixed(0)} €</p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Bénéfice Brut</p>
+                      <p className={`text-2xl font-bold ${brut >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>{brut.toFixed(0)} €</p>
+                    </div>
+                    <div className="p-4 bg-purple-900/50 border border-purple-500 rounded-lg">
+                      <p className="text-xs text-purple-300 mb-2">Bénéfice Net</p>
+                      <p className={`text-2xl font-bold ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{net.toFixed(0)} €</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-700">
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Capital Investi</p>
+                      <p className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(0)} €</p>
+                      <p className="text-xs text-gray-500 mt-2">{stats.nbLots} lots</p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Rentabilité</p>
+                      <p className={`text-2xl font-bold ${(net / stats.capital * 100) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {stats.capital > 0 ? (net / stats.capital * 100).toFixed(1) : 0}%
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">ROI</p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Produits Vendus</p>
+                      <p className="text-2xl font-bold text-purple-400">{stats.nbProduitsVendus}</p>
+                      <p className="text-xs text-gray-500 mt-2">Rotation: {stats.tauxRotation.toFixed(1)}%</p>
+                    </div>
+                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-2">Produits En Stock</p>
+                      <p className="text-2xl font-bold text-yellow-400">{stats.nbProduitsBrutes + stats.nbProduitsEnVente}</p>
+                      <p className="text-xs text-gray-500 mt-2">{stats.nbProduitsCasses} cassés</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
