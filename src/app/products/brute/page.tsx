@@ -73,14 +73,15 @@ export default function ProduitsBrutePage() {
 
     if (data) setProduits(data);
 
-    // Récupérer le TOTAL (tous les produits du lot, peu importe le statut)
-    const { data: allProds, error } = await supabase
+    // Récupérer VRAIMENT TOUS les produits du lot (peu importe le statut)
+    // Sans filters, sans paginations
+    const { data: allProds } = await supabase
       .from('produits')
-      .select('*')
+      .select('id')
       .eq('lot_id', selectedLotId);
 
     const totalCount = allProds?.length || 0;
-    console.log('🔍 DEBUG - Lot:', selectedLotId, 'Brutes:', data?.length, 'Total:', totalCount);
+    console.log('🔍 DEBUG - Lot:', selectedLotId, 'Brutes:', data?.length, 'Total vrai:', totalCount);
 
     setTotalProduitsLot(totalCount);
   }
