@@ -79,6 +79,9 @@ export default function Navbar() {
 
             {/* Collaborateurs */}
             <Link href="/collaborateurs" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">Collaborateurs</Link>
+
+            {/* Plateformes */}
+            <Link href="/settings/plateformes" className="text-gray-300 hover:text-white text-sm font-medium transition-colors">⚙️ Plateformes</Link>
           </div>
 
           {/* 3. ACTIONS DROITE (Déconnexion + Hamburger) */}
@@ -141,7 +144,9 @@ export default function Navbar() {
 
           <Link href="/organisateur" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium border-b border-gray-800/50 pb-3">Organisateur</Link>
 
-          <Link href="/collaborateurs" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium">Collaborateurs</Link>
+          <Link href="/collaborateurs" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium border-b border-gray-800/50 pb-3">Collaborateurs</Link>
+
+          <Link href="/settings/plateformes" onClick={() => setIsMobileMenuOpen(false)} className="block text-gray-300 hover:text-white py-2 text-sm font-medium">⚙️ Plateformes</Link>
         </div>
       )}
     </nav>
