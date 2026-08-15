@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Menu, X, ChevronDown, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import DateTime from './DateTime';
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -28,11 +29,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           
-          {/* 1. LOGO */}
-          <Link href="/" className="flex items-center gap-2 font-bold text-xl text-white shrink-0">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-sm">A</div>
-            <span className="hidden sm:inline tracking-tight">AZULGESTION</span>
-          </Link>
+          {/* 1. LOGO + DATETIME */}
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center gap-2 font-bold text-xl text-white shrink-0">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-sm">A</div>
+              <span className="hidden sm:inline tracking-tight">AZULGESTION</span>
+            </Link>
+            <div className="hidden md:block">
+              <DateTime />
+            </div>
+          </div>
 
           {/* 2. MENU DESKTOP (Horizontal avec Dropdowns) */}
           <div className="hidden lg:flex items-center gap-6">
