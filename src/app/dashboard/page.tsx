@@ -66,10 +66,10 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .eq('statut', 'brute');
 
-        // Ventes
+        // Ventes avec infos du lot
         const { data: ventesData } = await supabase
           .from('produits')
-          .select('*')
+          .select('*, lots(numerolot)')
           .eq('user_id', user.id)
           .eq('statut', 'vendu')
           .order('date_vente', { ascending: false });
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                 recentSales.map((vente) => (
                   <div key={vente.id} className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
                     <div className="flex justify-between items-start mb-3">
-                      <span className="font-semibold text-green-300">Vente #{vente.numeroproduit || vente.id.slice(0, 8)}</span>
+                      <span className="font-semibold text-green-300">Lot N°{(vente.lots as any)?.numerolot || 'N/A'}</span>
                       <span className="text-green-400 font-bold text-lg">{vente.prix_vente_final?.toFixed(2) || '0'} €</span>
                     </div>
                     <div className="space-y-2 text-xs text-gray-400">
