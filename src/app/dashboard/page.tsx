@@ -371,105 +371,62 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* SECTION PRODUITS ET VENTES */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* VENTES PAR PLATEFORME */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          {(() => {
+            const platformes = recentSales.reduce((acc: Record<string, any>, vente: any) => {
+              const plat = vente.plateforme_vente_finale || 'Non défini';
+              if (!acc[plat]) {
+                acc[plat] = { chiffre: 0, revient: 0, count: 0, marge: 0 };
+              }
+              acc[plat].chiffre += vente.prix_vente_final || 0;
+              acc[plat].revient += vente.prix_revient || 0;
+              acc[plat].count += 1;
+              acc[plat].marge += (vente.prix_vente_final || 0) - (vente.prix_revient || 0);
+              return acc;
+            }, {});
 
-          {/* Produits Achetés - TOTAL */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Package size={20} className="text-blue-400" />
-              <h2 className="text-lg font-bold text-white">Produits Achetés</h2>
-            </div>
-            <div className="text-4xl font-bold text-blue-400 mb-2">{stats.nbProduits}</div>
-            <p className="text-sm text-gray-400 mb-2">Total acheté</p>
-            <div className="text-xs text-gray-500 space-y-1">
-              <p>Brutes: {stats.nbProduitsBrutes} | En Vente: {stats.nbProduitsEnVente}</p>
-              <p>Vendus: {stats.nbProduitsVendus} | Cassés: {stats.nbProduitsCasses}</p>
-            </div>
-          </div>
+            const platformeColors: Record<string, string> = {
+              'Vinted': 'text-blue-400',
+              'Le Bon Coin': 'text-yellow-400',
+              'eBay': 'text-red-400',
+              'Amazon': 'text-purple-400',
+              'Non défini': 'text-gray-400'
+            };
 
-          {/* Produits Brutes */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Package size={20} className="text-yellow-400" />
-              <h2 className="text-lg font-bold text-white">Produits Brutes</h2>
-            </div>
-            <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.nbProduitsBrutes}</div>
-            <p className="text-sm text-gray-400 mb-4">Nouvellement achetés</p>
-            <button
-              onClick={() => router.push('/products/brute')}
-              className="w-full px-4 py-2 bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-600/50 text-yellow-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              Voir les produits →
-            </button>
-          </div>
+            const platformeBorders: Record<string, string> = {
+              'Vinted': 'border-blue-700',
+              'Le Bon Coin': 'border-yellow-700',
+              'eBay': 'border-red-700',
+              'Amazon': 'border-purple-700',
+              'Non défini': 'border-gray-700'
+            };
 
-          {/* Produits En Vente */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <ShoppingCart size={20} className="text-orange-400" />
-              <h2 className="text-lg font-bold text-white">Produits En Vente</h2>
-            </div>
-            <div className="text-4xl font-bold text-orange-400 mb-2">{stats.nbProduitsEnVente}</div>
-            <p className="text-sm text-gray-400 mb-4">En cours de vente</p>
-            <button
-              onClick={() => router.push('/products/vente')}
-              className="w-full px-4 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/50 text-orange-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              Voir les produits →
-            </button>
-          </div>
-
-          {/* Produits Vendus */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <ShoppingCart size={20} className="text-green-400" />
-              <h2 className="text-lg font-bold text-white">Produits Vendus</h2>
-            </div>
-            <div className="text-4xl font-bold text-green-400 mb-2">{stats.nbProduitsVendus}</div>
-            <p className="text-sm text-gray-400 mb-4">Archivés</p>
-            <button
-              onClick={() => router.push('/products/archives')}
-              className="w-full px-4 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-600/50 text-green-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              Voir les archives →
-            </button>
-          </div>
-
-          {/* Produits Cassés */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <AlertCircle size={20} className="text-red-400" />
-              <h2 className="text-lg font-bold text-white">Produits Cassés</h2>
-            </div>
-            <div className="text-4xl font-bold text-red-400 mb-2">{stats.nbProduitsCasses}</div>
-            <p className="text-sm text-gray-400 mb-4">Non vendables</p>
-            <button
-              onClick={() => router.push('/finance/rebut')}
-              className="w-full px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/50 text-red-400 rounded-lg text-sm font-medium transition-colors"
-            >
-              Voir les rebuts →
-            </button>
-          </div>
-
-          {/* Actions Rapides */}
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
-            <h2 className="text-lg font-bold text-white mb-4">Actions Rapides</h2>
-            <div className="space-y-2">
-              <button
-                onClick={() => router.push('/products/brute')}
-                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                <Plus size={16} /> Voir produits
-              </button>
-              <button
-                onClick={() => router.push('/finance/encaissement')}
-                className="w-full px-4 py-2 bg-[#252525] hover:bg-[#333] text-gray-300 rounded-lg text-sm font-medium transition-colors"
-              >
-                Gestion Encaissement
-              </button>
-            </div>
-          </div>
+            return Object.entries(platformes).map(([plat, data]: [string, any]) => (
+              <div key={plat} className={`bg-[#1a1a1a] border ${platformeBorders[plat] || 'border-gray-800'} rounded-xl p-6`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className={`text-lg font-bold ${platformeColors[plat] || 'text-gray-300'}`}>{plat}</h2>
+                  <span className="text-xs text-gray-500">{data.count} ventes</span>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Chiffre</p>
+                    <p className="text-2xl font-bold text-green-400">{data.chiffre.toFixed(0)} €</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Revient</p>
+                    <p className="text-sm font-semibold text-orange-400">{data.revient.toFixed(0)} €</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 mb-1">Marge</p>
+                    <p className={`text-sm font-semibold ${data.marge >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {data.marge.toFixed(0)} €
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ));
+          })()}
         </div>
 
         {/* DÉTAILS DES LOTS */}
