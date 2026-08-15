@@ -208,6 +208,18 @@ export default function Organisateur() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  const handleDeleteIdentifiant = async (id: string) => {
+    if (!confirm('Sûr de vouloir supprimer cet identifiant?')) return;
+    try {
+      const supabase = createClient();
+      await supabase.from('identifiants').delete().eq('id', id);
+      await fetchData();
+      alert('✅ Identifiant supprimé!');
+    } catch (error) {
+      alert('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
+    }
+  };
+
   const handleUpdateNotes = async (contenu: string) => {
     try {
       const supabase = createClient();
@@ -1081,12 +1093,15 @@ export default function Organisateur() {
                   <div key={id.id} className="bg-[#1a1a1a] border-2 border-green-700/50 rounded-xl p-6">
                     <div className="flex justify-between items-start mb-4">
                       <h3 className="text-2xl font-bold text-green-400">{id.nom_site}</h3>
-                      <button
-                        onClick={() => {}}
-                        className="p-2 hover:bg-red-600/50 rounded-lg"
-                      >
-                        <Trash2 size={20} className="text-red-400" />
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleDeleteIdentifiant(id.id)}
+                          className="p-2 hover:bg-red-600/50 rounded-lg transition-all"
+                          title="Supprimer"
+                        >
+                          <Trash2 size={20} className="text-red-400" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-3 text-sm">
