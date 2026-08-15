@@ -3,7 +3,11 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Filter, ArrowLeft, Archive, ShoppingCart, AlertCircle } from 'lucide-react';
+import { Upload, Edit2, CheckCircle, Package, Filter, Trash2, QrCode, ArrowLeft, AlertCircle } from 'lucide-react';
+import ModalModifier from '@/components/ModalModifier';
+import ModalValider from '@/components/ModalValider';
+import ModalMarquerCasse from '@/components/ModalMarquerCasse';
+import { Produit } from '@/lib/interfaces';
 
 type ProductStatus = 'all' | 'brute' | 'en_vente' | 'vendu' | 'casse';
 
@@ -15,16 +19,29 @@ export default function ProductsContent() {
   const [status, setStatus] = useState<ProductStatus>(
     (searchParams.get('status') as ProductStatus) || 'all'
   );
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Produit[]>([]);
+  const [lots, setLots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Produit | null>(null);
+  const [isModifying, setIsModifying] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [isMarquingCasse, setIsMarquingCasse] = useState(false);
 
   useEffect(() => {
-    async function fetchProducts() {
+    async function fetchData() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        // Fetch lots
+        const { data: lotsData } = await supabase
+          .from('lots')
+          .select('*')
+          .eq('user_id', user.id);
+        setLots(lotsData || []);
+
+        // Fetch products
         let query = supabase
           .from('produits')
           .select('*')
@@ -34,16 +51,16 @@ export default function ProductsContent() {
           query = query.eq('statut', status);
         }
 
-        const { data } = await query.order('created_at', { ascending: false });
+        const { data } = await query.order('product_number', { ascending: true });
         setProducts(data || []);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchProducts();
+    fetchData();
   }, [status, supabase]);
 
   const filteredProducts = products.filter(p =>
@@ -67,21 +84,17 @@ export default function ProductsContent() {
     casse: 'Cassés/Rebuts'
   };
 
-  const statusColors: Record<ProductStatus, string> = {
-    all: 'text-gray-400 border-gray-600',
-    brute: 'text-blue-400 border-blue-600',
-    en_vente: 'text-yellow-400 border-yellow-600',
-    vendu: 'text-green-400 border-green-600',
-    casse: 'text-red-400 border-red-600'
-  };
+  async function deleteProduit(id: string, nom: string) {
+    if (!confirm(`Supprimer "${nom}" ?`)) return;
+    try {
+      await supabase.from('produits').delete().eq('id', id);
+      setProducts(products.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  }
 
-  const statusBgHover: Record<ProductStatus, string> = {
-    all: 'hover:bg-gray-900/30',
-    brute: 'hover:bg-blue-900/30',
-    en_vente: 'hover:bg-yellow-900/30',
-    vendu: 'hover:bg-green-900/30',
-    casse: 'hover:bg-red-900/30'
-  };
+  const categoriesUniques = [...new Set(products.map(p => p.categorie))].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
@@ -99,9 +112,9 @@ export default function ProductsContent() {
           <p className="text-gray-400">Gérez tous vos produits à partir d'une seule page</p>
         </div>
 
-        {/* TABS/FILTERS */}
-        <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 mb-8">
-          <div className="flex flex-wrap gap-2">
+        {/* TABS */}
+        <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 mb-8 overflow-x-auto">
+          <div className="flex gap-2 min-w-full md:min-w-0">
             {(['all', 'brute', 'en_vente', 'vendu', 'casse'] as ProductStatus[]).map(st => (
               <button
                 key={st}
@@ -109,10 +122,10 @@ export default function ProductsContent() {
                   setStatus(st);
                   router.push(`/products?status=${st}`);
                 }}
-                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all border ${
+                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap border ${
                   status === st
-                    ? `${statusColors[st]} bg-${st}-900/30 border-current`
-                    : `text-gray-400 border-gray-700 ${statusBgHover[st]}`
+                    ? 'bg-blue-900/30 text-blue-400 border-blue-600'
+                    : 'text-gray-400 border-gray-700 hover:border-gray-600'
                 }`}
               >
                 {statusLabels[st]}
@@ -141,68 +154,155 @@ export default function ProductsContent() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
           </div>
         ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {filteredProducts.map(product => (
-              <div
-                key={product.id}
-                className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-all cursor-pointer hover:shadow-lg"
-                onClick={() => router.push(`/products/${product.id}`)}
-              >
-                {/* Status Badge */}
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-bold text-white flex-1 pr-2">
-                    {product.nom?.substring(0, 30)}
-                  </h3>
-                  <span className={`text-xs px-3 py-1 rounded font-semibold whitespace-nowrap ${
-                    product.statut === 'brute' ? 'bg-blue-900/30 text-blue-400' :
-                    product.statut === 'en_vente' ? 'bg-yellow-900/30 text-yellow-400' :
-                    product.statut === 'vendu' ? 'bg-green-900/30 text-green-400' :
-                    'bg-red-900/30 text-red-400'
-                  }`}>
-                    {product.statut === 'brute' ? 'Brut' :
-                     product.statut === 'en_vente' ? 'En vente' :
-                     product.statut === 'vendu' ? 'Vendu' :
-                     'Cassé'}
-                  </span>
-                </div>
-
-                {/* Info */}
-                <div className="space-y-3 text-sm">
-                  {product.lot_id && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Lot</span>
-                      <span className="text-white font-semibold">#{product.lot_id.substring(0, 8)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Prix d'achat</span>
-                    <span className="text-blue-400 font-semibold">{product.prix_achat?.toFixed(2) || '—'} €</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product, index) => {
+              const lot = lots.find(l => l.id === product.lot_id);
+              const lotNumber = lot?.numerolot || 'N/A';
+              return (
+                <div key={product.id} className="bg-[#1a1a1a] rounded-xl border border-gray-800 overflow-hidden hover:border-gray-600 transition-all flex flex-col">
+                  {/* Header avec numéros */}
+                  <div className="bg-[#252525] border-b border-gray-700 px-4 py-2 flex justify-between items-center">
+                    <span className="text-xs text-gray-400">Lot #{lotNumber}</span>
+                    <span className="text-xs font-bold text-blue-400">Prod #{product.product_number || index + 1}</span>
                   </div>
-                  {product.prix_vente_final && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Prix de vente</span>
-                      <span className="text-green-400 font-semibold">{product.prix_vente_final.toFixed(2)} €</span>
-                    </div>
-                  )}
-                  {product.date_vente && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Vendu le</span>
-                      <span className="text-gray-300 text-xs">
-                        {new Date(product.date_vente).toLocaleDateString('fr-FR')}
+
+                  {/* Image Area */}
+                  <div className="relative bg-[#252525] h-48 flex items-center justify-center">
+                    {product.photos && product.photos.length > 0 ? (
+                      <img src={product.photos[0]} alt={product.nom} className="w-full h-full object-contain p-2" />
+                    ) : (
+                      <div className="text-gray-500 text-center">
+                        <Upload size={32} className="mx-auto mb-2" />
+                        <span className="text-sm">Ajouter photo</span>
+                      </div>
+                    )}
+                    {product.qr_code && (
+                      <div className="absolute top-2 right-2 bg-black/70 px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700">
+                        {product.qr_code}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4 flex-1 flex flex-col">
+                    <div className="flex gap-2 mb-2 flex-wrap">
+                      <span className="text-xs px-2 py-1 bg-[#252525] border border-gray-700 rounded-full text-gray-400">
+                        {product.categorie || 'N/A'}
                       </span>
+                      {product.marque && (
+                        <span className="text-xs px-2 py-1 bg-blue-900/30 border border-blue-800/50 rounded-full text-blue-400 font-bold">
+                          {product.marque}
+                        </span>
+                      )}
                     </div>
-                  )}
+
+                    <h3 className="font-bold text-white mb-1 line-clamp-2 text-sm">{product.nom}</h3>
+                    <p className="text-xs text-gray-400 mb-3 line-clamp-2 flex-1">{product.description || '—'}</p>
+
+                    <div className="mb-3">
+                      <div className="text-xl font-extrabold text-white">{product.prix_neuf?.toFixed(0) || '—'} €</div>
+                      <div className="text-xs text-gray-500">
+                        Revient: <span className="text-gray-200 font-bold">{product.prix_revient?.toFixed(0) || '—'} €</span>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex gap-2 pt-3 border-t border-gray-800">
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsModifying(true);
+                        }}
+                        className="flex-1 px-2 py-2 bg-[#252525] border border-gray-700 rounded text-xs font-medium text-gray-300 hover:bg-[#333] transition-all flex items-center justify-center gap-1"
+                      >
+                        <Edit2 size={12} /> Modifier
+                      </button>
+                      <button className="px-2 py-2 bg-[#252525] border border-gray-700 rounded hover:bg-[#333] transition-all">
+                        <QrCode size={14} className="text-gray-400" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsValidating(true);
+                        }}
+                        className="px-2 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-all flex items-center justify-center"
+                      >
+                        <CheckCircle size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setIsMarquingCasse(true);
+                        }}
+                        className="px-2 py-2 bg-red-900/20 hover:bg-red-900/40 text-red-400 rounded border border-red-700/50 transition-all"
+                        title="Marquer comme cassé"
+                      >
+                        💔
+                      </button>
+                      <button
+                        onClick={() => deleteProduit(product.id, product.nom)}
+                        className="px-2 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 rounded border border-red-600/30 transition-all"
+                        title="Supprimer ce produit"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-12 text-center">
-            <AlertCircle size={48} className="text-gray-600 mx-auto mb-4" />
+          <div className="text-center py-16 bg-[#1a1a1a] rounded-xl border border-gray-800">
+            <Package size={48} className="mx-auto text-gray-600 mb-4" />
             <p className="text-gray-400 text-lg">Aucun produit {statusLabels[status].toLowerCase()}</p>
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <ModalModifier
+        product={selectedProduct}
+        isOpen={isModifying}
+        onClose={() => {
+          setIsModifying(false);
+          setSelectedProduct(null);
+        }}
+        onSuccess={() => {
+          setProducts(products.map(p => p.id === selectedProduct?.id ? { ...p } : p));
+          setIsModifying(false);
+          setSelectedProduct(null);
+        }}
+      />
+
+      <ModalValider
+        product={selectedProduct}
+        isOpen={isValidating}
+        onClose={() => {
+          setIsValidating(false);
+          setSelectedProduct(null);
+        }}
+        onSuccess={() => {
+          setProducts(products.filter(p => p.id !== selectedProduct?.id));
+          setIsValidating(false);
+          setSelectedProduct(null);
+        }}
+      />
+
+      <ModalMarquerCasse
+        produit={selectedProduct}
+        lotInfo={lots.find(l => l.id === selectedProduct?.lot_id)}
+        isOpen={isMarquingCasse}
+        onClose={() => {
+          setIsMarquingCasse(false);
+          setSelectedProduct(null);
+        }}
+        onSuccess={() => {
+          setProducts(products.filter(p => p.id !== selectedProduct?.id));
+          setIsMarquingCasse(false);
+          setSelectedProduct(null);
+        }}
+      />
     </div>
   );
 }
