@@ -149,12 +149,18 @@ export default function DashboardPage() {
               </div>
               <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Achat - Lots</span>
             </div>
-            <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
+            <div className="space-y-3 mb-4 max-h-40 overflow-y-auto">
               {lots.length > 0 ? (
                 lots.map((lot) => (
-                  <div key={lot.id} className="flex justify-between text-xs text-gray-300 pb-2 border-b border-gray-700">
-                    <span className="text-blue-300">Lot N°{lot.numerolot}</span>
-                    <span className="font-semibold text-blue-400">{lot.couttotal.toFixed(2)} €</span>
+                  <div key={lot.id} className="pb-3 border-b border-gray-700">
+                    <div className="flex justify-between text-xs text-blue-300 mb-1">
+                      <span className="font-semibold">Lot N°{lot.numerolot}</span>
+                      <span className="text-blue-400 font-bold">{lot.couttotal.toFixed(2)} €</span>
+                    </div>
+                    <div className="flex gap-4 text-xs text-gray-400">
+                      <span>📫 Palettes: <span className="text-gray-300 font-semibold">{Math.ceil((lot.nbpieces || 0) / 50)}</span></span>
+                      <span>📦 Pièces: <span className="text-gray-300 font-semibold">{lot.nbpieces || 0}</span></span>
+                    </div>
                   </div>
                 ))
               ) : (
