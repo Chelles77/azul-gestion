@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, ArrowRight } from 'lucide-react';
 
 interface Activite {
   id: string;
@@ -16,6 +17,7 @@ interface Activite {
 }
 
 export default function AppointmentCard() {
+  const router = useRouter();
   const [activities, setActivities] = useState<Activite[]>([]);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
@@ -94,11 +96,19 @@ export default function AppointmentCard() {
 
   return (
     <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg col-span-full mb-8">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-blue-500/20 rounded-lg">
-          <Calendar size={20} className="text-blue-400" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-500/20 rounded-lg">
+            <Calendar size={20} className="text-blue-400" />
+          </div>
+          <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Agenda du jour</span>
         </div>
-        <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Agenda du jour</span>
+        <button
+          onClick={() => router.push('/organisateur')}
+          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 px-2 py-1 hover:bg-blue-900/20 rounded transition-all"
+        >
+          Voir agenda <ArrowRight size={12} />
+        </button>
       </div>
 
       <div className="mb-6 p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">

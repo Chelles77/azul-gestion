@@ -176,12 +176,17 @@ export default function DashboardPage() {
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Capital Investi */}
-          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg col-span-full">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <ShoppingCart size={20} className="text-blue-400" />
+          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg col-span-full hover:border-blue-600 transition-all cursor-pointer" onClick={() => router.push('/products')}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <ShoppingCart size={20} className="text-blue-400" />
+                </div>
+                <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Achat - Lots</span>
               </div>
-              <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Achat - Lots</span>
+              <button className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 px-2 py-1 hover:bg-blue-900/20 rounded transition-all">
+                Voir tous <ArrowRight size={12} />
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -230,12 +235,17 @@ export default function DashboardPage() {
           </div>
 
           {/* VENTE - PRODUITS VENDUS */}
-          <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg col-span-full">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-green-500/20 rounded-lg">
-                <TrendingUp size={20} className="text-green-400" />
+          <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg col-span-full hover:border-green-600 transition-all cursor-pointer" onClick={() => router.push('/products/archives')}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/20 rounded-lg">
+                  <TrendingUp size={20} className="text-green-400" />
+                </div>
+                <span className="text-xs uppercase tracking-wider text-green-400 font-semibold">Vente - Produits Vendus</span>
               </div>
-              <span className="text-xs uppercase tracking-wider text-green-400 font-semibold">Vente - Produits Vendus</span>
+              <button className="text-xs text-green-400 hover:text-green-300 flex items-center gap-1 px-2 py-1 hover:bg-green-900/20 rounded transition-all">
+                Voir tous <ArrowRight size={12} />
+              </button>
             </div>
 
             {recentSales.length > 0 ? (
@@ -306,12 +316,17 @@ export default function DashboardPage() {
           </div>
 
           {/* ANALYSE - MÉTRIQUES PRINCIPALES */}
-          <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700 shadow-lg col-span-full">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="p-2 bg-purple-500/20 rounded-lg">
-                <Activity size={20} className="text-purple-400" />
+          <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700 shadow-lg col-span-full hover:border-purple-600 transition-all cursor-pointer" onClick={() => router.push('/finance/synthese')}>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/20 rounded-lg">
+                  <Activity size={20} className="text-purple-400" />
+                </div>
+                <span className="text-xs uppercase tracking-wider text-purple-400 font-semibold">Analyse - Métriques Principales</span>
               </div>
-              <span className="text-xs uppercase tracking-wider text-purple-400 font-semibold">Analyse - Métriques Principales</span>
+              <button className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1 px-2 py-1 hover:bg-purple-900/20 rounded transition-all">
+                Détails <ArrowRight size={12} />
+              </button>
             </div>
 
             {(() => {
@@ -407,10 +422,10 @@ export default function DashboardPage() {
             };
 
             return Object.entries(platformes).map(([plat, data]: [string, any]) => (
-              <div key={plat} className={`bg-[#1a1a1a] border ${platformeBorders[plat] || 'border-gray-800'} rounded-xl p-6`}>
+              <div key={plat} className={`bg-[#1a1a1a] border ${platformeBorders[plat] || 'border-gray-800'} rounded-xl p-6 hover:border-opacity-100 transition-all cursor-pointer hover:shadow-lg`} onClick={() => router.push(`/products/archives?plateforme=${plat}`)}>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className={`text-lg font-bold ${platformeColors[plat] || 'text-gray-300'}`}>{plat}</h2>
-                  <span className="text-xs text-gray-500">{data.count} ventes</span>
+                  <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded">{data.count} ventes</span>
                 </div>
                 <div className="space-y-3">
                   <div>
