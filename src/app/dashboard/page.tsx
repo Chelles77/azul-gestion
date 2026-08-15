@@ -5,8 +5,6 @@ import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TrendingUp, DollarSign, Package, Activity, ArrowRight, Plus, ShoppingCart, Wallet, AlertCircle } from 'lucide-react';
 import AppointmentCard from '@/components/AppointmentCard';
-import { useSharedData } from '@/hooks/useSharedData';
-import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 
 interface DashboardStats {
   capital: number;
@@ -33,69 +31,9 @@ interface LotDetail {
   venduCount: number;
 }
 
-const dashboardDataFetcher = async (supabase: any) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Not authenticated');
-
-  const { data: lotsData } = await supabase
-    .from('lots')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: false });
-
-  const { data: allProduitsData } = await supabase
-    .from('produits')
-    .select('*')
-    .eq('user_id', user.id);
-
-  const { data: ventesData } = await supabase
-    .from('produits')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('statut', 'vendu')
-    .order('date_vente', { ascending: false });
-
-  const ventesDataEnriched = ventesData && ventesData.length > 0 ? await Promise.all(
-    ventesData.map(async (vente: any) => {
-      if (vente.lot_id) {
-        const { data: lot } = await supabase
-          .from('lots')
-          .select('numerolot')
-          .eq('id', vente.lot_id)
-          .single();
-        return { ...vente, lots: lot };
-      }
-      return { ...vente, lots: { numerolot: 'N/A' } };
-    })
-  ) : [];
-
-  const lotsWithSales = await Promise.all(
-    (lotsData || []).map(async (lot: any) => {
-      const { data: soldProducts } = await supabase
-        .from('produits')
-        .select('*', { count: 'exact' })
-        .eq('lot_id', lot.id)
-        .eq('statut', 'vendu');
-
-      return {
-        ...lot,
-        venduCount: soldProducts?.length || 0
-      };
-    })
-  );
-
-  return {
-    lotsData,
-    allProduitsData,
-    ventesDataEnriched,
-    lotsWithSales
-  };
-};
-
 export default function DashboardPage() {
   const router = useRouter();
-  const { data: dashboardData, loading, refetch } = useSharedData('dashboard-data', dashboardDataFetcher);
-
+  const supabase = createClient();
   const [stats, setStats] = useState<DashboardStats>({
     capital: 0,
     totalVentes: 0,
@@ -110,49 +48,109 @@ export default function DashboardPage() {
     nbVentes: 0,
     tauxRotation: 0
   });
+  const [loading, setLoading] = useState(true);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [lots, setLots] = useState<LotDetail[]>([]);
 
-  // Refetch when user returns to dashboard
-  useRefreshOnFocus(() => {
-    refetch();
-  });
-
   useEffect(() => {
-    if (!dashboardData) return;
+    async function fetchData() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
 
-    const { lotsData, allProduitsData, ventesDataEnriched, lotsWithSales } = dashboardData;
+        // Lots
+        const { data: lotsData } = await supabase
+          .from('lots')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-    const totalCapital = lotsData?.reduce((sum: number, lot: any) => sum + (lot.couttotal || 0), 0) || 0;
-    const totalVentes = ventesDataEnriched?.reduce((sum: number, v: any) => sum + (v.prix_vente_final || 0), 0) || 0;
-    const totalCouts = ventesDataEnriched?.reduce((sum: number, v: any) => sum + (v.prix_revient || 0), 0) || 0;
-    const benefice = totalVentes - totalCouts;
+        // Tous les produits par statut
+        const { data: allProduitsData } = await supabase
+          .from('produits')
+          .select('*')
+          .eq('user_id', user.id);
 
-    const nbProduitsBrutes = allProduitsData?.filter((p: any) => p.statut === 'brute').length || 0;
-    const nbProduitsEnVente = allProduitsData?.filter((p: any) => p.statut === 'en_vente').length || 0;
-    const nbProduitsVendus = allProduitsData?.filter((p: any) => p.statut === 'vendu').length || 0;
-    const nbProduitsCasses = allProduitsData?.filter((p: any) => p.statut === 'casse' || p.statut === 'rebut').length || 0;
-    const totalProduits = nbProduitsBrutes + nbProduitsEnVente + nbProduitsVendus + nbProduitsCasses;
-    const tauxRotation = totalProduits > 0 ? ((nbProduitsVendus / totalProduits) * 100) : 0;
+        // Ventes - tous les champs y compris lot_id
+        const { data: ventesData } = await supabase
+          .from('produits')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('statut', 'vendu')
+          .order('date_vente', { ascending: false });
 
-    setStats({
-      capital: totalCapital,
-      totalVentes,
-      totalCouts,
-      benefice,
-      nbLots: lotsData?.length || 0,
-      nbProduits: totalProduits,
-      nbProduitsBrutes,
-      nbProduitsEnVente,
-      nbProduitsVendus,
-      nbProduitsCasses,
-      nbVentes: ventesDataEnriched?.length || 0,
-      tauxRotation
-    });
+        // Enrichir ventes avec les infos des lots
+        const ventesDataEnriched = ventesData && ventesData.length > 0 ? await Promise.all(
+          ventesData.map(async (vente: any) => {
+            if (vente.lot_id) {
+              const { data: lot } = await supabase
+                .from('lots')
+                .select('numerolot')
+                .eq('id', vente.lot_id)
+                .single();
+              return { ...vente, lots: lot };
+            }
+            return { ...vente, lots: { numerolot: 'N/A' } };
+          })
+        ) : [];
 
-    setRecentSales(ventesDataEnriched || []);
-    setLots(lotsWithSales || []);
-  }, [dashboardData]);
+        // Compter les produits vendus par lot
+        const lotsWithSales = await Promise.all(
+          (lotsData || []).map(async (lot) => {
+            const { data: soldProducts } = await supabase
+              .from('produits')
+              .select('*', { count: 'exact' })
+              .eq('lot_id', lot.id)
+              .eq('statut', 'vendu');
+
+            return {
+              ...lot,
+              venduCount: soldProducts?.length || 0
+            };
+          })
+        );
+
+        const totalCapital = lotsData?.reduce((sum, lot) => sum + (lot.couttotal || 0), 0) || 0;
+        const totalVentes = ventesDataEnriched?.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0) || 0;
+        const totalCouts = ventesDataEnriched?.reduce((sum, v) => sum + (v.prix_revient || 0), 0) || 0;
+        const benefice = totalVentes - totalCouts;
+
+        const nbProduitsBrutes = allProduitsData?.filter(p => p.statut === 'brute').length || 0;
+        const nbProduitsEnVente = allProduitsData?.filter(p => p.statut === 'en_vente').length || 0;
+        const nbProduitsVendus = allProduitsData?.filter(p => p.statut === 'vendu').length || 0;
+        const nbProduitsCasses = allProduitsData?.filter(p => p.statut === 'casse' || p.statut === 'rebut').length || 0;
+        const totalProduits = nbProduitsBrutes + nbProduitsEnVente + nbProduitsVendus + nbProduitsCasses;
+        const tauxRotation = totalProduits > 0 ? ((nbProduitsVendus / totalProduits) * 100) : 0;
+
+        setStats({
+          capital: totalCapital,
+          totalVentes,
+          totalCouts,
+          benefice,
+          nbLots: lotsData?.length || 0,
+          nbProduits: totalProduits,
+          nbProduitsBrutes,
+          nbProduitsEnVente,
+          nbProduitsVendus,
+          nbProduitsCasses,
+          nbVentes: ventesDataEnriched?.length || 0,
+          tauxRotation
+        });
+
+        setRecentSales(ventesDataEnriched || []);
+        setLots(lotsWithSales);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [router, supabase]);
 
   if (loading) {
     return (
