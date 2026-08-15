@@ -69,12 +69,23 @@ export default function DashboardPage() {
           return;
         }
 
-        // Plateformes
+        // Plateformes - créer par défaut si elles n'existent pas
         const { data: platformesData } = await supabase
           .from('plateformes')
           .select('*')
           .eq('user_id', user.id)
           .order('nom', { ascending: true });
+
+        // Si aucune plateforme, en créer par défaut
+        if (!platformesData || platformesData.length === 0) {
+          const defaultPlateformes = [
+            { user_id: user.id, nom: 'Vinted', couleur: '#3b82f6', icone: '📱' },
+            { user_id: user.id, nom: 'Le Bon Coin', couleur: '#fbbf24', icone: '🏷️' },
+            { user_id: user.id, nom: 'eBay', couleur: '#ef4444', icone: '🌍' },
+            { user_id: user.id, nom: 'Amazon', couleur: '#a855f7', icone: '📦' }
+          ];
+          await supabase.from('plateformes').insert(defaultPlateformes);
+        }
 
         // Lots
         const { data: lotsData } = await supabase
