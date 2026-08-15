@@ -63,23 +63,23 @@ export default function ProduitsBrutePage() {
   async function fetchProduits() {
     if (!selectedLotId) return;
 
-    // Récupérer TOUS les produits du lot (pour le compteur)
-    const { data: allData, count: totalCount } = await supabase
+    // Récupérer les produits BRUTES (pour l'affichage)
+    const { data, count: bruteCount } = await supabase
       .from('produits')
       .select('*', { count: 'exact' })
-      .eq('lot_id', selectedLotId);
-
-    setTotalProduitsLot(totalCount || 0);
-
-    // Récupérer les produits BRUTES (pour l'affichage)
-    const { data } = await supabase
-      .from('produits')
-      .select('*')
       .eq('lot_id', selectedLotId)
       .eq('statut', 'brute')
       .order('product_number', { ascending: true });
 
     if (data) setProduits(data);
+
+    // Récupérer le TOTAL (tous les produits du lot, peu importe le statut)
+    const { count: totalCount } = await supabase
+      .from('produits')
+      .select('*', { count: 'exact', head: true })
+      .eq('lot_id', selectedLotId);
+
+    setTotalProduitsLot(totalCount || 0);
   }
 
   function generateQRCode(): string {
