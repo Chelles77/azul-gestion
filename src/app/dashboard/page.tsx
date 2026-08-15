@@ -142,15 +142,31 @@ export default function DashboardPage() {
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Capital Investi */}
-          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
+          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg lg:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
               <div className="p-2 bg-blue-500/20 rounded-lg">
-                <DollarSign size={20} className="text-blue-400" />
+                <ShoppingCart size={20} className="text-blue-400" />
               </div>
-              <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Capital Investi</span>
+              <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Achat - Lots</span>
             </div>
-            <div className="text-3xl font-bold text-blue-400">{stats.capital.toFixed(0)} €</div>
-            <p className="text-xs text-gray-500 mt-2">{stats.nbLots} lot(s)</p>
+            <div className="space-y-2 mb-4 max-h-32 overflow-y-auto">
+              {lots.length > 0 ? (
+                lots.map((lot) => (
+                  <div key={lot.id} className="flex justify-between text-xs text-gray-300 pb-2 border-b border-gray-700">
+                    <span className="text-blue-300">Lot N°{lot.numerolot}</span>
+                    <span className="font-semibold text-blue-400">{lot.couttotal.toFixed(2)} €</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-500">Aucun lot</p>
+              )}
+            </div>
+            <div className="border-t-2 border-blue-500 pt-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-blue-300">Total Investi</span>
+                <div className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(2)} €</div>
+              </div>
+            </div>
           </div>
 
           {/* Chiffre d'Affaires */}
