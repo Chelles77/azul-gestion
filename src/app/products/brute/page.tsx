@@ -232,8 +232,8 @@ export default function ProduitsBrutePage() {
           .update({ nombre_produits_total: totalImported })
           .eq('id', selectedLotId);
 
-        let message = `✅ ${insertedCount} produits importés`;
-        if (duplicatesFound > 0) message += ` (${duplicatesFound} doublons ignorés)`;
+        let message = `✅ ${totalImported} produits au total (${insertedCount} nouveaux)`;
+        if (duplicatesFound > 0) message += ` + ${duplicatesFound} existants`;
         if (skipped > 0) message += ` - ${skipped} lignes invalides`;
         alert(message);
         setTimeout(() => window.location.reload(), 500);
