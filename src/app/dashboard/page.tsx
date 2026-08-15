@@ -421,7 +421,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
           {plateformes.map((plat) => {
             const statsPlat = recentSales.reduce((acc: any, vente: any) => {
-              if (vente.plateforme_vente_finale === plat.nom) {
+              if ((vente.plateforme_vente_finale || '').toLowerCase() === plat.nom.toLowerCase()) {
                 acc.chiffre += vente.prix_vente_final || 0;
                 acc.revient += vente.prix_revient || 0;
                 acc.count += 1;
