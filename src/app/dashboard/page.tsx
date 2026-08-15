@@ -33,6 +33,7 @@ interface LotDetail {
   numerolot: string;
   couttotal: number;
   nbpieces: number;
+  nombre_produits_total: number;
   nbpalettes: number;
   coutreelparpiece: number;
   venduCount: number;
