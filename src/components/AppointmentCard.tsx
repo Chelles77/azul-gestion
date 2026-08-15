@@ -2,18 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 
-interface Appointment {
+interface Activite {
   id: string;
   titre: string;
-  avec_qui: string;
-  date_heure: string;
+  heure_debut: string;
+  heure_fin: string;
   description?: string;
+  date_jour: string;
+  categorie: string;
+  statut: string;
 }
 
 export default function AppointmentCard() {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [activities, setActivities] = useState<Activite[]>([]);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +26,7 @@ export default function AppointmentCard() {
   }, []);
 
   useEffect(() => {
-    async function fetchAppointments() {
+    async function fetchActivities() {
       try {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -31,41 +34,43 @@ export default function AppointmentCard() {
         if (!user) return;
 
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dateStr = today.getFullYear() + '-' +
+          String(today.getMonth() + 1).padStart(2, '0') + '-' +
+          String(today.getDate()).padStart(2, '0');
 
         const { data } = await supabase
-          .from('rendez_vous')
+          .from('activites')
           .select('*')
           .eq('user_id', user.id)
-          .gte('date_heure', today.toISOString())
-          .lt('date_heure', tomorrow.toISOString())
-          .order('date_heure', { ascending: true });
+          .eq('date_jour', dateStr)
+          .order('heure_debut', { ascending: true });
 
-        setAppointments(data || []);
+        setActivities(data || []);
       } catch (error) {
-        console.error('Error fetching appointments:', error);
+        console.error('Error fetching activities:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAppointments();
+    fetchActivities();
   }, []);
 
-  const calculateTimeLeft = (appointmentTime: string): string => {
-    const apt = new Date(appointmentTime);
+  const calculateTimeLeft = (heureDebut: string): string => {
+    const [hours, minutes] = heureDebut.split(':').map(Number);
+    const apt = new Date();
+    apt.setHours(hours, minutes, 0);
+
     const now = currentTime;
     const diff = apt.getTime() - now.getTime();
 
     if (diff < 0) return 'Passé';
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const h = Math.floor(diff / (1000 * 60 * 60));
+    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (hours === 0) return `${minutes}min`;
-    return `${hours}h ${minutes}min`;
+    if (h === 0) return `${m}min`;
+    return `${h}h ${m}min`;
   };
 
   const formatDate = (date: Date): string => {
@@ -102,34 +107,37 @@ export default function AppointmentCard() {
         </p>
 
         {loading ? (
-          <p className="text-xs text-gray-500 mt-3">Chargement des rendez-vous...</p>
-        ) : appointments.length === 0 ? (
+          <p className="text-xs text-gray-500 mt-3">Chargement des activités...</p>
+        ) : activities.length === 0 ? (
           <p className="text-sm text-emerald-400 mt-3">✅ Vous n'avez rien de prévu aujourd'hui</p>
         ) : (
           <div className="mt-4 space-y-3">
-            {appointments.map((apt, index) => (
-              <div key={apt.id} className="bg-[#1a1a1a] border border-gray-600 rounded-lg p-3">
+            {activities.map((act) => (
+              <div key={act.id} className="bg-[#1a1a1a] border border-gray-600 rounded-lg p-3">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-blue-300 bg-blue-900/30 px-2 py-1 rounded">
-                      {new Date(apt.date_heure).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {act.heure_debut} → {act.heure_fin}
                     </span>
-                    <span className="font-semibold text-white">{apt.titre}</span>
+                    <span className="font-semibold text-white">{act.titre}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${
+                      act.categorie === 'Travail'
+                        ? 'bg-blue-900/30 text-blue-300'
+                        : 'bg-pink-900/30 text-pink-300'
+                    }`}>
+                      {act.categorie}
+                    </span>
                   </div>
                   <span className={`text-xs font-semibold px-2 py-1 rounded ${
-                    calculateTimeLeft(apt.date_heure).includes('Passé')
+                    calculateTimeLeft(act.heure_debut).includes('Passé')
                       ? 'text-gray-400 bg-gray-800/30'
                       : 'text-yellow-300 bg-yellow-900/30'
                   }`}>
-                    dans {calculateTimeLeft(apt.date_heure)}
+                    dans {calculateTimeLeft(act.heure_debut)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-xs text-gray-400">
-                  <User size={14} />
-                  <span>avec {apt.avec_qui}</span>
-                </div>
-                {apt.description && (
-                  <p className="text-xs text-gray-500 mt-2">📝 {apt.description}</p>
+                {act.description && (
+                  <p className="text-xs text-gray-500 mt-2">📝 {act.description}</p>
                 )}
               </div>
             ))}
