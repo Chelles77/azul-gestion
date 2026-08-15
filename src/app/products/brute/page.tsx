@@ -30,12 +30,13 @@ export default function ProduitsBrutePage() {
   const [totalProduitsLot, setTotalProduitsLot] = useState(0);
   const [isArchiving, setIsArchiving] = useState(false);
 
-  // Charger les lots
+  // Charger les lots ACTIFS seulement
   useEffect(() => {
     async function fetchLots() {
       const { data } = await supabase
         .from('lots')
         .select('*')
+        .eq('statut', 'actif')
         .order('created_at', { ascending: false });
       if (data) {
         setLots(data);
