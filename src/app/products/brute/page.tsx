@@ -27,6 +27,7 @@ export default function ProduitsBrutePage() {
   const [isValidating, setIsValidating] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isMarquingCasse, setIsMarquingCasse] = useState(false);
+  const [totalProduitsLot, setTotalProduitsLot] = useState(0);
 
   // Charger les lots
   useEffect(() => {
@@ -61,6 +62,16 @@ export default function ProduitsBrutePage() {
 
   async function fetchProduits() {
     if (!selectedLotId) return;
+
+    // Récupérer TOUS les produits du lot (pour le compteur)
+    const { data: allData, count: totalCount } = await supabase
+      .from('produits')
+      .select('*', { count: 'exact' })
+      .eq('lot_id', selectedLotId);
+
+    setTotalProduitsLot(totalCount || 0);
+
+    // Récupérer les produits BRUTES (pour l'affichage)
     const { data } = await supabase
       .from('produits')
       .select('*')
@@ -337,7 +348,8 @@ export default function ProduitsBrutePage() {
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
             <p className="text-xs text-gray-500 uppercase mb-1">Produits Bruts</p>
-            <p className="text-2xl font-bold text-white">{produits.length}</p>
+            <p className="text-2xl font-bold text-white">{totalProduitsLot}</p>
+            <p className="text-xs text-gray-600 mt-1">({produits.length} à traiter)</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
             <p className="text-xs text-gray-500 uppercase mb-1">Prix Total Neuf</p>
