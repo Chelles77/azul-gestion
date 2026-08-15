@@ -30,7 +30,9 @@ interface Identifiant {
 
 interface Note {
   id: string;
+  titre: string;
   contenu: string;
+  created_at: string;
   updated_at: string;
 }
 
@@ -89,11 +91,14 @@ export default function Organisateur() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activites, setActivites] = useState<Activite[]>([]);
   const [identifiants, setIdentifiants] = useState<Identifiant[]>([]);
-  const [notes, setNotes] = useState<Note | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [notesInput, setNotesInput] = useState('');
+  const [notesTitre, setNotesTitre] = useState('');
+  const [notesSortBy, setNotesSortBy] = useState<'date' | 'titre'>('date');
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [notesInput, setNotesInput] = useState('');
   const notesTimeoutRef = useRef<any>(null);
 
   const [showAddIdentifiant, setShowAddIdentifiant] = useState(false);
@@ -150,10 +155,14 @@ export default function Organisateur() {
         .from('notes')
         .select('*')
         .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(1);
+        .order('updated_at', { ascending: false });
 
-      setNotes(notesData?.[0] as Note || null);
+      setNotes((notesData as Note[]) || []);
+      if (notesData && notesData.length > 0) {
+        setSelectedNote(notesData[0] as Note);
+        setNotesInput(notesData[0].contenu);
+        setNotesTitre(notesData[0].titre);
+      }
     } catch (error) {
       console.error(error);
     }
@@ -300,16 +309,23 @@ export default function Organisateur() {
     }
   };
 
-  const saveNotesToSupabase = async (contenu: string) => {
+  const saveNotesToSupabase = async () => {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user || !selectedNote) return;
 
-      if (notes?.id) {
-        await supabase.from('notes').update({ contenu }).eq('id', notes.id);
+      if (selectedNote.id === 'new') {
+        await supabase.from('notes').insert({
+          user_id: user.id,
+          titre: notesTitre || 'Note sans titre',
+          contenu: notesInput
+        });
       } else {
-        await supabase.from('notes').insert({ user_id: user.id, contenu });
+        await supabase.from('notes').update({
+          titre: notesTitre,
+          contenu: notesInput
+        }).eq('id', selectedNote.id);
       }
 
       await fetchData();
@@ -326,8 +342,32 @@ export default function Organisateur() {
     }
 
     notesTimeoutRef.current = setTimeout(() => {
-      saveNotesToSupabase(contenu);
+      saveNotesToSupabase();
     }, 1000);
+  };
+
+  const handleCreateNewNote = () => {
+    setSelectedNote({ id: 'new', titre: '', contenu: '', created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+    setNotesInput('');
+    setNotesTitre('');
+  };
+
+  const handleSelectNote = (note: Note) => {
+    setSelectedNote(note);
+    setNotesInput(note.contenu);
+    setNotesTitre(note.titre);
+  };
+
+  const handleDeleteNote = async (id: string) => {
+    if (!confirm('Supprimer cette note?')) return;
+    try {
+      const supabase = createClient();
+      await supabase.from('notes').delete().eq('id', id);
+      await fetchData();
+      setSelectedNote(null);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleSaveIdentifiant = async () => {
@@ -1244,14 +1284,88 @@ export default function Organisateur() {
 
         {/* NOTES */}
         {activeTab === 'notes' && (
-          <div>
-            <div className="bg-[#1a1a1a] border-2 border-yellow-600 rounded-xl p-8 h-96">
-              <textarea
-                value={notesInput || notes?.contenu || ''}
-                onChange={e => handleUpdateNotes(e.target.value)}
-                placeholder="📝 Écris tes notes ici..."
-                className="w-full h-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white resize-none focus:outline-none focus:border-yellow-600"
-              />
+          <div className="space-y-6">
+            {/* Bouton + et Tri */}
+            <div className="flex justify-between items-center">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCreateNewNote}
+                  className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-bold flex items-center gap-2"
+                >
+                  ➕ Nouvelle Note
+                </button>
+                <select
+                  value={notesSortBy}
+                  onChange={e => setNotesSortBy(e.target.value as 'date' | 'titre')}
+                  className="px-4 py-3 bg-[#1a1a1a] border-2 border-yellow-600 text-white rounded-lg font-bold"
+                >
+                  <option value="date">📅 Par Date</option>
+                  <option value="titre">🔤 Par Titre</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Cartes des notes */}
+              <div className="lg:col-span-1 space-y-2 max-h-96 overflow-y-auto">
+                {notes.length === 0 ? (
+                  <p className="text-gray-400 text-center py-8">Aucune note</p>
+                ) : (
+                  notes
+                    .sort((a, b) => notesSortBy === 'date'
+                      ? new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+                      : a.titre.localeCompare(b.titre)
+                    )
+                    .map(note => (
+                      <div
+                        key={note.id}
+                        onClick={() => handleSelectNote(note)}
+                        className={`p-4 rounded-lg cursor-pointer transition-all ${
+                          selectedNote?.id === note.id
+                            ? 'bg-yellow-600 border-2 border-yellow-400 text-white'
+                            : 'bg-[#1a1a1a] border-2 border-gray-700 text-gray-300 hover:border-yellow-600'
+                        }`}
+                      >
+                        <p className="font-bold truncate">{note.titre || 'Sans titre'}</p>
+                        <p className="text-xs opacity-75 truncate">{note.contenu.substring(0, 40)}...</p>
+                        <p className="text-xs opacity-50 mt-1">{new Date(note.updated_at).toLocaleDateString('fr-FR')}</p>
+                      </div>
+                    ))
+                )}
+              </div>
+
+              {/* Éditeur */}
+              <div className="lg:col-span-2 space-y-4">
+                {selectedNote ? (
+                  <>
+                    <input
+                      type="text"
+                      value={notesTitre}
+                      onChange={e => setNotesTitre(e.target.value)}
+                      placeholder="Titre de la note..."
+                      className="w-full px-4 py-3 bg-[#1a1a1a] border-2 border-yellow-600 rounded-lg text-white font-bold focus:outline-none focus:border-yellow-400"
+                    />
+                    <textarea
+                      value={notesInput}
+                      onChange={e => handleUpdateNotes(e.target.value)}
+                      placeholder="📝 Écris tes notes ici..."
+                      className="w-full h-96 px-4 py-3 bg-[#1a1a1a] border-2 border-yellow-600 rounded-lg text-white resize-none focus:outline-none focus:border-yellow-400"
+                    />
+                    {selectedNote.id !== 'new' && (
+                      <button
+                        onClick={() => handleDeleteNote(selectedNote.id)}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold"
+                      >
+                        🗑️ Supprimer
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center justify-center h-96 text-gray-400">
+                    Créez ou sélectionnez une note pour commencer
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
