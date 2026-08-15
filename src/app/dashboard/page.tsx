@@ -292,11 +292,22 @@ export default function DashboardPage() {
         {/* SECTION PRODUITS ET VENTES */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-          {/* Produits en Stock */}
+          {/* Produits Achetés */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Package size={20} className="text-blue-400" />
+              <h2 className="text-lg font-bold text-white">Produits Achetés</h2>
+            </div>
+            <div className="text-4xl font-bold text-blue-400 mb-2">{stats.nbProduits + stats.nbVentes}</div>
+            <p className="text-sm text-gray-400 mb-4">Total acheté</p>
+            <p className="text-xs text-gray-500">Stock: {stats.nbProduits} | Vendu: {stats.nbVentes}</p>
+          </div>
+
+          {/* Produits En Stock */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Package size={20} className="text-orange-400" />
-              <h2 className="text-lg font-bold text-white">Produits en Stock</h2>
+              <h2 className="text-lg font-bold text-white">Produits En Stock</h2>
             </div>
             <div className="text-4xl font-bold text-orange-400 mb-2">{stats.nbProduits}</div>
             <p className="text-sm text-gray-400 mb-4">En attente de vente</p>
@@ -308,14 +319,14 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Ventes Récentes */}
+          {/* Produits Vendus */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <ShoppingCart size={20} className="text-green-400" />
-              <h2 className="text-lg font-bold text-white">Ventes Récentes</h2>
+              <h2 className="text-lg font-bold text-white">Produits Vendus</h2>
             </div>
             <div className="text-4xl font-bold text-green-400 mb-2">{stats.nbVentes}</div>
-            <p className="text-sm text-gray-400 mb-4">Produits vendus</p>
+            <p className="text-sm text-gray-400 mb-4">Produits archivés</p>
             <button
               onClick={() => router.push('/products/archives')}
               className="w-full px-4 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-600/50 text-green-400 rounded-lg text-sm font-medium transition-colors"
