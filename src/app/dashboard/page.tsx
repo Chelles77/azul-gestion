@@ -176,7 +176,7 @@ export default function DashboardPage() {
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Capital Investi */}
-          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg col-span-full hover:border-blue-600 transition-all cursor-pointer" onClick={() => router.push('/products')}>
+          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg col-span-full hover:border-blue-600 transition-all cursor-pointer" onClick={() => router.push('/products/brute')}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -235,7 +235,7 @@ export default function DashboardPage() {
           </div>
 
           {/* VENTE - PRODUITS VENDUS */}
-          <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg col-span-full hover:border-green-600 transition-all cursor-pointer" onClick={() => router.push('/products/archives')}>
+          <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg col-span-full hover:border-green-600 transition-all cursor-pointer" onClick={() => router.push('/products/vente')}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-500/20 rounded-lg">
