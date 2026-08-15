@@ -236,11 +236,14 @@ export default function Organisateur() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
 
-      if (!user) return;
+      if (!user) {
+        alert('Erreur: Tu n\'es pas connecté!');
+        return;
+      }
 
       const encrypted = await encryptPassword(newIdentifiant.password);
 
-      await supabase
+      const { error } = await supabase
         .from('identifiants')
         .insert({
           user_id: user.id,
@@ -251,6 +254,14 @@ export default function Organisateur() {
           notes: newIdentifiant.notes,
           categorie: newIdentifiant.categorie,
         });
+
+      if (error) {
+        alert('❌ Erreur d\'enregistrement: ' + error.message);
+        console.error('Supabase error:', error);
+        return;
+      }
+
+      alert('✅ Identifiant enregistré avec succès!');
 
       setNewIdentifiant({
         nom_site: '',
@@ -264,8 +275,8 @@ export default function Organisateur() {
 
       await fetchData();
     } catch (error) {
-      console.error(error);
-      alert('Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
+      console.error('Error:', error);
+      alert('❌ Erreur: ' + (error instanceof Error ? error.message : 'Erreur inconnue'));
     }
   };
 
