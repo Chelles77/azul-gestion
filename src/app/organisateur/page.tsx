@@ -67,7 +67,7 @@ const decryptPassword = async (encrypted: string): Promise<string> => {
     const data = combined.slice(12);
     const key = await crypto.subtle.importKey(
       'raw',
-      encoder.encode(SECRET_KEY.padStart(32, '0').slice(0, 32)),
+      encoder.encode(SECRET_KEY.padEnd(32, '0').slice(0, 32)),
       { name: 'AES-GCM' },
       false,
       ['decrypt']
