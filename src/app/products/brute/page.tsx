@@ -226,18 +226,18 @@ export default function ProduitsBrutePage() {
 
       if (!hasError) {
         // Recalculer le nombre TOTAL réel de produits dans le lot
-        const { count: totalProduits } = await supabase
+        const { count } = await supabase
           .from('produits')
-          .select('id', { count: 'exact', head: true })
+          .select('*', { count: 'exact', head: true })
           .eq('lot_id', selectedLotId);
 
+        const totalProduits = count || 0;
         await supabase
           .from('lots')
-          .update({ nombre_produits_total: totalProduits || 0 })
+          .update({ nombre_produits_total: totalProduits })
           .eq('id', selectedLotId);
 
-        const totalImported = insertedCount + duplicatesFound;
-        let message = `✅ ${totalProduits || totalImported} produits au total (${insertedCount} nouveaux)`;
+        let message = `✅ ${totalProduits} produits au total (${insertedCount} nouveaux)`;
         if (duplicatesFound > 0) message += ` + ${duplicatesFound} existants`;
         if (skipped > 0) message += ` - ${skipped} lignes invalides`;
         alert(message);
