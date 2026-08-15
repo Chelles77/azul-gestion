@@ -1186,20 +1186,20 @@ export default function Organisateur() {
                       <div>
                         <p className="text-gray-400">Mot de passe</p>
                         <div className="flex gap-2 items-center">
-                          <p className="text-white font-mono flex-1">
+                          <p className="text-white font-mono flex-1 text-sm break-all">
                             {showPasswords[id.id] ? decryptedPasswords[id.id] || '••••••••' : '••••••••'}
                           </p>
                           <button
                             onClick={() => toggleShowPassword(id.id, id.password_encrypted)}
-                            className="p-2 hover:bg-white/10 rounded"
+                            className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-bold transition-all whitespace-nowrap"
                           >
-                            {showPasswords[id.id] ? <EyeOff size={18} /> : <Eye size={18} />}
+                            {showPasswords[id.id] ? '🙈 Masquer' : '👁️ Voir'}
                           </button>
                           <button
                             onClick={() => copyPassword(id.id, id.password_encrypted)}
-                            className={`p-2 rounded transition-all ${copiedId === id.id ? 'bg-green-600' : 'hover:bg-white/10'}`}
+                            className={`px-3 py-1 text-xs text-white rounded font-bold transition-all whitespace-nowrap ${copiedId === id.id ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'}`}
                           >
-                            <Copy size={18} />
+                            {copiedId === id.id ? '✅ Copié!' : '📋 Copier'}
                           </button>
                         </div>
                       </div>
