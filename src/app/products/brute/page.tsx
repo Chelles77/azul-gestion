@@ -74,12 +74,15 @@ export default function ProduitsBrutePage() {
     if (data) setProduits(data);
 
     // Récupérer le TOTAL (tous les produits du lot, peu importe le statut)
-    const { count: totalCount } = await supabase
+    const { data: allProds, error } = await supabase
       .from('produits')
-      .select('*', { count: 'exact', head: true })
+      .select('*')
       .eq('lot_id', selectedLotId);
 
-    setTotalProduitsLot(totalCount || 0);
+    const totalCount = allProds?.length || 0;
+    console.log('🔍 DEBUG - Lot:', selectedLotId, 'Brutes:', data?.length, 'Total:', totalCount);
+
+    setTotalProduitsLot(totalCount);
   }
 
   function generateQRCode(): string {
