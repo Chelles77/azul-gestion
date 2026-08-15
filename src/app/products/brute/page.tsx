@@ -63,27 +63,38 @@ export default function ProduitsBrutePage() {
   async function fetchProduits() {
     if (!selectedLotId) return;
 
-    // Récupérer les produits BRUTES (pour l'affichage)
-    const { data, count: bruteCount } = await supabase
-      .from('produits')
-      .select('*', { count: 'exact' })
-      .eq('lot_id', selectedLotId)
-      .eq('statut', 'brute')
-      .order('product_number', { ascending: true });
+    try {
+      // Récupérer les produits BRUTES (pour l'affichage)
+      const { data, count: bruteCount, error: bruteError } = await supabase
+        .from('produits')
+        .select('*', { count: 'exact' })
+        .eq('lot_id', selectedLotId)
+        .eq('statut', 'brute')
+        .order('product_number', { ascending: true });
 
-    if (data) setProduits(data);
+      if (bruteError) console.error('❌ Erreur brutes:', bruteError);
+      if (data) {
+        setProduits(data);
+        console.log('✅ Produits brutes:', data.length);
+      }
 
-    // Récupérer VRAIMENT TOUS les produits du lot (peu importe le statut)
-    // Sans filters, sans paginations
-    const { data: allProds } = await supabase
-      .from('produits')
-      .select('id')
-      .eq('lot_id', selectedLotId);
+      // Récupérer TOUS les produits du lot (peu importe le statut)
+      const { data: allProds, error: totalError } = await supabase
+        .from('produits')
+        .select('id, statut')
+        .eq('lot_id', selectedLotId);
 
-    const totalCount = allProds?.length || 0;
-    console.log('🔍 DEBUG - Lot:', selectedLotId, 'Brutes:', data?.length, 'Total vrai:', totalCount);
-
-    setTotalProduitsLot(totalCount);
+      if (totalError) {
+        console.error('❌ Erreur total:', totalError);
+        setTotalProduitsLot(data?.length || 0);
+      } else {
+        const totalCount = allProds?.length || 0;
+        console.log('🔍 DEBUG - Total réel:', totalCount, 'Brutes:', data?.length);
+        setTotalProduitsLot(totalCount);
+      }
+    } catch (err) {
+      console.error('❌ Erreur fetchProduits:', err);
+    }
   }
 
   function generateQRCode(): string {
@@ -371,8 +382,10 @@ export default function ProduitsBrutePage() {
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
             <p className="text-xs text-gray-500 uppercase mb-1">Produits Bruts</p>
-            <p className="text-2xl font-bold text-white">{totalProduitsLot}</p>
-            <p className="text-xs text-gray-600 mt-1">({produits.length} à traiter)</p>
+            <p className="text-2xl font-bold text-white">{totalProduitsLot > 0 ? totalProduitsLot : produits.length}</p>
+            {totalProduitsLot > 0 && produits.length < totalProduitsLot && (
+              <p className="text-xs text-gray-600 mt-1">({produits.length} à traiter, {totalProduitsLot - produits.length} en vente/vendu)</p>
+            )}
           </div>
           <div className="bg-[#1a1a1a] rounded-xl p-4 border border-gray-800">
             <p className="text-xs text-gray-500 uppercase mb-1">Prix Total Neuf</p>
