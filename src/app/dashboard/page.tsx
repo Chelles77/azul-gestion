@@ -73,13 +73,28 @@ export default function DashboardPage() {
           .select('*')
           .eq('user_id', user.id);
 
-        // Ventes avec infos du lot
+        // Ventes - tous les champs y compris lot_id
         const { data: ventesData } = await supabase
           .from('produits')
-          .select('*, lots(numerolot)')
+          .select('*')
           .eq('user_id', user.id)
           .eq('statut', 'vendu')
           .order('date_vente', { ascending: false });
+
+        // Enrichir ventes avec les infos des lots
+        const ventesDataEnriched = ventesData && ventesData.length > 0 ? await Promise.all(
+          ventesData.map(async (vente: any) => {
+            if (vente.lot_id) {
+              const { data: lot } = await supabase
+                .from('lots')
+                .select('numerolot')
+                .eq('id', vente.lot_id)
+                .single();
+              return { ...vente, lots: lot };
+            }
+            return { ...vente, lots: { numerolot: 'N/A' } };
+          })
+        ) : [];
 
         // Compter les produits vendus par lot
         const lotsWithSales = await Promise.all(
@@ -98,8 +113,8 @@ export default function DashboardPage() {
         );
 
         const totalCapital = lotsData?.reduce((sum, lot) => sum + (lot.couttotal || 0), 0) || 0;
-        const totalVentes = ventesData?.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0) || 0;
-        const totalCouts = ventesData?.reduce((sum, v) => sum + (v.prix_revient || 0), 0) || 0;
+        const totalVentes = ventesDataEnriched?.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0) || 0;
+        const totalCouts = ventesDataEnriched?.reduce((sum, v) => sum + (v.prix_revient || 0), 0) || 0;
         const benefice = totalVentes - totalCouts;
 
         const nbProduitsBrutes = allProduitsData?.filter(p => p.statut === 'brute').length || 0;
@@ -120,11 +135,11 @@ export default function DashboardPage() {
           nbProduitsEnVente,
           nbProduitsVendus,
           nbProduitsCasses,
-          nbVentes: ventesData?.length || 0,
+          nbVentes: ventesDataEnriched?.length || 0,
           tauxRotation
         });
 
-        setRecentSales(ventesData || []);
+        setRecentSales(ventesDataEnriched || []);
         setLots(lotsWithSales);
       } catch (error) {
         console.error('Error fetching data:', error);
