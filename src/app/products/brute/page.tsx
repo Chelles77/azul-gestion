@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase';
-import { Upload, Edit2, CheckCircle, Package, Filter, Trash2, QrCode, Plus } from 'lucide-react';
+import { Upload, Edit2, CheckCircle, Package, Filter, Trash2, QrCode, Plus, Archive } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Produit } from '@/lib/interfaces';
 import ModalModifier from '@/components/ModalModifier';
@@ -28,6 +28,7 @@ export default function ProduitsBrutePage() {
   const [isCreating, setIsCreating] = useState(false);
   const [isMarquingCasse, setIsMarquingCasse] = useState(false);
   const [totalProduitsLot, setTotalProduitsLot] = useState(0);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   // Charger les lots
   useEffect(() => {
@@ -299,6 +300,53 @@ export default function ProduitsBrutePage() {
     }
   }
 
+  async function handleArchiveLot() {
+    if (!selectedLotId) return;
+    setIsArchiving(true);
+    try {
+      const { data: invendus } = await supabase
+        .from('produits')
+        .select('*')
+        .eq('lot_id', selectedLotId)
+        .not('statut', 'in', '(vendu,casse,rebut)');
+
+      const count = invendus?.length || 0;
+      if (!window.confirm(`Archiver ce lot?\n\n${count} produits invendus seront supprimés de la comptabilité.\nCette action est irréversible.`)) {
+        setIsArchiving(false);
+        return;
+      }
+
+      // Supprimer les produits invendus
+      await supabase
+        .from('produits')
+        .delete()
+        .eq('lot_id', selectedLotId)
+        .not('statut', 'in', '(vendu,casse,rebut)');
+
+      // Marquer le lot comme archivé
+      await supabase
+        .from('lots')
+        .update({ statut: 'archive', archived_at: new Date().toISOString() })
+        .eq('id', selectedLotId);
+
+      alert(`✅ Lot archivé!\n\n${count} produits invendus supprimés de la comptabilité.\nLe lot est maintenant fermé.`);
+
+      // Recharger les lots
+      const { data } = await supabase
+        .from('lots')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (data) {
+        setLots(data);
+        if (data.length > 0) setSelectedLotId(data[0].id);
+      }
+    } catch (err: any) {
+      alert('Erreur: ' + err.message);
+    } finally {
+      setIsArchiving(false);
+    }
+  }
+
   const produitsFiltres = useMemo(
     () =>
       produits.filter(
@@ -364,6 +412,13 @@ export default function ProduitsBrutePage() {
               className="px-4 py-2 bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-600/30 rounded-lg flex items-center gap-2 disabled:opacity-50"
             >
               <Plus size={18} /> Créer un produit
+            </button>
+            <button
+              onClick={handleArchiveLot}
+              disabled={isArchiving || !selectedLotId}
+              className="px-4 py-2 bg-orange-600/10 hover:bg-orange-600/20 text-orange-400 border border-orange-600/30 rounded-lg flex items-center gap-2 disabled:opacity-50"
+            >
+              <Archive size={18} /> {isArchiving ? 'Archivage...' : 'Archiver ce lot'}
             </button>
           </div>
         </div>
