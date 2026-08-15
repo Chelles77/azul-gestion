@@ -225,19 +225,16 @@ export default function ProduitsBrutePage() {
       }
 
       if (!hasError) {
-        // Recalculer le nombre TOTAL réel de produits dans le lot
-        const { count } = await supabase
-          .from('produits')
-          .select('*', { count: 'exact', head: true })
-          .eq('lot_id', selectedLotId);
+        // Total = nouveaux + doublons trouvés dans ce fichier
+        const totalFromFile = insertedCount + duplicatesFound;
 
-        const totalProduits = count || 0;
+        // Mettre à jour avec le total du fichier importé
         await supabase
           .from('lots')
-          .update({ nombre_produits_total: totalProduits })
+          .update({ nombre_produits_total: totalFromFile })
           .eq('id', selectedLotId);
 
-        let message = `✅ ${totalProduits} produits au total (${insertedCount} nouveaux)`;
+        let message = `✅ ${totalFromFile} produits au total (${insertedCount} nouveaux)`;
         if (duplicatesFound > 0) message += ` + ${duplicatesFound} existants`;
         if (skipped > 0) message += ` - ${skipped} lignes invalides`;
         alert(message);
