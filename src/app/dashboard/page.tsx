@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { TrendingUp, DollarSign, Package, Activity, ArrowRight, Plus, ShoppingCart, Wallet, AlertCircle } from 'lucide-react';
+import AppointmentCard from '@/components/AppointmentCard';
 
 interface DashboardStats {
   capital: number;
@@ -168,6 +169,9 @@ export default function DashboardPage() {
           <h1 className="text-4xl font-bold text-white mb-2">Tableau de Bord</h1>
           <p className="text-gray-400">Vue d'ensemble de vos activités et performances</p>
         </div>
+
+        {/* APPOINTMENT CARD */}
+        <AppointmentCard />
 
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
