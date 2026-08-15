@@ -23,6 +23,7 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
   const [prixVente, setPrixVente] = useState('');
   const [platformeVente, setPlatformeVente] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingPlat, setLoadingPlat] = useState(false);
   const [error, setError] = useState('');
   const [platformes, setPlatformes] = useState<Plateforme[]>([]);
 
@@ -33,6 +34,7 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
   }, [isOpen, product]);
 
   const fetchPlateformes = async () => {
+    setLoadingPlat(true);
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -47,6 +49,8 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
       setPlatformes(data || []);
     } catch (err) {
       console.error('Erreur chargement plateformes:', err);
+    } finally {
+      setLoadingPlat(false);
     }
   };
 
@@ -129,9 +133,16 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
             <select
               value={platformeVente}
               onChange={e => setPlatformeVente(e.target.value)}
-              className="w-full bg-[#252525] border border-gray-700 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none"
+              disabled={loadingPlat || platformes.length === 0}
+              className={`w-full bg-[#252525] border rounded-lg px-4 py-3 text-white outline-none ${
+                loadingPlat || platformes.length === 0
+                  ? 'border-gray-700 opacity-50 cursor-not-allowed'
+                  : 'border-gray-700 focus:border-blue-500'
+              }`}
             >
-              <option value="">Sélectionner une plateforme...</option>
+              <option value="">
+                {loadingPlat ? 'Chargement des plateformes...' : platformes.length === 0 ? 'Aucune plateforme' : 'Sélectionner une plateforme...'}
+              </option>
               {platformes.map(p => (
                 <option key={p.id} value={p.nom}>{p.nom}</option>
               ))}
