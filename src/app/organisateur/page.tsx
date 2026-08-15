@@ -94,7 +94,7 @@ export default function Organisateur() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [notesInput, setNotesInput] = useState('');
-  const notesTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notesTimeoutRef = useRef<any>(null);
 
   const [showAddIdentifiant, setShowAddIdentifiant] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
