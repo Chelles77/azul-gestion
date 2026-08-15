@@ -471,8 +471,9 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold text-white mb-4">📦 Détails par Lot</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lots.map(lot => {
-                const tauxVente = lot.nbpieces && lot.nbpieces > 0
-                  ? (lot.venduCount / lot.nbpieces) * 100
+                const totalProduits = lot.nombre_produits_total || lot.nbpieces || 0;
+                const tauxVente = totalProduits > 0
+                  ? (lot.venduCount / totalProduits) * 100
                   : 0;
 
                 return (
@@ -491,7 +492,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-400">Produits Total</span>
-                        <span className="font-bold text-white">{lot.nbpieces}</span>
+                        <span className="font-bold text-white">{totalProduits}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-400">Prix / Produit</span>
@@ -503,7 +504,7 @@ export default function DashboardPage() {
                     <div className="mb-4">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-gray-400">Ventes</span>
-                        <span className="text-xs font-bold text-green-400">{lot.venduCount}/{lot.nbpieces} ({tauxVente.toFixed(1)}%)</span>
+                        <span className="text-xs font-bold text-green-400">{lot.venduCount}/{totalProduits} ({tauxVente.toFixed(1)}%)</span>
                       </div>
                       <div className="w-full bg-[#252525] rounded-full h-2 border border-gray-700">
                         <div
