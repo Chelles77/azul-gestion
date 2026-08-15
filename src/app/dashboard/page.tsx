@@ -21,6 +21,7 @@ interface LotDetail {
   numerolot: string;
   couttotal: number;
   nbpieces: number;
+  nbpalettes: number;
   coutreelparpiece: number;
   venduCount: number;
 }
@@ -158,7 +159,7 @@ export default function DashboardPage() {
                       <span className="text-blue-400 font-bold">{lot.couttotal.toFixed(2)} €</span>
                     </div>
                     <div className="flex gap-4 text-xs text-gray-400">
-                      <span>📫 Palettes: <span className="text-gray-300 font-semibold">{Math.ceil((lot.nbpieces || 0) / 50)}</span></span>
+                      <span>📫 Palettes: <span className="text-gray-300 font-semibold">{lot.nbpalettes || 1}</span></span>
                       <span>📦 Pièces: <span className="text-gray-300 font-semibold">{lot.nbpieces || 0}</span></span>
                     </div>
                   </div>
