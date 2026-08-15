@@ -72,8 +72,7 @@ export default function DashboardPage() {
           .select('*')
           .eq('user_id', user.id)
           .eq('statut', 'vendu')
-          .order('date_vente', { ascending: false })
-          .limit(5);
+          .order('date_vente', { ascending: false });
 
         // Compter les produits vendus par lot
         const lotsWithSales = await Promise.all(
@@ -196,46 +195,97 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Chiffre d'Affaires */}
-          <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
+          {/* VENTE - PRODUITS VENDUS */}
+          <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700 shadow-lg col-span-full">
+            <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-green-500/20 rounded-lg">
                 <TrendingUp size={20} className="text-green-400" />
               </div>
-              <span className="text-xs uppercase tracking-wider text-green-400 font-semibold">Chiffre d'Affaires</span>
+              <span className="text-xs uppercase tracking-wider text-green-400 font-semibold">Vente - Produits Vendus</span>
             </div>
-            <div className="text-3xl font-bold text-green-400">{stats.totalVentes.toFixed(0)} €</div>
-            <p className="text-xs text-gray-500 mt-2">{stats.nbVentes} ventes</p>
-          </div>
 
-          {/* Bénéfice Net */}
-          <div className={`bg-gradient-to-br ${stats.benefice >= 0 ? 'from-emerald-900/30' : 'from-red-900/30'} to-[#1a1a1a] p-6 rounded-xl border ${stats.benefice >= 0 ? 'border-emerald-700' : 'border-red-700'} shadow-lg`}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`p-2 ${stats.benefice >= 0 ? 'bg-emerald-500/20' : 'bg-red-500/20'} rounded-lg`}>
-                <Wallet size={20} className={stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              {recentSales.length > 0 ? (
+                recentSales.map((vente) => (
+                  <div key={vente.id} className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="font-semibold text-green-300">Vente #{vente.numeroproduit || vente.id.slice(0, 8)}</span>
+                      <span className="text-green-400 font-bold text-lg">{vente.prix_vente_final?.toFixed(2) || '0'} €</span>
+                    </div>
+                    <div className="space-y-2 text-xs text-gray-400">
+                      <div className="flex justify-between">
+                        <span>💰 Revient:</span>
+                        <span className="text-gray-200 font-semibold">{vente.prix_revient?.toFixed(2) || '0'} €</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>📈 Marge:</span>
+                        <span className={`font-semibold ${((vente.prix_vente_final || 0) - (vente.prix_revient || 0)) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {((vente.prix_vente_final || 0) - (vente.prix_revient || 0)).toFixed(2)} €
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-500 col-span-full">Aucune vente</p>
+              )}
+            </div>
+
+            <div className="border-t-2 border-green-500 pt-6 grid grid-cols-4 gap-4">
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
+                <p className="text-xs text-gray-400 mb-2">Total Chiffre</p>
+                <p className="text-2xl font-bold text-green-400">{recentSales.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0).toFixed(0)} €</p>
               </div>
-              <span className={`text-xs uppercase tracking-wider font-semibold ${stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                Bénéfice Net
-              </span>
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
+                <p className="text-xs text-gray-400 mb-2">Total Revient</p>
+                <p className="text-2xl font-bold text-green-400">{recentSales.reduce((sum, v) => sum + (v.prix_revient || 0), 0).toFixed(0)} €</p>
+              </div>
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
+                <p className="text-xs text-gray-400 mb-2">Nombre Ventes</p>
+                <p className="text-2xl font-bold text-green-400">{recentSales.length}</p>
+              </div>
+              <div className="bg-green-900/50 border border-green-500 rounded-lg p-4">
+                <p className="text-xs text-green-300 mb-2">Total Marge</p>
+                <p className="text-2xl font-bold text-green-400">{recentSales.reduce((sum, v) => sum + ((v.prix_vente_final || 0) - (v.prix_revient || 0)), 0).toFixed(0)} €</p>
+              </div>
             </div>
-            <div className={`text-3xl font-bold ${stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-              {stats.benefice.toFixed(0)} €
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {stats.benefice >= 0 ? 'Positif ✓' : 'Négatif ✗'}
-            </p>
           </div>
 
-          {/* Taux de Rotation */}
-          <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700 shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
+          {/* ANALYSE - MÉTRIQUES PRINCIPALES */}
+          <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700 shadow-lg col-span-full">
+            <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-purple-500/20 rounded-lg">
                 <Activity size={20} className="text-purple-400" />
               </div>
-              <span className="text-xs uppercase tracking-wider text-purple-400 font-semibold">Rotation</span>
+              <span className="text-xs uppercase tracking-wider text-purple-400 font-semibold">Analyse - Métriques Principales</span>
             </div>
-            <div className="text-3xl font-bold text-purple-400">{stats.tauxRotation.toFixed(1)}%</div>
-            <p className="text-xs text-gray-500 mt-2">{stats.nbProduits} en stock</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                <p className="text-xs text-gray-400 mb-3">Capital Investi</p>
+                <p className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(0)} €</p>
+                <p className="text-xs text-gray-500 mt-2">{stats.nbLots} lots</p>
+              </div>
+              <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                <p className="text-xs text-gray-400 mb-3">Chiffre d'Affaires</p>
+                <p className="text-2xl font-bold text-green-400">{stats.totalVentes.toFixed(0)} €</p>
+                <p className="text-xs text-gray-500 mt-2">{stats.nbVentes} ventes</p>
+              </div>
+              <div className={`p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg`}>
+                <p className="text-xs text-gray-400 mb-3">Bénéfice Net</p>
+                <p className={`text-2xl font-bold ${stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {stats.benefice.toFixed(0)} €
+                </p>
+                <p className={`text-xs mt-2 ${stats.benefice >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {stats.benefice >= 0 ? 'Positif ✓' : 'Négatif ✗'}
+                </p>
+              </div>
+              <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                <p className="text-xs text-gray-400 mb-3">Taux de Rotation</p>
+                <p className="text-2xl font-bold text-purple-400">{stats.tauxRotation.toFixed(1)}%</p>
+                <p className="text-xs text-gray-500 mt-2">{stats.nbProduits} en stock</p>
+              </div>
+            </div>
           </div>
         </div>
 
