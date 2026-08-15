@@ -1,9 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import { Produit } from '@/lib/interfaces';
+
+interface Plateforme {
+  id: string;
+  nom: string;
+  couleur: string;
+  icone: string;
+}
 
 interface ModalArchiverProps {
   product: Produit | null;
@@ -17,10 +24,33 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
   const [platformeVente, setPlatformeVente] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [platformes, setPlatformes] = useState<Plateforme[]>([]);
+
+  useEffect(() => {
+    if (isOpen && product) {
+      fetchPlateformes();
+    }
+  }, [isOpen, product]);
+
+  const fetchPlateformes = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('plateformes')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('nom', { ascending: true });
+
+      setPlatformes(data || []);
+    } catch (err) {
+      console.error('Erreur chargement plateformes:', err);
+    }
+  };
 
   if (!isOpen || !product) return null;
-
-  const platformes = product.plateformes_vente || [];
 
   const handleArchive = async () => {
     if (!prixVente || !platformeVente) {
@@ -80,13 +110,13 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
             <p className="text-lg font-bold text-white">{product.nom}</p>
           </div>
 
-          {/* Alerte plateformes */}
-          <div className="flex gap-3 p-4 bg-yellow-900/20 border border-yellow-700/50 rounded-lg">
-            <AlertCircle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />
+          {/* Alerte vente */}
+          <div className="flex gap-3 p-4 bg-blue-900/20 border border-blue-700/50 rounded-lg">
+            <AlertCircle size={20} className="text-blue-500 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm text-yellow-400 font-bold mb-1">⚠️ Important</p>
-              <p className="text-sm text-yellow-300">
-                Ce produit sera retiré de : <span className="font-bold">{platformes.join(', ')}</span>
+              <p className="text-sm text-blue-400 font-bold mb-1">ℹ️ Enregistrement</p>
+              <p className="text-sm text-blue-300">
+                Ce produit sera marqué comme vendu et retiré de votre inventaire
               </p>
             </div>
           </div>
@@ -103,7 +133,7 @@ export default function ModalArchiver({ product, isOpen, onClose, onSuccess }: M
             >
               <option value="">Sélectionner une plateforme...</option>
               {platformes.map(p => (
-                <option key={p} value={p}>{p}</option>
+                <option key={p.id} value={p.nom}>{p.nom}</option>
               ))}
             </select>
           </div>
