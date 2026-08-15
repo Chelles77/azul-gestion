@@ -93,6 +93,8 @@ export default function Organisateur() {
   const [decryptedPasswords, setDecryptedPasswords] = useState<Record<string, string>>({});
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [notesInput, setNotesInput] = useState('');
+  const notesTimeoutRef = React.useRef<NodeJS.Timeout>();
 
   const [showAddIdentifiant, setShowAddIdentifiant] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -298,7 +300,7 @@ export default function Organisateur() {
     }
   };
 
-  const handleUpdateNotes = async (contenu: string) => {
+  const saveNotesToSupabase = async (contenu: string) => {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
@@ -314,6 +316,18 @@ export default function Organisateur() {
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const handleUpdateNotes = (contenu: string) => {
+    setNotesInput(contenu);
+
+    if (notesTimeoutRef.current) {
+      clearTimeout(notesTimeoutRef.current);
+    }
+
+    notesTimeoutRef.current = setTimeout(() => {
+      saveNotesToSupabase(contenu);
+    }, 1000);
   };
 
   const handleSaveIdentifiant = async () => {
@@ -1233,7 +1247,7 @@ export default function Organisateur() {
           <div>
             <div className="bg-[#1a1a1a] border-2 border-yellow-600 rounded-xl p-8 h-96">
               <textarea
-                value={notes?.contenu || ''}
+                value={notesInput || notes?.contenu || ''}
                 onChange={e => handleUpdateNotes(e.target.value)}
                 placeholder="📝 Écris tes notes ici..."
                 className="w-full h-full bg-[#0a0a0a] border border-gray-700 rounded-lg px-4 py-3 text-white resize-none focus:outline-none focus:border-yellow-600"
