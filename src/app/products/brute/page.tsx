@@ -96,7 +96,7 @@ export default function ProduitsBrutePage() {
       const workbook = XLSX.read(data);
       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      // Format simple: Col A=Numéro, Col B=Description, Col C=Prix (no empty rows)
+      // Lire les données brutes
       const allRows: any[][] = XLSX.utils.sheet_to_json<any>(worksheet, { header: 1 });
 
       if (allRows.length === 0) {
@@ -105,10 +105,14 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Filtre les lignes vides
-      const jsonData = allRows.filter((row) => {
+      // Filtrer les lignes vides et l'en-tête
+      const jsonData = allRows.filter((row, index) => {
         if (!Array.isArray(row) || row.length === 0) return false;
         if (row.every(cell => !cell)) return false; // Saute les lignes complètement vides
+        // Sauter la première ligne si c'est un header (contient du texte au lieu de chiffres)
+        if (index === 0 && row[0] && typeof row[0] === 'string' && isNaN(Number(row[0]))) {
+          return false;
+        }
         return true;
       });
 
@@ -118,14 +122,18 @@ export default function ProduitsBrutePage() {
 
       for (const row of jsonData) {
         // Indices: 0=Numéro, 1=Description, 2=Prix
-        if (!Array.isArray(row) || row.length < 3) continue;
+        if (!Array.isArray(row) || row.length < 2) {
+          skipped++;
+          continue;
+        }
 
         const productNumber = row[0]?.toString().trim() || '';
-        const desc = row[1]?.toString().trim() || '';
-        let rawPrice = row[2]?.toString().trim() || '0';
+        const desc = row[1]?.toString().trim() || row[2]?.toString().trim() || '';
+        let rawPrice = row[2]?.toString().trim() || row[1]?.toString().trim() || '0';
         rawPrice = rawPrice.replace(/[^\d.,]/g, '').replace(/,/g, '.');
         const prixNeuf = parseFloat(rawPrice) || 0;
 
+        // Accepter si on a description ET prix
         if (!desc || prixNeuf <= 0) {
           skipped++;
           continue;
@@ -174,23 +182,33 @@ export default function ProduitsBrutePage() {
         return;
       }
 
-      // Récupérer les produits existants pour éviter les doublons
+      // Récupérer les produits existants pour éviter les doublons (par nom + prix)
       const { data: existingProducts } = await supabase
         .from('produits')
-        .select('product_number')
+        .select('nom, prix_neuf')
         .eq('lot_id', selectedLotId);
 
-      const existingNumbers = new Set(
+      const existingSet = new Set(
         (existingProducts || [])
-          .map((p: any) => p.product_number)
-          .filter(Boolean)
+          .map((p: any) => `${p.nom}|${p.prix_neuf}`)
       );
 
       // Filtrer pour ne garder que les nouveaux produits
-      const produitsAjouter = nouveauxProduits.filter(p => !existingNumbers.has(p.product_number));
+      let duplicatesFound = 0;
+      const produitsAjouter = nouveauxProduits.filter(p => {
+        const key = `${p.nom}|${p.prix_neuf}`;
+        if (existingSet.has(key)) {
+          duplicatesFound++;
+          return false;
+        }
+        return true;
+      });
 
       if (produitsAjouter.length === 0) {
-        alert('✅ Tous les produits existent déjà dans ce lot.');
+        let msg = '✅ Fichier traité.';
+        if (duplicatesFound > 0) msg += ` ${duplicatesFound} produits existent déjà.`;
+        if (skipped > 0) msg += ` ${skipped} lignes invalides ignorées.`;
+        alert(msg);
         setUploading(false);
         return;
       }
@@ -213,8 +231,9 @@ export default function ProduitsBrutePage() {
       }
 
       if (!hasError) {
-        let message = `✅ ${insertedCount} produits importés (${nouveauxProduits.length - insertedCount} déjà existants)`;
-        if (skipped > 0) message += ` - ${skipped} lignes invalides ignorées`;
+        let message = `✅ ${insertedCount} produits importés`;
+        if (duplicatesFound > 0) message += ` (${duplicatesFound} doublons ignorés)`;
+        if (skipped > 0) message += ` - ${skipped} lignes invalides`;
         alert(message);
         setTimeout(() => window.location.reload(), 500);
       } else {
