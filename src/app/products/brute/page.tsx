@@ -229,10 +229,16 @@ export default function ProduitsBrutePage() {
         const totalFromFile = insertedCount + duplicatesFound;
 
         // Mettre à jour avec le total du fichier importé
-        await supabase
+        const { error: updateError } = await supabase
           .from('lots')
           .update({ nombre_produits_total: totalFromFile })
           .eq('id', selectedLotId);
+
+        if (updateError) {
+          console.error('Erreur UPDATE lots:', updateError);
+        } else {
+          console.log(`✅ nombre_produits_total mis à jour à ${totalFromFile}`);
+        }
 
         let message = `✅ ${totalFromFile} produits au total (${insertedCount} nouveaux)`;
         if (duplicatesFound > 0) message += ` + ${duplicatesFound} existants`;
