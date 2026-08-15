@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, DollarSign, Package, Activity, ArrowRight, Plus, ShoppingCart, Wallet } from 'lucide-react';
+import { TrendingUp, DollarSign, Package, Activity, ArrowRight, Plus, ShoppingCart, Wallet, AlertCircle } from 'lucide-react';
 
 interface DashboardStats {
   capital: number;
@@ -12,6 +12,10 @@ interface DashboardStats {
   benefice: number;
   nbLots: number;
   nbProduits: number;
+  nbProduitsBrutes: number;
+  nbProduitsEnVente: number;
+  nbProduitsVendus: number;
+  nbProduitsCasses: number;
   nbVentes: number;
   tauxRotation: number;
 }
@@ -36,6 +40,10 @@ export default function DashboardPage() {
     benefice: 0,
     nbLots: 0,
     nbProduits: 0,
+    nbProduitsBrutes: 0,
+    nbProduitsEnVente: 0,
+    nbProduitsVendus: 0,
+    nbProduitsCasses: 0,
     nbVentes: 0,
     tauxRotation: 0
   });
@@ -59,12 +67,11 @@ export default function DashboardPage() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
-        // Produits bruts
-        const { data: produitsData } = await supabase
+        // Tous les produits par statut
+        const { data: allProduitsData } = await supabase
           .from('produits')
           .select('*')
-          .eq('user_id', user.id)
-          .eq('statut', 'brute');
+          .eq('user_id', user.id);
 
         // Ventes avec infos du lot
         const { data: ventesData } = await supabase
@@ -94,9 +101,13 @@ export default function DashboardPage() {
         const totalVentes = ventesData?.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0) || 0;
         const totalCouts = ventesData?.reduce((sum, v) => sum + (v.prix_revient || 0), 0) || 0;
         const benefice = totalVentes - totalCouts;
-        const nbProduitsBruts = produitsData?.length || 0;
-        const totalProduits = (produitsData?.length || 0) + (ventesData?.length || 0);
-        const tauxRotation = totalProduits > 0 ? ((ventesData?.length || 0) / totalProduits) * 100 : 0;
+
+        const nbProduitsBrutes = allProduitsData?.filter(p => p.statut === 'brute').length || 0;
+        const nbProduitsEnVente = allProduitsData?.filter(p => p.statut === 'en_vente').length || 0;
+        const nbProduitsVendus = allProduitsData?.filter(p => p.statut === 'vendu').length || 0;
+        const nbProduitsCasses = allProduitsData?.filter(p => p.statut === 'casse' || p.statut === 'rebut').length || 0;
+        const totalProduits = nbProduitsBrutes + nbProduitsEnVente + nbProduitsVendus + nbProduitsCasses;
+        const tauxRotation = totalProduits > 0 ? ((nbProduitsVendus / totalProduits) * 100) : 0;
 
         setStats({
           capital: totalCapital,
@@ -104,7 +115,11 @@ export default function DashboardPage() {
           totalCouts,
           benefice,
           nbLots: lotsData?.length || 0,
-          nbProduits: nbProduitsBruts,
+          nbProduits: totalProduits,
+          nbProduitsBrutes,
+          nbProduitsEnVente,
+          nbProduitsVendus,
+          nbProduitsCasses,
           nbVentes: ventesData?.length || 0,
           tauxRotation
         });
@@ -292,27 +307,46 @@ export default function DashboardPage() {
         {/* SECTION PRODUITS ET VENTES */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-          {/* Produits Achetés */}
+          {/* Produits Achetés - TOTAL */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
               <Package size={20} className="text-blue-400" />
               <h2 className="text-lg font-bold text-white">Produits Achetés</h2>
             </div>
-            <div className="text-4xl font-bold text-blue-400 mb-2">{stats.nbProduits + stats.nbVentes}</div>
-            <p className="text-sm text-gray-400 mb-4">Total acheté</p>
-            <p className="text-xs text-gray-500">Stock: {stats.nbProduits} | Vendu: {stats.nbVentes}</p>
+            <div className="text-4xl font-bold text-blue-400 mb-2">{stats.nbProduits}</div>
+            <p className="text-sm text-gray-400 mb-2">Total acheté</p>
+            <div className="text-xs text-gray-500 space-y-1">
+              <p>Brutes: {stats.nbProduitsBrutes} | En Vente: {stats.nbProduitsEnVente}</p>
+              <p>Vendus: {stats.nbProduitsVendus} | Cassés: {stats.nbProduitsCasses}</p>
+            </div>
           </div>
 
-          {/* Produits En Stock */}
+          {/* Produits Brutes */}
           <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Package size={20} className="text-orange-400" />
-              <h2 className="text-lg font-bold text-white">Produits En Stock</h2>
+              <Package size={20} className="text-yellow-400" />
+              <h2 className="text-lg font-bold text-white">Produits Brutes</h2>
             </div>
-            <div className="text-4xl font-bold text-orange-400 mb-2">{stats.nbProduits}</div>
-            <p className="text-sm text-gray-400 mb-4">En attente de vente</p>
+            <div className="text-4xl font-bold text-yellow-400 mb-2">{stats.nbProduitsBrutes}</div>
+            <p className="text-sm text-gray-400 mb-4">Nouvellement achetés</p>
             <button
               onClick={() => router.push('/products/brute')}
+              className="w-full px-4 py-2 bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-600/50 text-yellow-400 rounded-lg text-sm font-medium transition-colors"
+            >
+              Voir les produits →
+            </button>
+          </div>
+
+          {/* Produits En Vente */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <ShoppingCart size={20} className="text-orange-400" />
+              <h2 className="text-lg font-bold text-white">Produits En Vente</h2>
+            </div>
+            <div className="text-4xl font-bold text-orange-400 mb-2">{stats.nbProduitsEnVente}</div>
+            <p className="text-sm text-gray-400 mb-4">En cours de vente</p>
+            <button
+              onClick={() => router.push('/products/vente')}
               className="w-full px-4 py-2 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-600/50 text-orange-400 rounded-lg text-sm font-medium transition-colors"
             >
               Voir les produits →
@@ -325,13 +359,29 @@ export default function DashboardPage() {
               <ShoppingCart size={20} className="text-green-400" />
               <h2 className="text-lg font-bold text-white">Produits Vendus</h2>
             </div>
-            <div className="text-4xl font-bold text-green-400 mb-2">{stats.nbVentes}</div>
-            <p className="text-sm text-gray-400 mb-4">Produits archivés</p>
+            <div className="text-4xl font-bold text-green-400 mb-2">{stats.nbProduitsVendus}</div>
+            <p className="text-sm text-gray-400 mb-4">Archivés</p>
             <button
               onClick={() => router.push('/products/archives')}
               className="w-full px-4 py-2 bg-green-600/20 hover:bg-green-600/30 border border-green-600/50 text-green-400 rounded-lg text-sm font-medium transition-colors"
             >
               Voir les archives →
+            </button>
+          </div>
+
+          {/* Produits Cassés */}
+          <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertCircle size={20} className="text-red-400" />
+              <h2 className="text-lg font-bold text-white">Produits Cassés</h2>
+            </div>
+            <div className="text-4xl font-bold text-red-400 mb-2">{stats.nbProduitsCasses}</div>
+            <p className="text-sm text-gray-400 mb-4">Non vendables</p>
+            <button
+              onClick={() => router.push('/finance/rebut')}
+              className="w-full px-4 py-2 bg-red-600/20 hover:bg-red-600/30 border border-red-600/50 text-red-400 rounded-lg text-sm font-medium transition-colors"
+            >
+              Voir les rebuts →
             </button>
           </div>
 
