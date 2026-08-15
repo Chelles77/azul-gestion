@@ -143,35 +143,55 @@ export default function DashboardPage() {
         {/* KPI CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Capital Investi */}
-          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg lg:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
+          <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700 shadow-lg col-span-full">
+            <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-blue-500/20 rounded-lg">
                 <ShoppingCart size={20} className="text-blue-400" />
               </div>
               <span className="text-xs uppercase tracking-wider text-blue-400 font-semibold">Achat - Lots</span>
             </div>
-            <div className="space-y-3 mb-4 max-h-40 overflow-y-auto">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               {lots.length > 0 ? (
                 lots.map((lot) => (
-                  <div key={lot.id} className="pb-3 border-b border-gray-700">
-                    <div className="flex justify-between text-xs text-blue-300 mb-1">
-                      <span className="font-semibold">Lot N°{lot.numerolot}</span>
-                      <span className="text-blue-400 font-bold">{lot.couttotal.toFixed(2)} €</span>
+                  <div key={lot.id} className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="font-semibold text-blue-300">Lot N°{lot.numerolot}</span>
+                      <span className="text-blue-400 font-bold text-lg">{lot.couttotal.toFixed(2)} €</span>
                     </div>
-                    <div className="flex gap-4 text-xs text-gray-400">
-                      <span>📫 Palettes: <span className="text-gray-300 font-semibold">{lot.nbpalettes || 1}</span></span>
-                      <span>📦 Pièces: <span className="text-gray-300 font-semibold">{lot.nbpieces || 0}</span></span>
+                    <div className="space-y-2 text-xs text-gray-400">
+                      <div className="flex justify-between">
+                        <span>📫 Palettes:</span>
+                        <span className="text-gray-200 font-semibold">{lot.nbpalettes || 1}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>📦 Pièces:</span>
+                        <span className="text-gray-200 font-semibold">{lot.nbpieces || 0}</span>
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-gray-500">Aucun lot</p>
+                <p className="text-xs text-gray-500 col-span-full">Aucun lot</p>
               )}
             </div>
-            <div className="border-t-2 border-blue-500 pt-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-blue-300">Total Investi</span>
-                <div className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(2)} €</div>
+
+            <div className="border-t-2 border-blue-500 pt-6 grid grid-cols-4 gap-4">
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
+                <p className="text-xs text-gray-400 mb-2">Total Palettes</p>
+                <p className="text-2xl font-bold text-blue-400">{lots.reduce((sum, lot) => sum + (lot.nbpalettes || 1), 0)}</p>
+              </div>
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
+                <p className="text-xs text-gray-400 mb-2">Total Pièces</p>
+                <p className="text-2xl font-bold text-blue-400">{lots.reduce((sum, lot) => sum + (lot.nbpieces || 0), 0)}</p>
+              </div>
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
+                <p className="text-xs text-gray-400 mb-2">Nombre de Lots</p>
+                <p className="text-2xl font-bold text-blue-400">{lots.length}</p>
+              </div>
+              <div className="bg-blue-900/50 border border-blue-500 rounded-lg p-4">
+                <p className="text-xs text-blue-300 mb-2">Total Investi</p>
+                <p className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(0)} €</p>
               </div>
             </div>
           </div>
