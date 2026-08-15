@@ -95,6 +95,7 @@ export default function Organisateur() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [showAddIdentifiant, setShowAddIdentifiant] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [newIdentifiant, setNewIdentifiant] = useState({
     nom_site: '',
     email: '',
@@ -215,6 +216,66 @@ export default function Organisateur() {
       await supabase.from('identifiants').delete().eq('id', id);
       await fetchData();
       alert('✅ Identifiant supprimé!');
+    } catch (error) {
+      alert('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
+    }
+  };
+
+  const handleEditIdentifiant = (id: Identifiant) => {
+    setNewIdentifiant({
+      nom_site: id.nom_site,
+      email: id.email,
+      password: '',
+      url: id.url || '',
+      notes: id.notes || '',
+      categorie: id.categorie,
+    });
+    setEditingId(id.id);
+    setShowAddIdentifiant(true);
+  };
+
+  const handleUpdateIdentifiant = async () => {
+    try {
+      if (!newIdentifiant.nom_site || !newIdentifiant.email) {
+        alert('Remplis tous les champs!');
+        return;
+      }
+
+      const supabase = createClient();
+      const updates: any = {
+        nom_site: newIdentifiant.nom_site,
+        email: newIdentifiant.email,
+        url: newIdentifiant.url,
+        notes: newIdentifiant.notes,
+        categorie: newIdentifiant.categorie,
+      };
+
+      if (newIdentifiant.password) {
+        updates.password_encrypted = await encryptPassword(newIdentifiant.password);
+      }
+
+      const { error } = await supabase
+        .from('identifiants')
+        .update(updates)
+        .eq('id', editingId);
+
+      if (error) {
+        alert('❌ Erreur: ' + error.message);
+        return;
+      }
+
+      alert('✅ Identifiant modifié!');
+      setNewIdentifiant({
+        nom_site: '',
+        email: '',
+        password: '',
+        url: '',
+        notes: '',
+        categorie: 'Autre',
+      });
+      setEditingId(null);
+      setShowAddIdentifiant(false);
+      await fetchData();
     } catch (error) {
       alert('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
     }
@@ -1031,6 +1092,7 @@ export default function Organisateur() {
 
             {showAddIdentifiant && (
               <div className="bg-[#1a1a1a] border-2 border-green-600 rounded-xl p-6 space-y-4">
+                <h3 className="text-lg font-bold text-white">{editingId ? '✏️ Modifier' : '➕ Ajouter'} un identifiant</h3>
                 <input
                   type="text"
                   placeholder="Nom du site"
@@ -1047,7 +1109,7 @@ export default function Organisateur() {
                 />
                 <input
                   type="text"
-                  placeholder="Mot de passe"
+                  placeholder={editingId ? "Mot de passe (laisser vide pour ne pas changer)" : "Mot de passe"}
                   value={newIdentifiant.password}
                   onChange={e => setNewIdentifiant({ ...newIdentifiant, password: e.target.value })}
                   className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white"
@@ -1067,13 +1129,17 @@ export default function Organisateur() {
                 />
                 <div className="flex gap-3">
                   <button
-                    onClick={handleSaveIdentifiant}
+                    onClick={editingId ? handleUpdateIdentifiant : handleSaveIdentifiant}
                     className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg"
                   >
-                    Sauvegarder
+                    {editingId ? 'Mettre à jour' : 'Sauvegarder'}
                   </button>
                   <button
-                    onClick={() => setShowAddIdentifiant(false)}
+                    onClick={() => {
+                      setShowAddIdentifiant(false);
+                      setEditingId(null);
+                      setNewIdentifiant({ nom_site: '', email: '', password: '', url: '', notes: '', categorie: 'Autre' });
+                    }}
                     className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg"
                   >
                     Annuler
@@ -1094,6 +1160,13 @@ export default function Organisateur() {
                     <div className="flex justify-between items-start mb-4">
                       <h3 className="text-2xl font-bold text-green-400">{id.nom_site}</h3>
                       <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditIdentifiant(id)}
+                          className="p-2 hover:bg-blue-600/50 rounded-lg transition-all"
+                          title="Modifier"
+                        >
+                          ✏️
+                        </button>
                         <button
                           onClick={() => handleDeleteIdentifiant(id.id)}
                           className="p-2 hover:bg-red-600/50 rounded-lg transition-all"
