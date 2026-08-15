@@ -223,17 +223,17 @@ export default function DashboardPage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                   {Object.entries(
-                    recentSales.reduce((acc, vente) => {
+                    recentSales.reduce((acc: Record<string, any[]>, vente: any) => {
                       const lotNum = (vente.lots as any)?.numerolot || 'N/A';
                       if (!acc[lotNum]) {
                         acc[lotNum] = [];
                       }
                       acc[lotNum].push(vente);
                       return acc;
-                    }, {} as Record<string, typeof recentSales>)
-                  ).map(([lotNum, ventes]) => {
-                    const chiffre = ventes.reduce((sum, v) => sum + (v.prix_vente_final || 0), 0);
-                    const revient = ventes.reduce((sum, v) => sum + (v.prix_revient || 0), 0);
+                    }, {} as Record<string, any[]>)
+                  ).map(([lotNum, ventes]: [string, any[]]) => {
+                    const chiffre = (ventes as any[]).reduce((sum: number, v: any) => sum + (v.prix_vente_final || 0), 0);
+                    const revient = (ventes as any[]).reduce((sum: number, v: any) => sum + (v.prix_revient || 0), 0);
                     const marge = chiffre - revient;
                     return (
                       <div key={lotNum} className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
