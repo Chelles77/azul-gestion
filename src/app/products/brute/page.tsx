@@ -55,6 +55,9 @@ export default function ProduitsBrutePage() {
       if (lot) {
         const coef = lot.coef_brut || (lot.prixneuftotal > 0 ? lot.couttotal / lot.prixneuftotal : 0);
         setCoefBrut(coef);
+        // Récupérer le nombre total de produits stocké dans la BD
+        const totalCount = lot.nombre_produits_total || 0;
+        setTotalProduitsLot(totalCount);
       }
       fetchProduits();
     }
@@ -63,38 +66,14 @@ export default function ProduitsBrutePage() {
   async function fetchProduits() {
     if (!selectedLotId) return;
 
-    try {
-      // Récupérer les produits BRUTES (pour l'affichage)
-      const { data, count: bruteCount, error: bruteError } = await supabase
-        .from('produits')
-        .select('*', { count: 'exact' })
-        .eq('lot_id', selectedLotId)
-        .eq('statut', 'brute')
-        .order('product_number', { ascending: true });
+    const { data } = await supabase
+      .from('produits')
+      .select('*')
+      .eq('lot_id', selectedLotId)
+      .eq('statut', 'brute')
+      .order('product_number', { ascending: true });
 
-      if (bruteError) console.error('❌ Erreur brutes:', bruteError);
-      if (data) {
-        setProduits(data);
-        console.log('✅ Produits brutes:', data.length);
-      }
-
-      // Récupérer TOUS les produits du lot (peu importe le statut)
-      const { data: allProds, error: totalError } = await supabase
-        .from('produits')
-        .select('id, statut')
-        .eq('lot_id', selectedLotId);
-
-      if (totalError) {
-        console.error('❌ Erreur total:', totalError);
-        setTotalProduitsLot(data?.length || 0);
-      } else {
-        const totalCount = allProds?.length || 0;
-        console.log('🔍 DEBUG - Total réel:', totalCount, 'Brutes:', data?.length);
-        setTotalProduitsLot(totalCount);
-      }
-    } catch (err) {
-      console.error('❌ Erreur fetchProduits:', err);
-    }
+    if (data) setProduits(data);
   }
 
   function generateQRCode(): string {
@@ -246,6 +225,13 @@ export default function ProduitsBrutePage() {
       }
 
       if (!hasError) {
+        // Mettre à jour le nombre total de produits dans la table lots
+        const totalImported = insertedCount + duplicatesFound;
+        await supabase
+          .from('lots')
+          .update({ nombre_produits_total: totalImported })
+          .eq('id', selectedLotId);
+
         let message = `✅ ${insertedCount} produits importés`;
         if (duplicatesFound > 0) message += ` (${duplicatesFound} doublons ignorés)`;
         if (skipped > 0) message += ` - ${skipped} lignes invalides`;
