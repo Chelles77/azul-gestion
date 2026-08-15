@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 import { Plus, X, Clock, AlertCircle, Eye, EyeOff, Copy, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -94,7 +94,7 @@ export default function Organisateur() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [notesInput, setNotesInput] = useState('');
-  const notesTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const notesTimeoutRef = useRef<NodeJS.Timeout>();
 
   const [showAddIdentifiant, setShowAddIdentifiant] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
