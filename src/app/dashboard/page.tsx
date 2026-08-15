@@ -21,6 +21,13 @@ interface DashboardStats {
   tauxRotation: number;
 }
 
+interface Plateforme {
+  id: string;
+  nom: string;
+  couleur: string;
+  icone: string;
+}
+
 interface LotDetail {
   id: string;
   numerolot: string;
@@ -51,6 +58,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [recentSales, setRecentSales] = useState<any[]>([]);
   const [lots, setLots] = useState<LotDetail[]>([]);
+  const [plateformes, setPlateformes] = useState<Plateforme[]>([]);
 
   useEffect(() => {
     async function fetchData() {
@@ -60,6 +68,13 @@ export default function DashboardPage() {
           router.push('/login');
           return;
         }
+
+        // Plateformes
+        const { data: platformesData } = await supabase
+          .from('plateformes')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('nom', { ascending: true });
 
         // Lots
         const { data: lotsData } = await supabase
@@ -142,6 +157,7 @@ export default function DashboardPage() {
 
         setRecentSales(ventesDataEnriched || []);
         setLots(lotsWithSales);
+        setPlateformes(platformesData || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -392,60 +408,50 @@ export default function DashboardPage() {
 
         {/* VENTES PAR PLATEFORME */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-          {(() => {
-            const platformes = recentSales.reduce((acc: Record<string, any>, vente: any) => {
-              const plat = vente.plateforme_vente_finale || 'Non défini';
-              if (!acc[plat]) {
-                acc[plat] = { chiffre: 0, revient: 0, count: 0, marge: 0 };
+          {plateformes.map((plat) => {
+            const statsPlat = recentSales.reduce((acc: any, vente: any) => {
+              if (vente.plateforme_vente_finale === plat.nom) {
+                acc.chiffre += vente.prix_vente_final || 0;
+                acc.revient += vente.prix_revient || 0;
+                acc.count += 1;
+                acc.marge += (vente.prix_vente_final || 0) - (vente.prix_revient || 0);
               }
-              acc[plat].chiffre += vente.prix_vente_final || 0;
-              acc[plat].revient += vente.prix_revient || 0;
-              acc[plat].count += 1;
-              acc[plat].marge += (vente.prix_vente_final || 0) - (vente.prix_revient || 0);
               return acc;
-            }, {});
+            }, { chiffre: 0, revient: 0, count: 0, marge: 0 });
 
-            const platformeColors: Record<string, string> = {
-              'Vinted': 'text-blue-400',
-              'Le Bon Coin': 'text-yellow-400',
-              'eBay': 'text-red-400',
-              'Amazon': 'text-purple-400',
-              'Non défini': 'text-gray-400'
-            };
-
-            const platformeBorders: Record<string, string> = {
-              'Vinted': 'border-blue-700',
-              'Le Bon Coin': 'border-yellow-700',
-              'eBay': 'border-red-700',
-              'Amazon': 'border-purple-700',
-              'Non défini': 'border-gray-700'
-            };
-
-            return Object.entries(platformes).map(([plat, data]: [string, any]) => (
-              <div key={plat} className={`bg-[#1a1a1a] border ${platformeBorders[plat] || 'border-gray-800'} rounded-xl p-6 hover:border-opacity-100 transition-all cursor-pointer hover:shadow-lg`} onClick={() => router.push(`/products/archives?plateforme=${plat}`)}>
+            return (
+              <div
+                key={plat.id}
+                className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6 hover:border-opacity-100 transition-all cursor-pointer hover:shadow-lg"
+                style={{ borderColor: plat.couleur + '40' }}
+                onClick={() => router.push(`/products/archives?plateforme=${plat.nom}`)}
+              >
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className={`text-lg font-bold ${platformeColors[plat] || 'text-gray-300'}`}>{plat}</h2>
-                  <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded">{data.count} ventes</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{plat.icone}</span>
+                    <h2 className="text-lg font-bold" style={{ color: plat.couleur }}>{plat.nom}</h2>
+                  </div>
+                  <span className="text-xs text-gray-500 bg-gray-800/50 px-2 py-1 rounded">{statsPlat.count} ventes</span>
                 </div>
                 <div className="space-y-3">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Chiffre</p>
-                    <p className="text-2xl font-bold text-green-400">{data.chiffre.toFixed(0)} €</p>
+                    <p className="text-2xl font-bold text-green-400">{statsPlat.chiffre.toFixed(0)} €</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Revient</p>
-                    <p className="text-sm font-semibold text-orange-400">{data.revient.toFixed(0)} €</p>
+                    <p className="text-sm font-semibold text-orange-400">{statsPlat.revient.toFixed(0)} €</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Marge</p>
-                    <p className={`text-sm font-semibold ${data.marge >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {data.marge.toFixed(0)} €
+                    <p className={`text-sm font-semibold ${statsPlat.marge >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {statsPlat.marge.toFixed(0)} €
                     </p>
                   </div>
                 </div>
               </div>
-            ));
-          })()}
+            );
+          })}
         </div>
 
         {/* DÉTAILS DES LOTS */}
