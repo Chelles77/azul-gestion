@@ -193,20 +193,37 @@ export default function Organisateur() {
   };
 
   const toggleShowPassword = async (id: string, encrypted: string) => {
-    if (showPasswords[id]) {
-      setShowPasswords({ ...showPasswords, [id]: false });
-    } else {
-      const decrypted = await decryptPassword(encrypted);
-      setDecryptedPasswords({ ...decryptedPasswords, [id]: decrypted });
-      setShowPasswords({ ...showPasswords, [id]: true });
+    try {
+      if (showPasswords[id]) {
+        setShowPasswords({ ...showPasswords, [id]: false });
+      } else {
+        const decrypted = await decryptPassword(encrypted);
+        if (!decrypted) {
+          alert('❌ Erreur: Impossible de décrypter le mot de passe');
+          return;
+        }
+        setDecryptedPasswords({ ...decryptedPasswords, [id]: decrypted });
+        setShowPasswords({ ...showPasswords, [id]: true });
+      }
+    } catch (error) {
+      alert('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
     }
   };
 
   const copyPassword = async (id: string, encrypted: string) => {
-    const password = await decryptPassword(encrypted);
-    navigator.clipboard.writeText(password);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    try {
+      const password = await decryptPassword(encrypted);
+      if (!password) {
+        alert('❌ Erreur: Impossible de décrypter le mot de passe');
+        return;
+      }
+      await navigator.clipboard.writeText(password);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+      alert('✅ Mot de passe copié!');
+    } catch (error) {
+      alert('❌ Erreur: ' + (error instanceof Error ? error.message : 'Unknown'));
+    }
   };
 
   const handleDeleteIdentifiant = async (id: string) => {
