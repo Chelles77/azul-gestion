@@ -232,7 +232,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex justify-between">
                         <span>📦 Pièces:</span>
-                        <span className="text-gray-200 font-semibold">{lot.nbpieces || 0}</span>
+                        <span className="text-gray-200 font-semibold">{lot.nombre_produits_total || 0}</span>
                       </div>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export default function DashboardPage() {
               </div>
               <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
                 <p className="text-xs text-gray-400 mb-2">Total Pièces</p>
-                <p className="text-2xl font-bold text-blue-400">{lots.reduce((sum, lot) => sum + (lot.nbpieces || 0), 0)}</p>
+                <p className="text-2xl font-bold text-blue-400">{lots.reduce((sum, lot) => sum + (lot.nombre_produits_total || 0), 0)}</p>
               </div>
               <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
                 <p className="text-xs text-gray-400 mb-2">Nombre de Lots</p>
