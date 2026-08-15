@@ -68,14 +68,15 @@ export default function RebutPage() {
               .eq('statut', 'en_vente');
 
             const produitsEnVente = enVente?.length || 0;
-            const prixMoyenOriginal = lot.prixAchat / (lot.nbpieces || 1);
+            const nbPieces = lot.nombre_produits_total || lot.nbpieces || 1;
+            const prixMoyenOriginal = lot.prixAchat / nbPieces;
             const prixMoyenNouveau = produitsEnVente > 0 ? prixRestantTotal / produitsEnVente : 0;
 
             stats.push({
               lot_id: lotId,
               lot_numero: lot.numerolot || lotId,
               prixAchat: lot.prixAchat,
-              nbRebutTotal: lot.nbpieces || 0,
+              nbRebutTotal: nbPieces,
               rebutCount: rebuts.length,
               prixRebutTotal,
               prixRestantTotal,

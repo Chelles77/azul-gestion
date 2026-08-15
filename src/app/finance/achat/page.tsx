@@ -22,6 +22,7 @@ type Lot = {
   couttotal: number;
   nbpalettes: number;
   nbpieces: number;
+  nombre_produits_total?: number;
   prixneuftotal: number;
   tauxrebut: number;
   indiceachat: number;
@@ -140,7 +141,7 @@ export default function PageGestionAchats() {
       fraisPort: (lot.fraisport || 0).toString(),
       fraisEncheres: (lot.fraisencheres || 0).toString(),
       nbPalettes: (lot.nbpalettes || 1).toString(),
-      nbPieces: (lot.nbpieces || 0).toString(),
+      nbPieces: (lot.nombre_produits_total || lot.nbpieces || 0).toString(),
       prixNeufTotal: (lot.prixneuftotal || 0).toString(),
       tauxRebut: (lot.tauxrebut || 0).toString()
     });
@@ -354,7 +355,7 @@ export default function PageGestionAchats() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Pièces Vendables</span>
                       <span className="font-bold text-orange-400">
-                        {Math.round((lot.nbpieces || 0) * (1 - (lot.tauxrebut || 0)/100))} / {lot.nbpieces}
+                        {Math.round((lot.nombre_produits_total || lot.nbpieces || 0) * (1 - (lot.tauxrebut || 0)/100))} / {lot.nombre_produits_total || lot.nbpieces}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">

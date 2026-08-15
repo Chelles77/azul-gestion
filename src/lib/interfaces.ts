@@ -38,6 +38,7 @@ export interface Lot {
   couttotal: number;
   nbpalettes: number;
   nbpieces: number;
+  nombre_produits_total?: number;
   prixneuftotal: number;
   tauxrebut: number;
   indiceachat: number;
