@@ -9,7 +9,7 @@ import ModalValider from '@/components/ModalValider';
 import ModalMarquerCasse from '@/components/ModalMarquerCasse';
 import { Produit } from '@/lib/interfaces';
 
-type ProductStatus = 'all' | 'brute' | 'en_vente' | 'vendu' | 'casse' | 'autres';
+type ProductStatus = 'all' | 'brute' | 'en_vente' | 'vendu' | 'casse';
 
 export default function ProductsContent() {
   const router = useRouter();
@@ -47,8 +47,12 @@ export default function ProductsContent() {
           .select('*')
           .eq('user_id', user.id);
 
-        const { data: allProducts } = await query.order('product_number', { ascending: true });
-        setProducts(allProducts || []);
+        if (status !== 'all') {
+          query = query.eq('statut', status);
+        }
+
+        const { data } = await query.order('product_number', { ascending: true });
+        setProducts(data || []);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -59,23 +63,7 @@ export default function ProductsContent() {
     fetchData();
   }, [status, supabase]);
 
-  let filtered = products;
-
-  // Filter by status
-  if (status === 'brute') {
-    filtered = filtered.filter(p => p.statut === 'brute');
-  } else if (status === 'en_vente') {
-    filtered = filtered.filter(p => p.statut === 'en_vente');
-  } else if (status === 'vendu') {
-    filtered = filtered.filter(p => p.statut === 'vendu');
-  } else if (status === 'casse') {
-    filtered = filtered.filter(p => p.statut === 'casse' || p.statut === 'rebut');
-  } else if (status === 'autres') {
-    filtered = filtered.filter(p => p.statut !== 'brute' && p.statut !== 'en_vente' && p.statut !== 'vendu' && p.statut !== 'casse' && p.statut !== 'rebut');
-  }
-
-  // Filter by search term
-  const filteredProducts = filtered.filter(p =>
+  const filteredProducts = products.filter(p =>
     p.nom?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -85,8 +73,7 @@ export default function ProductsContent() {
     brute: products.filter(p => p.statut === 'brute').length,
     en_vente: products.filter(p => p.statut === 'en_vente').length,
     vendu: products.filter(p => p.statut === 'vendu').length,
-    casse: products.filter(p => p.statut === 'casse' || p.statut === 'rebut').length,
-    autres: products.filter(p => p.statut !== 'brute' && p.statut !== 'en_vente' && p.statut !== 'vendu' && p.statut !== 'casse' && p.statut !== 'rebut').length
+    casse: products.filter(p => p.statut === 'casse' || p.statut === 'rebut').length
   };
 
   const statusLabels: Record<ProductStatus, string> = {
@@ -94,8 +81,7 @@ export default function ProductsContent() {
     brute: 'Produits bruts',
     en_vente: 'En vente',
     vendu: 'Vendus',
-    casse: 'Cassés/Rebuts',
-    autres: 'Autres (à vérifier)'
+    casse: 'Cassés/Rebuts'
   };
 
   async function deleteProduit(id: string, nom: string) {
@@ -129,7 +115,7 @@ export default function ProductsContent() {
         {/* TABS */}
         <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 mb-8 overflow-x-auto">
           <div className="flex gap-2 min-w-full md:min-w-0">
-            {(['all', 'brute', 'en_vente', 'vendu', 'casse', 'autres'] as ProductStatus[]).map(st => (
+            {(['all', 'brute', 'en_vente', 'vendu', 'casse'] as ProductStatus[]).map(st => (
               <button
                 key={st}
                 onClick={() => {
