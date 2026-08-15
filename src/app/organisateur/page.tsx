@@ -1023,7 +1023,7 @@ export default function Organisateur() {
                   className="w-full bg-[#0a0a0a] border border-gray-700 rounded px-3 py-2 text-white"
                 />
                 <input
-                  type="password"
+                  type="text"
                   placeholder="Mot de passe"
                   value={newIdentifiant.password}
                   onChange={e => setNewIdentifiant({ ...newIdentifiant, password: e.target.value })}
