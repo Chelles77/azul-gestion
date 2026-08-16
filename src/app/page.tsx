@@ -65,39 +65,31 @@ export default function Dashboard() {
         </div>
 
         {/* KPI CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-lg">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-blue-500/10 rounded-lg"><DollarSign size={20} className="text-blue-400" /></div>
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Capital Investi</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{stats.capital.toFixed(2)} €</div>
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+          <div className="bg-[#1a1a1a] p-4 md:p-6 rounded-xl border border-gray-800 shadow-lg flex flex-col items-center text-center">
+            <div className="p-2 bg-blue-500/10 rounded-lg mb-2"><DollarSign size={16} className="text-blue-400" /></div>
+            <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2 line-clamp-2">Capital Investi</span>
+            <div className="text-lg md:text-2xl font-bold text-white break-words overflow-hidden">{stats.capital.toFixed(2)} €</div>
           </div>
 
-          <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-lg">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-green-500/10 rounded-lg"><TrendingUp size={20} className="text-green-400" /></div>
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Chiffre d'Affaires</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{stats.ca.toFixed(2)} €</div>
+          <div className="bg-[#1a1a1a] p-4 md:p-6 rounded-xl border border-gray-800 shadow-lg flex flex-col items-center text-center">
+            <div className="p-2 bg-green-500/10 rounded-lg mb-2"><TrendingUp size={16} className="text-green-400" /></div>
+            <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2 line-clamp-2">Chiffre d'Affaires</span>
+            <div className="text-lg md:text-2xl font-bold text-white break-words overflow-hidden">{stats.ca.toFixed(2)} €</div>
           </div>
 
-          <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-lg">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-red-500/10 rounded-lg"><Activity size={20} className="text-red-400" /></div>
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Bénéfice Net</span>
-            </div>
-            <div className={`text-2xl font-bold ${stats.benefice >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <div className="bg-[#1a1a1a] p-4 md:p-6 rounded-xl border border-gray-800 shadow-lg flex flex-col items-center text-center">
+            <div className="p-2 bg-red-500/10 rounded-lg mb-2"><Activity size={16} className="text-red-400" /></div>
+            <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2 line-clamp-2">Bénéfice Net</span>
+            <div className={`text-lg md:text-2xl font-bold break-words overflow-hidden ${stats.benefice >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {stats.benefice.toFixed(2)} €
             </div>
           </div>
 
-          <div className="bg-[#1a1a1a] p-6 rounded-xl border border-gray-800 shadow-lg">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-purple-500/10 rounded-lg"><Package size={20} className="text-purple-400" /></div>
-              <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Taux de Rotation</span>
-            </div>
-            <div className="text-2xl font-bold text-white">{stats.rotation}%</div>
+          <div className="bg-[#1a1a1a] p-4 md:p-6 rounded-xl border border-gray-800 shadow-lg flex flex-col items-center text-center">
+            <div className="p-2 bg-purple-500/10 rounded-lg mb-2"><Package size={16} className="text-purple-400" /></div>
+            <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2 line-clamp-2">Taux de Rotation</span>
+            <div className="text-lg md:text-2xl font-bold text-white break-words overflow-hidden">{stats.rotation}%</div>
           </div>
         </div>
 
