@@ -35,6 +35,7 @@ export default function SimulateurPage() {
   // Résultats
   const [costPerPalette, setCostPerPalette] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [savedSimulation, setSavedSimulation] = useState<any>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -106,6 +107,34 @@ export default function SimulateurPage() {
     else color = 'green';
 
     return { score: finalScore, color };
+  };
+
+  const handleReset = () => {
+    setProducts([]);
+    setResults([]);
+    setTotalPrice('');
+    setPalettes('4');
+    setShippingCost('');
+    setFeesPercent('5');
+    setCostPerPalette(0);
+    setShowResults(false);
+    setSavedSimulation(null);
+  };
+
+  const handleSaveSimulation = () => {
+    const simulation = {
+      timestamp: new Date().toLocaleString('fr-FR'),
+      products,
+      totalPrice,
+      palettes,
+      shippingCost,
+      feesPercent,
+      results,
+      costPerPalette
+    };
+    setSavedSimulation(simulation);
+    localStorage.setItem('lastSimulation', JSON.stringify(simulation));
+    alert('✅ Simulation sauvegardée !');
   };
 
   const handleCalculate = () => {
@@ -265,15 +294,33 @@ export default function SimulateurPage() {
             </div>
           )}
 
-          {/* Bouton Calculer */}
+          {/* Boutons Calculer / Vider / Sauvegarder */}
           {products.length > 0 && (
-            <button
-              onClick={handleCalculate}
-              className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
-            >
-              <DownloadCloud size={20} />
-              Analyser le lot
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleCalculate}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+              >
+                <DownloadCloud size={20} />
+                Analyser le lot
+              </button>
+              {showResults && (
+                <button
+                  onClick={handleSaveSimulation}
+                  className="px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition"
+                  title="Mémoriser cette simulation"
+                >
+                  💾 Garder
+                </button>
+              )}
+              <button
+                onClick={handleReset}
+                className="px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
+                title="Vider la page"
+              >
+                🗑️ Vider
+              </button>
+            </div>
           )}
         </div>
 
