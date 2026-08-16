@@ -35,6 +35,7 @@ export default function SimulateurPage() {
 
   // Résultats
   const [costPerPalette, setCostPerPalette] = useState(0);
+  const [totalCostAchat, setTotalCostAchat] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [savedSimulation, setSavedSimulation] = useState<any>(null);
 
@@ -146,6 +147,7 @@ export default function SimulateurPage() {
     setShippingCost('');
     setFeesPercent('5');
     setCostPerPalette(0);
+    setTotalCostAchat(0);
     setShowResults(false);
     setSavedSimulation(null);
   };
@@ -191,6 +193,7 @@ export default function SimulateurPage() {
     // Coût total avec frais
     const feeAmount = total * (fees / 100);
     const totalCost = total + shipping + feeAmount;
+    setTotalCostAchat(totalCost);
 
     // Coût par pièce
     const costPerPiece = totalCost / pieces;
@@ -237,8 +240,8 @@ export default function SimulateurPage() {
     ? (filteredResults.reduce((sum, r) => sum + r.score, 0) / filteredResults.length).toFixed(1)
     : 0;
 
-  const averageCoefficient = filteredResults.length > 0
-    ? (filteredResults.reduce((sum, r) => sum + r.coefficient, 0) / filteredResults.length).toFixed(1)
+  const averageCoefficient = totalPriceNeuf > 0 && totalCostAchat > 0
+    ? ((totalCostAchat / totalPriceNeuf) * 100).toFixed(1)
     : 0;
 
   const pricePiece = filteredResults.length > 0
