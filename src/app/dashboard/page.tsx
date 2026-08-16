@@ -365,50 +365,50 @@ export default function DashboardPage() {
               const net = brut - urssaf;
               return (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-5 gap-3">
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Vente</p>
-                      <p className="text-2xl font-bold text-green-400">{vente.toFixed(0)} €</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3">
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Vente</p>
+                      <p className="text-lg md:text-2xl font-bold text-green-400 break-words overflow-hidden w-full">{vente.toFixed(0)} €</p>
                     </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Frais</p>
-                      <p className="text-2xl font-bold text-orange-400">{frais.toFixed(0)} €</p>
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Frais</p>
+                      <p className="text-lg md:text-2xl font-bold text-orange-400 break-words overflow-hidden w-full">{frais.toFixed(0)} €</p>
                     </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">URSSAF (42%)</p>
-                      <p className="text-2xl font-bold text-red-400">{urssaf.toFixed(0)} €</p>
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">URSSAF (42%)</p>
+                      <p className="text-lg md:text-2xl font-bold text-red-400 break-words overflow-hidden w-full">{urssaf.toFixed(0)} €</p>
                     </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Bénéfice Brut</p>
-                      <p className={`text-2xl font-bold ${brut >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>{brut.toFixed(0)} €</p>
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Bénéfice Brut</p>
+                      <p className={`text-lg md:text-2xl font-bold break-words overflow-hidden w-full ${brut >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>{brut.toFixed(0)} €</p>
                     </div>
-                    <div className="p-4 bg-purple-900/50 border border-purple-500 rounded-lg">
-                      <p className="text-xs text-purple-300 mb-2">Bénéfice Net</p>
-                      <p className={`text-2xl font-bold ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{net.toFixed(0)} €</p>
+                    <div className="p-3 md:p-4 bg-purple-900/50 border border-purple-500 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-purple-300 mb-2 line-clamp-2">Bénéfice Net</p>
+                      <p className={`text-lg md:text-2xl font-bold break-words overflow-hidden w-full ${net >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{net.toFixed(0)} €</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 pt-4 border-t border-gray-700">
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Capital Investi</p>
-                      <p className="text-2xl font-bold text-blue-400">{stats.capital.toFixed(0)} €</p>
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 pt-4 border-t border-gray-700">
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Capital Investi</p>
+                      <p className="text-lg md:text-2xl font-bold text-blue-400 break-words overflow-hidden w-full">{stats.capital.toFixed(0)} €</p>
                       <p className="text-xs text-gray-500 mt-2">{stats.nbLots} lots</p>
                     </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Rentabilité</p>
-                      <p className={`text-2xl font-bold ${(net / stats.capital * 100) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Rentabilité</p>
+                      <p className={`text-lg md:text-2xl font-bold break-words overflow-hidden w-full ${(net / stats.capital * 100) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                         {stats.capital > 0 ? (net / stats.capital * 100).toFixed(1) : 0}%
                       </p>
                       <p className="text-xs text-gray-500 mt-2">ROI</p>
                     </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Produits Vendus</p>
-                      <p className="text-2xl font-bold text-purple-400">{stats.nbProduitsVendus}</p>
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Produits Vendus</p>
+                      <p className="text-lg md:text-2xl font-bold text-purple-400 break-words overflow-hidden w-full">{stats.nbProduitsVendus}</p>
                       <p className="text-xs text-gray-500 mt-2">Rotation: {stats.tauxRotation.toFixed(1)}%</p>
                     </div>
-                    <div className="p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg">
-                      <p className="text-xs text-gray-400 mb-2">Produits En Stock</p>
-                      <p className="text-2xl font-bold text-yellow-400">{stats.nbProduitsBrutes + stats.nbProduitsEnVente}</p>
+                    <div className="p-3 md:p-4 bg-[#0a0a0a] border border-gray-700 rounded-lg flex flex-col items-center text-center">
+                      <p className="text-xs text-gray-400 mb-2 line-clamp-2">Produits En Stock</p>
+                      <p className="text-lg md:text-2xl font-bold text-yellow-400 break-words overflow-hidden w-full">{stats.nbProduitsBrutes + stats.nbProduitsEnVente}</p>
                       <p className="text-xs text-gray-500 mt-2">{stats.nbProduitsCasses} cassés</p>
                     </div>
                   </div>
