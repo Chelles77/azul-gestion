@@ -106,26 +106,34 @@ export default function SimulateurPage() {
   };
 
   const calculateScore = (coefficient: number, priceNeuf: number): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
-    // Score basé sur coefficient et plage de prix
-    let baseScore = 20;
+    const coefficientPercent = coefficient * 100;
+    let score = 20;
 
-    // Pénalité si coefficient trop haut (coûte cher)
-    if (coefficient > 1) baseScore -= 10; // Si on paie plus que le prix neuf
-    else if (coefficient > 0.8) baseScore -= 5;
-    else if (coefficient > 0.6) baseScore -= 2;
+    // Seuils logiques basés sur le coefficient d'achat
+    if (coefficientPercent < 8) {
+      score = 20; // Excellent
+    } else if (coefficientPercent < 13) {
+      // Interpolation linéaire : 8% = 17, 13% = 15
+      score = 17 - ((coefficientPercent - 8) / 5) * 2;
+    } else if (coefficientPercent < 20) {
+      // Interpolation : 13% = 15, 20% = 12
+      score = 15 - ((coefficientPercent - 13) / 7) * 3;
+    } else if (coefficientPercent < 35) {
+      // Interpolation : 20% = 12, 35% = 8
+      score = 12 - ((coefficientPercent - 20) / 15) * 4;
+    } else if (coefficientPercent < 50) {
+      // Interpolation : 35% = 8, 50% = 4
+      score = 8 - ((coefficientPercent - 35) / 15) * 4;
+    } else {
+      score = 4; // Mauvais
+    }
 
-    // Bonus selon la plage de prix (produits plus chers = plus faciles à vendre)
-    if (priceNeuf >= 2000) baseScore += 3;
-    else if (priceNeuf >= 1000) baseScore += 2;
-    else if (priceNeuf >= 500) baseScore += 1;
-    else if (priceNeuf < 100) baseScore -= 3;
-
-    const finalScore = Math.max(0, Math.min(20, Math.round(baseScore * 10) / 10));
+    const finalScore = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
 
     let color: 'red' | 'orange' | 'yellow' | 'green';
-    if (finalScore < 7) color = 'red';
-    else if (finalScore < 13) color = 'orange';
-    else if (finalScore < 17) color = 'yellow';
+    if (finalScore < 8) color = 'red';
+    else if (finalScore < 12) color = 'orange';
+    else if (finalScore < 16) color = 'yellow';
     else color = 'green';
 
     return { score: finalScore, color };
