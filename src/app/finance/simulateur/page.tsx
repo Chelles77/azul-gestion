@@ -32,7 +32,6 @@ export default function SimulateurPage() {
   const [palettes, setPalettes] = useState('4');
   const [shippingCost, setShippingCost] = useState('');
   const [feesPercent, setFeesPercent] = useState('5');
-  const [totalPieces, setTotalPieces] = useState('');
 
   // Résultats
   const [costPerPalette, setCostPerPalette] = useState(0);
@@ -143,7 +142,6 @@ export default function SimulateurPage() {
     setProducts([]);
     setResults([]);
     setTotalPrice('');
-    setTotalPieces('');
     setPalettes('4');
     setShippingCost('');
     setFeesPercent('5');
@@ -161,7 +159,8 @@ export default function SimulateurPage() {
       shippingCost,
       feesPercent,
       results,
-      costPerPalette
+      costPerPalette,
+      totalPieces: products.length
     };
     setSavedSimulation(simulation);
     localStorage.setItem('lastSimulation', JSON.stringify(simulation));
@@ -169,8 +168,8 @@ export default function SimulateurPage() {
   };
 
   const handleCalculate = () => {
-    if (!totalPrice || !shippingCost || !palettes || !totalPieces) {
-      alert('Veuillez remplir tous les champs');
+    if (!totalPrice || !shippingCost || !palettes || products.length === 0) {
+      alert('Veuillez charger un fichier et remplir tous les champs');
       return;
     }
 
@@ -178,9 +177,9 @@ export default function SimulateurPage() {
     const shipping = parseFloat(shippingCost);
     const fees = parseFloat(feesPercent);
     const paletteCount = parseInt(palettes);
-    const pieces = parseInt(totalPieces);
+    const pieces = products.length;
 
-    if (isNaN(total) || isNaN(shipping) || isNaN(fees) || isNaN(paletteCount) || isNaN(pieces) || total <= 0 || shipping < 0 || fees < 0 || pieces <= 0) {
+    if (isNaN(total) || isNaN(shipping) || isNaN(fees) || isNaN(paletteCount) || total <= 0 || shipping < 0 || fees < 0 || pieces <= 0) {
       alert('Valeurs invalides');
       return;
     }
@@ -311,18 +310,6 @@ export default function SimulateurPage() {
                     className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white"
                   />
                 </div>
-
-              {/* Nombre de Pièces */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Nombre de Pièces</label>
-                <input
-                  type="number"
-                  value={totalPieces}
-                  onChange={(e) => setTotalPieces(e.target.value)}
-                  placeholder="150"
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white"
-                />
-              </div>
 
               {/* Nombre de Palettes */}
               <div>
