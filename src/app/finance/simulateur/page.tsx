@@ -238,6 +238,10 @@ export default function SimulateurPage() {
     ? (filteredResults[0]?.costPerProduct || 0).toFixed(2)
     : 0;
 
+  const totalPriceNeuf = products.length > 0
+    ? products.reduce((sum, p) => sum + p.priceNeuf, 0)
+    : 0;
+
   return (
     <div className="min-h-screen bg-[#111111] text-gray-200 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -279,19 +283,26 @@ export default function SimulateurPage() {
 
           {/* Formulaire Paramètres */}
           {products.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-
-              {/* Prix Total */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Prix Total (€)</label>
-                <input
-                  type="number"
-                  value={totalPrice}
-                  onChange={(e) => setTotalPrice(e.target.value)}
-                  placeholder="5000"
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white"
-                />
+            <>
+              {/* Affichage du Prix Neuf Total */}
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 mb-4 text-sm">
+                <span className="text-gray-400">📊 Prix Neuf Total du Lot: </span>
+                <span className="font-bold text-green-400">{totalPriceNeuf.toFixed(2)} €</span>
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+
+                {/* Prix Total */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Prix Total (€)</label>
+                  <input
+                    type="number"
+                    value={totalPrice}
+                    onChange={(e) => setTotalPrice(e.target.value)}
+                    placeholder="5000"
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white"
+                  />
+                </div>
 
               {/* Nombre de Pièces */}
               <div>
@@ -345,6 +356,7 @@ export default function SimulateurPage() {
                 </select>
               </div>
             </div>
+            </>
           )}
 
           {/* Boutons Calculer / Vider / Sauvegarder */}
