@@ -190,8 +190,9 @@ export default function SimulateurPage() {
 
     // Calculer les résultats
     const newResults: SimulationResult[] = products.map((product) => {
-      const coefficient = (costPerPiece / product.priceNeuf) * 100; // En %
-      const { score, color } = calculateScore(coefficient / 100, product.priceNeuf); // Passer le coefficient en décimal pour le scoring
+      const coefficientDecimal = costPerPiece / product.priceNeuf; // En décimal (0.20 = 20%)
+      const coefficientPercent = coefficientDecimal * 100; // En %
+      const { score, color } = calculateScore(coefficientDecimal, product.priceNeuf);
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
@@ -206,7 +207,7 @@ export default function SimulateurPage() {
         priceNeuf: product.priceNeuf,
         costPerProduct: costPerPiece,
         totalPurchasePrice: totalCost,
-        coefficient: coefficient,
+        coefficient: coefficientPercent,
         score: score,
         color: color,
         colorLabel: colorLabels[color]
@@ -380,10 +381,14 @@ export default function SimulateurPage() {
         {showResults && results.length > 0 && (
           <div>
             {/* Résumé */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 mb-8">
               <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-4 rounded-xl border border-blue-700">
                 <p className="text-xs text-gray-400 mb-2">Coût par Palette</p>
                 <p className="text-2xl font-bold text-blue-400">{costPerPalette.toFixed(2)} €</p>
+              </div>
+              <div className="bg-gradient-to-br from-cyan-900/30 to-[#1a1a1a] p-4 rounded-xl border border-cyan-700">
+                <p className="text-xs text-gray-400 mb-2">Prix Total d'Achat</p>
+                <p className="text-2xl font-bold text-cyan-400">{showResults && results.length > 0 ? (results[0]?.totalPurchasePrice || 0).toFixed(2) : '0'} €</p>
               </div>
               <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-4 rounded-xl border border-purple-700">
                 <p className="text-xs text-gray-400 mb-2">Score Moyen</p>
