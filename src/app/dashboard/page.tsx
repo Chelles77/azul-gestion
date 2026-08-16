@@ -255,9 +255,9 @@ export default function DashboardPage() {
                 <p className="text-xs text-gray-400 mb-2 line-clamp-2">Nombre de Lots</p>
                 <p className="text-lg md:text-2xl font-bold text-blue-400 break-words overflow-hidden w-full">{lots.length}</p>
               </div>
-              <div className="bg-red-900/50 border border-red-500 rounded-lg p-3 md:p-4 flex flex-col items-center text-center">
-                <p className="text-xs text-red-300 mb-2 line-clamp-2">Total Investi</p>
-                <p className="text-lg md:text-2xl font-bold text-red-400 break-words overflow-hidden w-full">{stats.capital.toFixed(0)} €</p>
+              <div className="bg-blue-900/50 border border-blue-500 rounded-lg p-3 md:p-4 flex flex-col items-center text-center">
+                <p className="text-xs text-blue-300 mb-2 line-clamp-2">Total Investi</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-400 break-words overflow-hidden w-full">{stats.capital.toFixed(0)} €</p>
               </div>
             </div>
           </div>
