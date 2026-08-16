@@ -242,22 +242,22 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div className="border-t-2 border-blue-500 pt-6 grid grid-cols-4 gap-4">
-              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
-                <p className="text-xs text-gray-400 mb-2">Total Palettes</p>
-                <p className="text-2xl font-bold text-blue-400">{lots.reduce((sum, lot) => sum + (lot.nbpalettes || 1), 0)}</p>
+            <div className="border-t-2 border-blue-500 pt-4 md:pt-6 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 md:p-4 flex flex-col items-center text-center">
+                <p className="text-xs text-gray-400 mb-2 line-clamp-2">Total Palettes</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-400 break-words overflow-hidden w-full">{lots.reduce((sum, lot) => sum + (lot.nbpalettes || 1), 0)}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
-                <p className="text-xs text-gray-400 mb-2">Total Pièces</p>
-                <p className="text-2xl font-bold text-blue-400">{lots.reduce((sum, lot) => sum + (lot.nombre_produits_total || 0), 0)}</p>
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 md:p-4 flex flex-col items-center text-center">
+                <p className="text-xs text-gray-400 mb-2 line-clamp-2">Total Pièces</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-400 break-words overflow-hidden w-full">{lots.reduce((sum, lot) => sum + (lot.nombre_produits_total || 0), 0)}</p>
               </div>
-              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-4">
-                <p className="text-xs text-gray-400 mb-2">Nombre de Lots</p>
-                <p className="text-2xl font-bold text-blue-400">{lots.length}</p>
+              <div className="bg-[#0a0a0a] border border-gray-700 rounded-lg p-3 md:p-4 flex flex-col items-center text-center">
+                <p className="text-xs text-gray-400 mb-2 line-clamp-2">Nombre de Lots</p>
+                <p className="text-lg md:text-2xl font-bold text-blue-400 break-words overflow-hidden w-full">{lots.length}</p>
               </div>
-              <div className="bg-red-900/50 border border-red-500 rounded-lg p-4">
-                <p className="text-xs text-red-300 mb-2">Total Investi</p>
-                <p className="text-2xl font-bold text-red-400">{stats.capital.toFixed(0)} €</p>
+              <div className="bg-red-900/50 border border-red-500 rounded-lg p-3 md:p-4 flex flex-col items-center text-center">
+                <p className="text-xs text-red-300 mb-2 line-clamp-2">Total Investi</p>
+                <p className="text-lg md:text-2xl font-bold text-red-400 break-words overflow-hidden w-full">{stats.capital.toFixed(0)} €</p>
               </div>
             </div>
           </div>
