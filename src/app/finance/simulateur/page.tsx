@@ -31,6 +31,7 @@ export default function SimulateurPage() {
   const [palettes, setPalettes] = useState('4');
   const [shippingCost, setShippingCost] = useState('');
   const [feesPercent, setFeesPercent] = useState('5');
+  const [totalPieces, setTotalPieces] = useState('');
 
   // Résultats
   const [costPerPalette, setCostPerPalette] = useState(0);
@@ -118,6 +119,7 @@ export default function SimulateurPage() {
     setProducts([]);
     setResults([]);
     setTotalPrice('');
+    setTotalPieces('');
     setPalettes('4');
     setShippingCost('');
     setFeesPercent('5');
@@ -143,7 +145,7 @@ export default function SimulateurPage() {
   };
 
   const handleCalculate = () => {
-    if (!totalPrice || !shippingCost || !palettes) {
+    if (!totalPrice || !shippingCost || !palettes || !totalPieces) {
       alert('Veuillez remplir tous les champs');
       return;
     }
@@ -152,8 +154,9 @@ export default function SimulateurPage() {
     const shipping = parseFloat(shippingCost);
     const fees = parseFloat(feesPercent);
     const paletteCount = parseInt(palettes);
+    const pieces = parseInt(totalPieces);
 
-    if (isNaN(total) || isNaN(shipping) || isNaN(fees) || isNaN(paletteCount) || total <= 0 || shipping < 0 || fees < 0) {
+    if (isNaN(total) || isNaN(shipping) || isNaN(fees) || isNaN(paletteCount) || isNaN(pieces) || total <= 0 || shipping < 0 || fees < 0 || pieces <= 0) {
       alert('Valeurs invalides');
       return;
     }
@@ -162,18 +165,17 @@ export default function SimulateurPage() {
     const costPerPalette = (total + shipping) / paletteCount;
     setCostPerPalette(costPerPalette);
 
-    // Coût par produit (avant frais)
-    const costPerProductBeforeFees = (total + shipping) / products.length;
-
-    // Coût avec frais d'enchère
+    // Coût total avec frais
     const feeAmount = total * (fees / 100);
     const totalCost = total + shipping + feeAmount;
-    const costPerProductAfterFees = totalCost / products.length;
+
+    // Coût par pièce
+    const costPerPiece = totalCost / pieces;
 
     // Calculer les résultats
     const newResults: SimulationResult[] = products.map((product) => {
-      const coefficient = costPerProductAfterFees / product.priceNeuf;
-      const { score, color } = calculateScore(coefficient, product.priceNeuf);
+      const coefficient = (costPerPiece / product.priceNeuf) * 100; // En %
+      const { score, color } = calculateScore(coefficient / 100, product.priceNeuf); // Passer le coefficient en décimal pour le scoring
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
@@ -186,7 +188,7 @@ export default function SimulateurPage() {
         id: product.id,
         name: product.name,
         priceNeuf: product.priceNeuf,
-        costPerProduct: costPerProductAfterFees,
+        costPerProduct: costPerPiece,
         coefficient: coefficient,
         score: score,
         color: color,
@@ -211,11 +213,11 @@ export default function SimulateurPage() {
     : 0;
 
   const averageCoefficient = filteredResults.length > 0
-    ? (filteredResults.reduce((sum, r) => sum + r.coefficient, 0) / filteredResults.length).toFixed(2)
+    ? (filteredResults.reduce((sum, r) => sum + r.coefficient, 0) / filteredResults.length).toFixed(1)
     : 0;
 
-  const costPerPiece = filteredResults.length > 0 && costPerPalette > 0
-    ? (costPerPalette / (filteredResults.reduce((sum, r) => sum + r.priceNeuf, 0) / filteredResults.length)).toFixed(2)
+  const pricePiece = filteredResults.length > 0
+    ? (filteredResults[0]?.costPerProduct || 0).toFixed(2)
     : 0;
 
   return (
@@ -259,11 +261,11 @@ export default function SimulateurPage() {
 
           {/* Formulaire Paramètres */}
           {products.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
 
               {/* Prix Total */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Prix Total du Lot (€)</label>
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Prix Total (€)</label>
                 <input
                   type="number"
                   value={totalPrice}
@@ -273,9 +275,21 @@ export default function SimulateurPage() {
                 />
               </div>
 
+              {/* Nombre de Pièces */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Nombre de Pièces</label>
+                <input
+                  type="number"
+                  value={totalPieces}
+                  onChange={(e) => setTotalPieces(e.target.value)}
+                  placeholder="150"
+                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white"
+                />
+              </div>
+
               {/* Nombre de Palettes */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Nombre de Palettes</label>
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Palettes</label>
                 <select
                   value={palettes}
                   onChange={(e) => setPalettes(e.target.value)}
@@ -289,7 +303,7 @@ export default function SimulateurPage() {
 
               {/* Frais de Port */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Frais de Port (€)</label>
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Frais Port (€)</label>
                 <input
                   type="number"
                   value={shippingCost}
@@ -363,12 +377,12 @@ export default function SimulateurPage() {
                 <p className="text-2xl font-bold text-green-400">{filteredResults.length}</p>
               </div>
               <div className="bg-gradient-to-br from-orange-900/30 to-[#1a1a1a] p-4 rounded-xl border border-orange-700">
-                <p className="text-xs text-gray-400 mb-2">Coefficient Moyen</p>
-                <p className="text-2xl font-bold text-orange-400">{averageCoefficient}</p>
+                <p className="text-xs text-gray-400 mb-2">Coefficient Moyen (%)</p>
+                <p className="text-2xl font-bold text-orange-400">{averageCoefficient}%</p>
               </div>
               <div className="bg-gradient-to-br from-pink-900/30 to-[#1a1a1a] p-4 rounded-xl border border-pink-700">
                 <p className="text-xs text-gray-400 mb-2">Prix par Pièce</p>
-                <p className="text-2xl font-bold text-pink-400">{costPerPiece} €</p>
+                <p className="text-2xl font-bold text-pink-400">{pricePiece} €</p>
               </div>
             </div>
 
@@ -428,7 +442,7 @@ export default function SimulateurPage() {
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-white">{result.priceNeuf.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-semibold text-blue-400">{result.costPerProduct.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold">{result.coefficient.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-orange-400">{result.coefficient.toFixed(1)}%</td>
                         <td className="px-4 py-3 text-sm font-bold text-white">{result.score.toFixed(1)}</td>
                         <td className="px-4 py-3 text-sm font-semibold">{result.colorLabel}</td>
                       </tr>
