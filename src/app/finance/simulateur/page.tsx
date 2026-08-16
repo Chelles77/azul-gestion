@@ -15,6 +15,7 @@ interface SimulationResult {
   name: string;
   priceNeuf: number;
   costPerProduct: number;
+  totalPurchasePrice: number;
   coefficient: number;
   score: number;
   color: 'red' | 'orange' | 'yellow' | 'green';
@@ -42,6 +43,21 @@ export default function SimulateurPage() {
   const [searchBrand, setSearchBrand] = useState('');
   const [filterMinPrice, setFilterMinPrice] = useState('');
   const [filterMaxPrice, setFilterMaxPrice] = useState('');
+
+  // Extraire les marques uniques
+  const extractBrands = (prods: Product[]) => {
+    const brands = new Set<string>();
+    prods.forEach(prod => {
+      // Extraire la marque depuis le nom (premier mot ou premieres lettres majuscules)
+      const words = prod.name.split(' ');
+      if (words.length > 0) {
+        brands.add(words[0]); // Prendre le premier mot comme marque
+      }
+    });
+    return Array.from(brands).sort();
+  };
+
+  const brands = extractBrands(products);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -189,6 +205,7 @@ export default function SimulateurPage() {
         name: product.name,
         priceNeuf: product.priceNeuf,
         costPerProduct: costPerPiece,
+        totalPurchasePrice: totalCost,
         coefficient: coefficient,
         score: score,
         color: color,
@@ -391,13 +408,18 @@ export default function SimulateurPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 mb-2">🔍 Filtrer par Marque</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Eureka, Dyson, Kärcher..."
+                  <select
                     value={searchBrand}
                     onChange={(e) => setSearchBrand(e.target.value)}
                     className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white text-sm"
-                  />
+                  >
+                    <option value="">Toutes les marques</option>
+                    {brands.map((brand) => (
+                      <option key={brand} value={brand}>
+                        {brand}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-400 mb-2">💰 Prix Min (€)</label>
@@ -431,6 +453,7 @@ export default function SimulateurPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Produit</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Neuf</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coût Acheté</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Total</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coefficient</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Score /20</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Décision</th>
@@ -442,6 +465,7 @@ export default function SimulateurPage() {
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-white">{result.priceNeuf.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-semibold text-blue-400">{result.costPerProduct.toFixed(2)} €</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-green-400">{result.totalPurchasePrice.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-semibold text-orange-400">{result.coefficient.toFixed(1)}%</td>
                         <td className="px-4 py-3 text-sm font-bold text-white">{result.score.toFixed(1)}</td>
                         <td className="px-4 py-3 text-sm font-semibold">{result.colorLabel}</td>
