@@ -37,6 +37,11 @@ export default function SimulateurPage() {
   const [showResults, setShowResults] = useState(false);
   const [savedSimulation, setSavedSimulation] = useState<any>(null);
 
+  // Filtres
+  const [searchBrand, setSearchBrand] = useState('');
+  const [filterMinPrice, setFilterMinPrice] = useState('');
+  const [filterMaxPrice, setFilterMaxPrice] = useState('');
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -193,8 +198,24 @@ export default function SimulateurPage() {
     setShowResults(true);
   };
 
-  const averageScore = results.length > 0
-    ? (results.reduce((sum, r) => sum + r.score, 0) / results.length).toFixed(1)
+  // Filtrer les résultats
+  const filteredResults = results.filter((r) => {
+    const matchBrand = !searchBrand || r.name.toLowerCase().includes(searchBrand.toLowerCase());
+    const matchMinPrice = !filterMinPrice || r.costPerProduct >= parseFloat(filterMinPrice);
+    const matchMaxPrice = !filterMaxPrice || r.costPerProduct <= parseFloat(filterMaxPrice);
+    return matchBrand && matchMinPrice && matchMaxPrice;
+  });
+
+  const averageScore = filteredResults.length > 0
+    ? (filteredResults.reduce((sum, r) => sum + r.score, 0) / filteredResults.length).toFixed(1)
+    : 0;
+
+  const averageCoefficient = filteredResults.length > 0
+    ? (filteredResults.reduce((sum, r) => sum + r.coefficient, 0) / filteredResults.length).toFixed(2)
+    : 0;
+
+  const costPerPiece = filteredResults.length > 0 && costPerPalette > 0
+    ? (costPerPalette / (filteredResults.reduce((sum, r) => sum + r.priceNeuf, 0) / filteredResults.length)).toFixed(2)
     : 0;
 
   return (
@@ -328,18 +349,62 @@ export default function SimulateurPage() {
         {showResults && results.length > 0 && (
           <div>
             {/* Résumé */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-              <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-6 rounded-xl border border-blue-700">
-                <p className="text-sm text-gray-400 mb-2">Coût par Palette</p>
-                <p className="text-3xl font-bold text-blue-400">{costPerPalette.toFixed(2)} €</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
+              <div className="bg-gradient-to-br from-blue-900/30 to-[#1a1a1a] p-4 rounded-xl border border-blue-700">
+                <p className="text-xs text-gray-400 mb-2">Coût par Palette</p>
+                <p className="text-2xl font-bold text-blue-400">{costPerPalette.toFixed(2)} €</p>
               </div>
-              <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-6 rounded-xl border border-purple-700">
-                <p className="text-sm text-gray-400 mb-2">Score Moyen du Lot</p>
-                <p className="text-3xl font-bold text-purple-400">{averageScore} / 20</p>
+              <div className="bg-gradient-to-br from-purple-900/30 to-[#1a1a1a] p-4 rounded-xl border border-purple-700">
+                <p className="text-xs text-gray-400 mb-2">Score Moyen</p>
+                <p className="text-2xl font-bold text-purple-400">{averageScore} / 20</p>
               </div>
-              <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-6 rounded-xl border border-green-700">
-                <p className="text-sm text-gray-400 mb-2">Nombre de Produits</p>
-                <p className="text-3xl font-bold text-green-400">{results.length}</p>
+              <div className="bg-gradient-to-br from-green-900/30 to-[#1a1a1a] p-4 rounded-xl border border-green-700">
+                <p className="text-xs text-gray-400 mb-2">Produits</p>
+                <p className="text-2xl font-bold text-green-400">{filteredResults.length}</p>
+              </div>
+              <div className="bg-gradient-to-br from-orange-900/30 to-[#1a1a1a] p-4 rounded-xl border border-orange-700">
+                <p className="text-xs text-gray-400 mb-2">Coefficient Moyen</p>
+                <p className="text-2xl font-bold text-orange-400">{averageCoefficient}</p>
+              </div>
+              <div className="bg-gradient-to-br from-pink-900/30 to-[#1a1a1a] p-4 rounded-xl border border-pink-700">
+                <p className="text-xs text-gray-400 mb-2">Prix par Pièce</p>
+                <p className="text-2xl font-bold text-pink-400">{costPerPiece} €</p>
+              </div>
+            </div>
+
+            {/* Barre de filtrage */}
+            <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-2">🔍 Filtrer par Marque</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Eureka, Dyson, Kärcher..."
+                    value={searchBrand}
+                    onChange={(e) => setSearchBrand(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-2">💰 Prix Min (€)</label>
+                  <input
+                    type="number"
+                    placeholder="Ex: 100"
+                    value={filterMinPrice}
+                    onChange={(e) => setFilterMinPrice(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-2">💰 Prix Max (€)</label>
+                  <input
+                    type="number"
+                    placeholder="Ex: 500"
+                    value={filterMaxPrice}
+                    onChange={(e) => setFilterMaxPrice(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white text-sm"
+                  />
+                </div>
               </div>
             </div>
 
@@ -358,7 +423,7 @@ export default function SimulateurPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {results.map((result) => (
+                    {filteredResults.map((result) => (
                       <tr key={result.id} className="border-b border-gray-800 hover:bg-[#252525] transition">
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-white">{result.priceNeuf.toFixed(2)} €</td>
