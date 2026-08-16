@@ -228,6 +228,10 @@ export default function SimulateurPage() {
     setShowResults(true);
   };
 
+  const totalPriceNeuf = products.length > 0
+    ? products.reduce((sum, p) => sum + p.priceNeuf, 0)
+    : 0;
+
   // Filtrer les résultats
   const filteredResults = results.filter((r) => {
     const matchBrand = !searchBrand || r.name.toLowerCase().includes(searchBrand.toLowerCase());
@@ -246,10 +250,6 @@ export default function SimulateurPage() {
 
   const pricePiece = filteredResults.length > 0
     ? (filteredResults[0]?.costPerProduct || 0).toFixed(2)
-    : 0;
-
-  const totalPriceNeuf = products.length > 0
-    ? products.reduce((sum, p) => sum + p.priceNeuf, 0)
     : 0;
 
   return (
