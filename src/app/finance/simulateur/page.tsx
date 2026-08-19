@@ -74,8 +74,8 @@ export default function SimulateurPage() {
 
         const parsedProducts: Product[] = [];
 
-        // Skip header row (row 0 is usually headers in Excel)
-        for (let i = 1; i < json.length; i++) {
+        // Lire tous les produits à partir de la ligne 0
+        for (let i = 0; i < json.length; i++) {
           const row = json[i];
           if (row && row.length >= 3) {
             const id = row[0];
