@@ -467,11 +467,7 @@ export default function SimulateurPage() {
                     <tr className="bg-[#0a0a0a] border-b border-gray-700">
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Produit</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Neuf</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coût Acheté</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Total</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coefficient</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Score /20</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Décision</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coût d'Achat</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -479,11 +475,7 @@ export default function SimulateurPage() {
                       <tr key={result.id} className="border-b border-gray-800 hover:bg-[#252525] transition">
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-white">{result.priceNeuf.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-blue-400">{result.costPerProduct.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-green-400">{result.totalPurchasePrice.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-orange-400">{result.coefficient.toFixed(1)}%</td>
-                        <td className="px-4 py-3 text-sm font-bold text-white">{result.score.toFixed(1)}</td>
-                        <td className="px-4 py-3 text-sm font-semibold">{result.colorLabel}</td>
+                        <td className="px-4 py-3 text-sm font-bold text-green-400">{result.costPerProduct.toFixed(2)} €</td>
                       </tr>
                     ))}
                   </tbody>
