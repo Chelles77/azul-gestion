@@ -195,12 +195,16 @@ export default function SimulateurPage() {
     const totalCost = total + shipping + feeAmount;
     setTotalCostAchat(totalCost);
 
-    // Coût par pièce
-    const costPerPiece = totalCost / pieces;
+    // Frais par pièce
+    const shippingPerPiece = shipping / pieces;
+    const feePerPiece = feeAmount / pieces;
 
     // Calculer les résultats
     const newResults: SimulationResult[] = products.map((product) => {
-      const coefficientDecimal = costPerPiece / product.priceNeuf; // En décimal (0.20 = 20%)
+      // Coût d'achat = Prix Neuf + Frais Port/pièce + Frais Enchère/pièce
+      const costPerProduct = product.priceNeuf + shippingPerPiece + feePerPiece;
+
+      const coefficientDecimal = costPerProduct / product.priceNeuf; // En décimal (0.20 = 20%)
       const coefficientPercent = coefficientDecimal * 100; // En %
       const { score, color } = calculateScore(coefficientDecimal, product.priceNeuf);
 
@@ -215,7 +219,7 @@ export default function SimulateurPage() {
         id: product.id,
         name: product.name,
         priceNeuf: product.priceNeuf,
-        costPerProduct: costPerPiece,
+        costPerProduct: costPerProduct,
         totalPurchasePrice: totalCost,
         coefficient: coefficientPercent,
         score: score,
