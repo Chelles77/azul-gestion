@@ -484,8 +484,8 @@ export default function SimulateurPage() {
                   </thead>
                   <tbody>
                     {filteredResults.map((result) => {
-                      const salePrice30 = result.costPerProduct * 1.30;
-                      const salePrice25 = result.costPerProduct * 1.25;
+                      const salePrice30 = result.priceNeuf * 1.30;
+                      const salePrice25 = result.priceNeuf * 1.25;
                       return (
                       <tr key={result.id} className="border-b border-gray-800 hover:bg-[#252525] transition">
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
@@ -502,8 +502,8 @@ export default function SimulateurPage() {
                       <td className="px-4 py-3 text-sm text-gray-300">TOTAL</td>
                       <td className="px-4 py-3 text-sm text-white">{filteredResults.reduce((sum, r) => sum + r.priceNeuf, 0).toFixed(2)} €</td>
                       <td className="px-4 py-3 text-sm text-blue-400">{filteredResults.reduce((sum, r) => sum + r.costPerProduct, 0).toFixed(2)} €</td>
-                      <td className="px-4 py-3 text-sm text-green-400">{filteredResults.reduce((sum, r) => sum + (r.costPerProduct * 1.30), 0).toFixed(2)} €</td>
-                      <td className="px-4 py-3 text-sm text-cyan-400">{filteredResults.reduce((sum, r) => sum + (r.costPerProduct * 1.25), 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-green-400">{filteredResults.reduce((sum, r) => sum + (r.priceNeuf * 1.30), 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-cyan-400">{filteredResults.reduce((sum, r) => sum + (r.priceNeuf * 1.25), 0).toFixed(2)} €</td>
                       <td className="px-4 py-3 text-sm text-white"></td>
                       <td className="px-4 py-3 text-sm text-white"></td>
                     </tr>
