@@ -476,24 +476,28 @@ export default function SimulateurPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Produit</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Neuf</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coût Acheté</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Total</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coefficient</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Vente 30%</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Vente 25%</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Score /20</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Décision</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredResults.map((result) => (
+                    {filteredResults.map((result) => {
+                      const salePrice30 = result.costPerProduct * 1.30;
+                      const salePrice25 = result.costPerProduct * 1.25;
+                      return (
                       <tr key={result.id} className="border-b border-gray-800 hover:bg-[#252525] transition">
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-white">{result.priceNeuf.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-semibold text-blue-400">{result.costPerProduct.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-green-400">{result.totalPurchasePrice.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-orange-400">{result.coefficient.toFixed(1)}%</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-green-400">{salePrice30.toFixed(2)} €</td>
+                        <td className="px-4 py-3 text-sm font-semibold text-cyan-400">{salePrice25.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-bold text-white">{result.score.toFixed(1)}</td>
                         <td className="px-4 py-3 text-sm font-semibold">{result.colorLabel}</td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>
