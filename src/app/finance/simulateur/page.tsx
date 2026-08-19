@@ -105,54 +105,60 @@ export default function SimulateurPage() {
     }
   };
 
-  // Marques premium reconnues
-  const premiumBrands = ['Dyson', 'Philips', 'Siemens', 'Nespresso', 'iRobot', 'Bissell', 'De\'Longhi', 'Moulinex', 'SEVERIN', 'Samsung', 'LG', 'Bosch', 'Miele', 'Zanussi', 'Beko'];
+  // Tier des marques
+  const tier1Brands = ['Dyson', 'Philips', 'Bosch', 'Siemens', 'Nespresso', 'iRobot', 'Samsung', 'LG', 'Miele', 'Zanussi'];
+  const tier2Brands = ['De\'Longhi', 'Moulinex', 'Bissell', 'Ariete', 'SEVERIN', 'Princess', 'Beko', 'Cecotec', 'Rowenta'];
 
   const extractBrand = (productName: string): string => {
     const words = productName.split(' ');
     return words[0] || 'Unknown';
   };
 
-  const isPremiumBrand = (brand: string): boolean => {
-    return premiumBrands.some(b => brand.toLowerCase().includes(b.toLowerCase()));
+  const getBrandTier = (brand: string): number => {
+    if (tier1Brands.some(b => brand.toLowerCase().includes(b.toLowerCase()))) return 1;
+    if (tier2Brands.some(b => brand.toLowerCase().includes(b.toLowerCase()))) return 2;
+    return 3;
   };
 
-  const calculateScore = (costPerProduct: number, priceNeuf: number, coefficientPercent: number, totalProducts: number, totalCostAchat: number, productsList: Product[]): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
-    // 1. COÛT TOTAL (35%)
-    let costScore = 0;
-    if (totalCostAchat < 500) costScore = 20;
-    else if (totalCostAchat < 1000) costScore = 18;
-    else if (totalCostAchat < 1500) costScore = 16;
-    else if (totalCostAchat < 2500) costScore = 14;
-    else if (totalCostAchat < 4000) costScore = 10;
-    else if (totalCostAchat < 6000) costScore = 6;
-    else costScore = 2;
+  const calculateScore = (priceNeuf: number, productsList: Product[]): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
+    // 1. RÉPARTITION PAR TRANCHE DE PRIX
+    const tranches = {
+      '2000+': { min: 2000, max: Infinity, note: 20, count: 0 },
+      '1000-2000': { min: 1000, max: 2000, note: 18, count: 0 },
+      '500-1000': { min: 500, max: 1000, note: 15, count: 0 },
+      '100-500': { min: 100, max: 500, note: 10, count: 0 },
+      '<100': { min: 0, max: 100, note: 5, count: 0 }
+    };
 
-    // 2. RENTABILITÉ (25%)
-    const salePrice25 = priceNeuf * 0.25;
-    const projectionGain = salePrice25 - costPerProduct;
-    const gainReel = (projectionGain * 0.90) - (costPerProduct * 0.10);
-    const rentabilite = costPerProduct > 0 ? Math.min(20, (gainReel / costPerProduct) * 100) : 0;
+    // Compter les produits par tranche
+    productsList.forEach(p => {
+      if (p.priceNeuf >= tranches['2000+'].min) tranches['2000+'].count++;
+      else if (p.priceNeuf >= tranches['1000-2000'].min) tranches['1000-2000'].count++;
+      else if (p.priceNeuf >= tranches['500-1000'].min) tranches['500-1000'].count++;
+      else if (p.priceNeuf >= tranches['100-500'].min) tranches['100-500'].count++;
+      else tranches['<100'].count++;
+    });
 
-    // 3. MARQUES (20%)
+    // Calculer score par tranche (moyenne pondérée)
+    const totalProducts = productsList.length;
+    let scoreParTranche = 0;
+    Object.values(tranches).forEach(t => {
+      const pct = t.count / totalProducts;
+      scoreParTranche += (pct * t.note);
+    });
+
+    // 2. BONUS MARQUES PAR TIER
     const brands = new Set(productsList.map(p => extractBrand(p.name)));
-    const premiumBrandCount = Array.from(brands).filter(b => isPremiumBrand(b)).length;
-    const premiumRatio = brands.size > 0 ? premiumBrandCount / brands.size : 0;
-    let marqueScore = 10;
-    if (premiumRatio > 0.7) marqueScore = 18;
-    else if (premiumRatio > 0.5) marqueScore = 16;
-    else if (premiumRatio > 0.3) marqueScore = 12;
-    else if (premiumRatio > 0) marqueScore = 8;
-    else marqueScore = 4;
+    let bonusMarques = 0;
 
-    // 4. DIVERSITÉ (10%)
-    const diversiteScore = Math.min(20, (totalProducts / brands.size) * 2);
+    productsList.forEach(p => {
+      const tier = getBrandTier(extractBrand(p.name));
+      if (tier === 1) bonusMarques += 4 / totalProducts;
+      else if (tier === 2) bonusMarques += 2 / totalProducts;
+    });
 
-    // 5. COEFFICIENT D'ACHAT (10%)
-    const coefficientScore = Math.max(0, 20 - coefficientPercent);
-
-    // SCORE FINAL = Moyenne pondérée
-    let score = (costScore * 0.35 + rentabilite * 0.25 + marqueScore * 0.2 + diversiteScore * 0.1 + coefficientScore * 0.1);
+    // SCORE FINAL = Score par tranche + Bonus marques
+    let score = scoreParTranche + bonusMarques;
     score = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
 
     let color: 'red' | 'orange' | 'yellow' | 'green';
@@ -235,7 +241,7 @@ export default function SimulateurPage() {
       // Coût d'achat = (Prix Neuf × Coefficient %) + Frais Port/pièce + Frais Enchère/pièce
       const costPerProduct = (product.priceNeuf * (coefficient / 100)) + shippingPerPiece + feePerPiece;
 
-      const { score, color } = calculateScore(costPerProduct, product.priceNeuf, coefficient, pieces, totalCost, products);
+      const { score, color } = calculateScore(product.priceNeuf, products);
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
