@@ -121,12 +121,12 @@ export default function SimulateurPage() {
     // 1. COÛT TOTAL (35%)
     let costScore = 0;
     if (totalCostAchat < 500) costScore = 20;
-    else if (totalCostAchat < 800) costScore = 18;
-    else if (totalCostAchat < 1000) costScore = 16;
-    else if (totalCostAchat < 1500) costScore = 12;
-    else if (totalCostAchat < 3000) costScore = 8;
-    else if (totalCostAchat < 5000) costScore = 4;
-    else costScore = 1;
+    else if (totalCostAchat < 1000) costScore = 18;
+    else if (totalCostAchat < 1500) costScore = 16;
+    else if (totalCostAchat < 2500) costScore = 14;
+    else if (totalCostAchat < 4000) costScore = 10;
+    else if (totalCostAchat < 6000) costScore = 6;
+    else costScore = 2;
 
     // 2. RENTABILITÉ (25%)
     const salePrice25 = priceNeuf * 0.25;
