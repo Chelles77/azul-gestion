@@ -498,6 +498,15 @@ export default function SimulateurPage() {
                       </tr>
                     );
                     })}
+                    <tr className="bg-[#0a0a0a] border-t-2 border-gray-600 font-bold">
+                      <td className="px-4 py-3 text-sm text-gray-300">TOTAL</td>
+                      <td className="px-4 py-3 text-sm text-white">{filteredResults.reduce((sum, r) => sum + r.priceNeuf, 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-blue-400">{filteredResults.reduce((sum, r) => sum + r.costPerProduct, 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-green-400">{filteredResults.reduce((sum, r) => sum + (r.costPerProduct * 1.30), 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-cyan-400">{filteredResults.reduce((sum, r) => sum + (r.costPerProduct * 1.25), 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-white"></td>
+                      <td className="px-4 py-3 text-sm text-white"></td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
