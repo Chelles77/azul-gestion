@@ -32,6 +32,7 @@ export default function SimulateurPage() {
   const [palettes, setPalettes] = useState('4');
   const [shippingCost, setShippingCost] = useState('');
   const [feesPercent, setFeesPercent] = useState('5');
+  const [buyCoefficient, setBuyCoefficient] = useState('8.5');
 
   // Résultats
   const [costPerPalette, setCostPerPalette] = useState(0);
@@ -146,6 +147,7 @@ export default function SimulateurPage() {
     setPalettes('4');
     setShippingCost('');
     setFeesPercent('5');
+    setBuyCoefficient('8.5');
     setCostPerPalette(0);
     setTotalCostAchat(0);
     setShowResults(false);
@@ -178,10 +180,11 @@ export default function SimulateurPage() {
     const total = parseFloat(totalPrice);
     const shipping = parseFloat(shippingCost);
     const fees = parseFloat(feesPercent);
+    const coefficient = parseFloat(buyCoefficient);
     const paletteCount = parseInt(palettes);
     const pieces = products.length;
 
-    if (isNaN(total) || isNaN(shipping) || isNaN(fees) || isNaN(paletteCount) || total <= 0 || shipping < 0 || fees < 0 || pieces <= 0) {
+    if (isNaN(total) || isNaN(shipping) || isNaN(fees) || isNaN(coefficient) || isNaN(paletteCount) || total <= 0 || shipping < 0 || fees < 0 || coefficient < 0 || pieces <= 0) {
       alert('Valeurs invalides');
       return;
     }
@@ -201,12 +204,11 @@ export default function SimulateurPage() {
 
     // Calculer les résultats
     const newResults: SimulationResult[] = products.map((product) => {
-      // Coût d'achat = Prix Neuf + Frais Port/pièce + Frais Enchère/pièce
-      const costPerProduct = product.priceNeuf + shippingPerPiece + feePerPiece;
+      // Coût d'achat = (Prix Neuf × Coefficient d'achat %) + Frais Port/pièce + Frais Enchère/pièce
+      const productCost = product.priceNeuf * (coefficient / 100);
+      const costPerProduct = productCost + shippingPerPiece + feePerPiece;
 
-      const coefficientDecimal = costPerProduct / product.priceNeuf; // En décimal (0.20 = 20%)
-      const coefficientPercent = coefficientDecimal * 100; // En %
-      const { score, color } = calculateScore(coefficientDecimal, product.priceNeuf);
+      const { score, color } = calculateScore(coefficient / 100, product.priceNeuf);
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
@@ -221,7 +223,7 @@ export default function SimulateurPage() {
         priceNeuf: product.priceNeuf,
         costPerProduct: costPerProduct,
         totalPurchasePrice: totalCost,
-        coefficient: coefficientPercent,
+        coefficient: coefficient,
         score: score,
         color: color,
         colorLabel: colorLabels[color]
@@ -356,6 +358,19 @@ export default function SimulateurPage() {
                   <option value="4.9">4.9%</option>
                   <option value="5">5%</option>
                 </select>
+              </div>
+
+              {/* Coefficient d'Achat % */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 mb-2 uppercase">Coefficient d'Achat (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={buyCoefficient}
+                  onChange={(e) => setBuyCoefficient(e.target.value)}
+                  placeholder="8.5"
+                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-gray-700 rounded text-white"
+                />
               </div>
             </div>
             </>
