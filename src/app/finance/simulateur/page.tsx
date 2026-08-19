@@ -121,22 +121,22 @@ export default function SimulateurPage() {
   };
 
   const calculateScore = (priceNeuf: number, productsList: Product[]): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
-    // 1. RÉPARTITION PAR TRANCHE DE PRIX
+    // 1. RÉPARTITION PAR TRANCHE DE PRIX (selon algorithme exact)
     const tranches = {
-      '2000+': { min: 2000, max: Infinity, note: 20, count: 0 },
-      '1000-2000': { min: 1000, max: 2000, note: 18, count: 0 },
-      '500-1000': { min: 500, max: 1000, note: 15, count: 0 },
-      '100-500': { min: 100, max: 500, note: 10, count: 0 },
+      '1000-2000': { min: 1000, max: 2000, note: 20, count: 0 },
+      '500-1000': { min: 500, max: 1000, note: 18, count: 0 },
+      '250-500': { min: 250, max: 500, note: 15, count: 0 },
+      '100-250': { min: 100, max: 250, note: 10, count: 0 },
       '<100': { min: 0, max: 100, note: 5, count: 0 }
     };
 
     // Compter les produits par tranche
     productsList.forEach(p => {
-      if (p.priceNeuf >= tranches['2000+'].min) tranches['2000+'].count++;
-      else if (p.priceNeuf >= tranches['1000-2000'].min) tranches['1000-2000'].count++;
-      else if (p.priceNeuf >= tranches['500-1000'].min) tranches['500-1000'].count++;
-      else if (p.priceNeuf >= tranches['100-500'].min) tranches['100-500'].count++;
-      else tranches['<100'].count++;
+      if (p.priceNeuf >= 1000 && p.priceNeuf < 2000) tranches['1000-2000'].count++;
+      else if (p.priceNeuf >= 500 && p.priceNeuf < 1000) tranches['500-1000'].count++;
+      else if (p.priceNeuf >= 250 && p.priceNeuf < 500) tranches['250-500'].count++;
+      else if (p.priceNeuf >= 100 && p.priceNeuf < 250) tranches['100-250'].count++;
+      else if (p.priceNeuf < 100) tranches['<100'].count++;
     });
 
     // Calculer score par tranche (moyenne pondérée)
