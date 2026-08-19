@@ -476,23 +476,23 @@ export default function SimulateurPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Produit</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Neuf</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Coût Acheté</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Vente -30%</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Vente -25%</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Vente 25%</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Projection Gain</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Score /20</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Décision</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredResults.map((result) => {
-                      const salePrice30 = result.priceNeuf * 0.30;
                       const salePrice25 = result.priceNeuf * 0.25;
+                      const projectionGain = salePrice25 - result.costPerProduct;
                       return (
                       <tr key={result.id} className="border-b border-gray-800 hover:bg-[#252525] transition">
                         <td className="px-4 py-3 text-sm text-gray-300 truncate max-w-xs">{result.name}</td>
                         <td className="px-4 py-3 text-sm font-semibold text-white">{result.priceNeuf.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-semibold text-blue-400">{result.costPerProduct.toFixed(2)} €</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-green-400">{salePrice30.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-semibold text-cyan-400">{salePrice25.toFixed(2)} €</td>
+                        <td className="px-4 py-3 text-sm font-bold text-yellow-400">{projectionGain.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-bold text-white">{result.score.toFixed(1)}</td>
                         <td className="px-4 py-3 text-sm font-semibold">{result.colorLabel}</td>
                       </tr>
@@ -502,8 +502,8 @@ export default function SimulateurPage() {
                       <td className="px-4 py-3 text-sm text-gray-300">TOTAL</td>
                       <td className="px-4 py-3 text-sm text-white">{filteredResults.reduce((sum, r) => sum + r.priceNeuf, 0).toFixed(2)} €</td>
                       <td className="px-4 py-3 text-sm text-blue-400">{filteredResults.reduce((sum, r) => sum + r.costPerProduct, 0).toFixed(2)} €</td>
-                      <td className="px-4 py-3 text-sm text-green-400">{filteredResults.reduce((sum, r) => sum + (r.priceNeuf * 0.30), 0).toFixed(2)} €</td>
                       <td className="px-4 py-3 text-sm text-cyan-400">{filteredResults.reduce((sum, r) => sum + (r.priceNeuf * 0.25), 0).toFixed(2)} €</td>
+                      <td className="px-4 py-3 text-sm text-yellow-400">{filteredResults.reduce((sum, r) => sum + ((r.priceNeuf * 0.25) - r.costPerProduct), 0).toFixed(2)} €</td>
                       <td className="px-4 py-3 text-sm text-white"></td>
                       <td className="px-4 py-3 text-sm text-white"></td>
                     </tr>
