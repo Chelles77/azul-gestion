@@ -105,27 +105,54 @@ export default function SimulateurPage() {
     }
   };
 
-  const calculateScore = (costPerProduct: number, priceNeuf: number, coefficientPercent: number, totalProducts: number, totalCostAchat: number): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
-    // Gain réel après 10% de risque
+  // Marques premium reconnues
+  const premiumBrands = ['Dyson', 'Philips', 'Siemens', 'Nespresso', 'iRobot', 'Bissell', 'De\'Longhi', 'Moulinex', 'SEVERIN', 'Samsung', 'LG', 'Bosch', 'Miele', 'Zanussi', 'Beko'];
+
+  const extractBrand = (productName: string): string => {
+    const words = productName.split(' ');
+    return words[0] || 'Unknown';
+  };
+
+  const isPremiumBrand = (brand: string): boolean => {
+    return premiumBrands.some(b => brand.toLowerCase().includes(b.toLowerCase()));
+  };
+
+  const calculateScore = (costPerProduct: number, priceNeuf: number, coefficientPercent: number, totalProducts: number, totalCostAchat: number, productsList: Product[]): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
+    // 1. COÛT TOTAL (35%)
+    let costScore = 0;
+    if (totalCostAchat < 500) costScore = 20;
+    else if (totalCostAchat < 800) costScore = 18;
+    else if (totalCostAchat < 1000) costScore = 16;
+    else if (totalCostAchat < 1500) costScore = 12;
+    else if (totalCostAchat < 3000) costScore = 8;
+    else if (totalCostAchat < 5000) costScore = 4;
+    else costScore = 1;
+
+    // 2. RENTABILITÉ (25%)
     const salePrice25 = priceNeuf * 0.25;
     const projectionGain = salePrice25 - costPerProduct;
     const gainReel = (projectionGain * 0.90) - (costPerProduct * 0.10);
+    const rentabilite = costPerProduct > 0 ? Math.min(20, (gainReel / costPerProduct) * 100) : 0;
 
-    // Rentabilité = (Gain Réel / Coût d'Achat) × 100
-    const rentabilite = totalCostAchat > 0 ? (gainReel / costPerProduct) * 100 : 0;
+    // 3. MARQUES (20%)
+    const brands = new Set(productsList.map(p => extractBrand(p.name)));
+    const premiumBrandCount = Array.from(brands).filter(b => isPremiumBrand(b)).length;
+    const premiumRatio = brands.size > 0 ? premiumBrandCount / brands.size : 0;
+    let marqueScore = 10;
+    if (premiumRatio > 0.7) marqueScore = 18;
+    else if (premiumRatio > 0.5) marqueScore = 16;
+    else if (premiumRatio > 0.3) marqueScore = 12;
+    else if (premiumRatio > 0) marqueScore = 8;
+    else marqueScore = 4;
 
-    // Coefficient Score = 20 - Coefficient d'achat
+    // 4. DIVERSITÉ (10%)
+    const diversiteScore = Math.min(20, (totalProducts / brands.size) * 2);
+
+    // 5. COEFFICIENT D'ACHAT (10%)
     const coefficientScore = Math.max(0, 20 - coefficientPercent);
 
-    // Prix Score = 20 - (Prix Moyen / 100)
-    const prixMoyen = priceNeuf;
-    const prixScore = Math.max(0, 20 - (prixMoyen / 100));
-
-    // Diversité = (Nombre de produits / 10)
-    const diversite = Math.min(20, (totalProducts / 10) * 5);
-
-    // Score Final = moyenne pondérée
-    let score = (rentabilite * 0.4 + coefficientScore * 0.25 + prixScore * 0.2 + diversite * 0.15) / 4;
+    // SCORE FINAL = Moyenne pondérée
+    let score = (costScore * 0.35 + rentabilite * 0.25 + marqueScore * 0.2 + diversiteScore * 0.1 + coefficientScore * 0.1);
     score = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
 
     let color: 'red' | 'orange' | 'yellow' | 'green';
@@ -208,7 +235,7 @@ export default function SimulateurPage() {
       // Coût d'achat = (Prix Neuf × Coefficient %) + Frais Port/pièce + Frais Enchère/pièce
       const costPerProduct = (product.priceNeuf * (coefficient / 100)) + shippingPerPiece + feePerPiece;
 
-      const { score, color } = calculateScore(costPerProduct, product.priceNeuf, coefficient, pieces, totalCost);
+      const { score, color } = calculateScore(costPerProduct, product.priceNeuf, coefficient, pieces, totalCost, products);
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
