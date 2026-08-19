@@ -281,8 +281,8 @@ export default function SimulateurPage() {
     ? ((totalCostAchat / totalPriceNeuf) * 100).toFixed(1)
     : 0;
 
-  const pricePiece = filteredResults.length > 0
-    ? (filteredResults[0]?.costPerProduct || 0).toFixed(2)
+  const pricePiece = filteredResults.length > 0 && totalCostAchat > 0
+    ? (totalCostAchat / filteredResults.length).toFixed(2)
     : 0;
 
   return (
