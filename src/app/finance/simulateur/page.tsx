@@ -510,6 +510,7 @@ export default function SimulateurPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Prix Vente 25%</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Projection Gain</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Score /20</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">% Risque</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase">Décision</th>
                     </tr>
                   </thead>
@@ -525,6 +526,14 @@ export default function SimulateurPage() {
                         <td className="px-4 py-3 text-sm font-semibold text-cyan-400">{salePrice25.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-bold text-yellow-400">{projectionGain.toFixed(2)} €</td>
                         <td className="px-4 py-3 text-sm font-bold text-white">{result.score.toFixed(1)}</td>
+                        <td className={`px-4 py-3 text-sm font-bold ${
+                          result.score >= 16 ? 'text-green-400' :
+                          result.score >= 12 ? 'text-yellow-400' :
+                          result.score >= 8 ? 'text-orange-400' :
+                          'text-red-400'
+                        }`}>
+                          {(100 - (result.score * 5)).toFixed(0)}%
+                        </td>
                         <td className="px-4 py-3 text-sm font-semibold">{result.colorLabel}</td>
                       </tr>
                     );
