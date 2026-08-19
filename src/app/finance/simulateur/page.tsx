@@ -105,38 +105,36 @@ export default function SimulateurPage() {
     }
   };
 
-  const calculateScore = (coefficient: number, priceNeuf: number): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
-    const coefficientPercent = coefficient * 100;
-    let score = 20;
+  const calculateScore = (costPerProduct: number, priceNeuf: number, coefficientPercent: number, totalProducts: number, totalCostAchat: number): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
+    // Gain réel après 10% de risque
+    const salePrice25 = priceNeuf * 0.25;
+    const projectionGain = salePrice25 - costPerProduct;
+    const gainReel = (projectionGain * 0.90) - (costPerProduct * 0.10);
 
-    // Seuils logiques basés sur le coefficient d'achat
-    if (coefficientPercent < 8) {
-      score = 20; // Excellent
-    } else if (coefficientPercent < 13) {
-      // Interpolation linéaire : 8% = 17, 13% = 15
-      score = 17 - ((coefficientPercent - 8) / 5) * 2;
-    } else if (coefficientPercent < 20) {
-      // Interpolation : 13% = 15, 20% = 12
-      score = 15 - ((coefficientPercent - 13) / 7) * 3;
-    } else if (coefficientPercent < 35) {
-      // Interpolation : 20% = 12, 35% = 8
-      score = 12 - ((coefficientPercent - 20) / 15) * 4;
-    } else if (coefficientPercent < 50) {
-      // Interpolation : 35% = 8, 50% = 4
-      score = 8 - ((coefficientPercent - 35) / 15) * 4;
-    } else {
-      score = 4; // Mauvais
-    }
+    // Rentabilité = (Gain Réel / Coût d'Achat) × 100
+    const rentabilite = totalCostAchat > 0 ? (gainReel / costPerProduct) * 100 : 0;
 
-    const finalScore = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
+    // Coefficient Score = 20 - Coefficient d'achat
+    const coefficientScore = Math.max(0, 20 - coefficientPercent);
+
+    // Prix Score = 20 - (Prix Moyen / 100)
+    const prixMoyen = priceNeuf;
+    const prixScore = Math.max(0, 20 - (prixMoyen / 100));
+
+    // Diversité = (Nombre de produits / 10)
+    const diversite = Math.min(20, (totalProducts / 10) * 5);
+
+    // Score Final = moyenne pondérée
+    let score = (rentabilite * 0.4 + coefficientScore * 0.25 + prixScore * 0.2 + diversite * 0.15) / 4;
+    score = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
 
     let color: 'red' | 'orange' | 'yellow' | 'green';
-    if (finalScore < 8) color = 'red';
-    else if (finalScore < 12) color = 'orange';
-    else if (finalScore < 16) color = 'yellow';
+    if (score < 8) color = 'red';
+    else if (score < 12) color = 'orange';
+    else if (score < 16) color = 'yellow';
     else color = 'green';
 
-    return { score: finalScore, color };
+    return { score, color };
   };
 
   const handleReset = () => {
@@ -210,7 +208,7 @@ export default function SimulateurPage() {
       // Coût d'achat = (Prix Neuf × Coefficient %) + Frais Port/pièce + Frais Enchère/pièce
       const costPerProduct = (product.priceNeuf * (coefficient / 100)) + shippingPerPiece + feePerPiece;
 
-      const { score, color } = calculateScore(coefficient / 100, product.priceNeuf);
+      const { score, color } = calculateScore(costPerProduct, product.priceNeuf, coefficient, pieces, totalCost);
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
