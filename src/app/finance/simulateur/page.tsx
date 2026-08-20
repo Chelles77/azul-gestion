@@ -230,8 +230,8 @@ export default function SimulateurPage() {
     // Prix neuf total
     const totalPriceNeuf = products.reduce((sum, p) => sum + p.priceNeuf, 0);
 
-    // Coefficient = (Frais Port + Frais Enchère) / Prix Neuf Total × 100
-    const coefficient = totalPriceNeuf > 0 ? ((shipping + feeAmount) / totalPriceNeuf) * 100 : 0;
+    // Coefficient = Coût Total d'Achat / Prix Neuf Total × 100
+    const coefficient = totalPriceNeuf > 0 ? (totalCost / totalPriceNeuf) * 100 : 0;
 
     // Frais par pièce
     const shippingPerPiece = shipping / pieces;
