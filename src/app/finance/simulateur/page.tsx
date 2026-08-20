@@ -120,26 +120,26 @@ export default function SimulateurPage() {
     return 3;
   };
 
-  const calculateScore = (priceNeuf: number, productsList: Product[]): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
-    // 1. RÉPARTITION PAR TRANCHE DE PRIX (selon algorithme exact)
+  const calculateScore = (priceNeuf: number, productsList: Product[], coefficient: number): { score: number; color: 'red' | 'orange' | 'yellow' | 'green' } => {
+    // 1. RÉPARTITION PAR TRANCHE DE PRIX
     const tranches = {
-      '1000-2000': { min: 1000, max: 2000, note: 20, count: 0 },
-      '500-1000': { min: 500, max: 1000, note: 18, count: 0 },
-      '250-500': { min: 250, max: 500, note: 15, count: 0 },
+      '>2000': { min: 2000, note: 20, count: 0 },
+      '1000-2000': { min: 1000, max: 2000, note: 19, count: 0 },
+      '500-1000': { min: 500, max: 1000, note: 17, count: 0 },
+      '250-500': { min: 250, max: 500, note: 14, count: 0 },
       '100-250': { min: 100, max: 250, note: 10, count: 0 },
       '<100': { min: 0, max: 100, note: 5, count: 0 }
     };
 
-    // Compter les produits par tranche
     productsList.forEach(p => {
-      if (p.priceNeuf >= 1000 && p.priceNeuf < 2000) tranches['1000-2000'].count++;
+      if (p.priceNeuf >= 2000) tranches['>2000'].count++;
+      else if (p.priceNeuf >= 1000 && p.priceNeuf < 2000) tranches['1000-2000'].count++;
       else if (p.priceNeuf >= 500 && p.priceNeuf < 1000) tranches['500-1000'].count++;
       else if (p.priceNeuf >= 250 && p.priceNeuf < 500) tranches['250-500'].count++;
       else if (p.priceNeuf >= 100 && p.priceNeuf < 250) tranches['100-250'].count++;
       else if (p.priceNeuf < 100) tranches['<100'].count++;
     });
 
-    // Calculer score par tranche (moyenne pondérée)
     const totalProducts = productsList.length;
     let scoreParTranche = 0;
     Object.values(tranches).forEach(t => {
@@ -147,18 +147,19 @@ export default function SimulateurPage() {
       scoreParTranche += (pct * t.note);
     });
 
-    // 2. BONUS MARQUES PAR TIER
-    const brands = new Set(productsList.map(p => extractBrand(p.name)));
-    let bonusMarques = 0;
+    // 2. BONUS COEFFICIENT (faible coefficient = bon score)
+    let coefficientBonus = Math.max(0, Math.min(8, 20 - coefficient * 1.2));
 
+    // 3. BONUS MARQUES PAR TIER
+    let bonusMarques = 0;
     productsList.forEach(p => {
       const tier = getBrandTier(extractBrand(p.name));
       if (tier === 1) bonusMarques += 4 / totalProducts;
       else if (tier === 2) bonusMarques += 2 / totalProducts;
     });
 
-    // SCORE FINAL = Score par tranche + Bonus marques
-    let score = scoreParTranche + bonusMarques;
+    // SCORE FINAL = Score par tranche + Bonus coefficient + Bonus marques
+    let score = scoreParTranche + coefficientBonus + bonusMarques;
     score = Math.max(0, Math.min(20, Math.round(score * 10) / 10));
 
     let color: 'red' | 'orange' | 'yellow' | 'green';
@@ -241,7 +242,7 @@ export default function SimulateurPage() {
       // Coût d'achat = (Prix Neuf × Coefficient %) + Frais Port/pièce + Frais Enchère/pièce
       const costPerProduct = (product.priceNeuf * (coefficient / 100)) + shippingPerPiece + feePerPiece;
 
-      const { score, color } = calculateScore(product.priceNeuf, products);
+      const { score, color } = calculateScore(product.priceNeuf, products, coefficient);
 
       const colorLabels = {
         red: '🔴 Ne pas acheter',
